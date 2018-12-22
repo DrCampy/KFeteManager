@@ -26,10 +26,22 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    loginview.cpp \
+    salesview.cpp \
+    accountview.cpp \
+    article.cpp \
+    cartemodel.cpp \
+    catalog.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    loginview.h \
+    salesview.h \
+    accountview.h \
+    article.h \
+    cartemodel.h \
+    catalog.h
 
 
 # Default rules for deployment.
