@@ -33,28 +33,50 @@ void CurrentOrderModel::updateModel(){
     for(auto it = items->begin(); it < items->end(); it++){
         QString itemName = *it;
         unsigned int itemQuantity= itemsCount->value(itemName);
-        qreal price = catalog->getArticle(itemName).getPrice() * itemQuantity;
-        total += price;
+        qreal subTotal= itemQuantity;
+
+        if(price == normal){
+             subTotal *= catalog->getArticle(itemName).getPrice();
+        }else if(price == reduced){
+             subTotal *= catalog->getArticle(itemName).getReducedPrice();
+        }else{
+            subTotal *= 0;
+        }
+
+        total += subTotal;
 
         this->setItem(it-items->begin(), 0, new QStandardItem(QString(itemQuantity)));
         this->setItem(it-items->begin(), 1, new QStandardItem(itemName));
-        this->setItem(it-items->begin(), 2, new QStandardItem(QString::number(price, 'f', 2)));
+        this->setItem(it-items->begin(), 2, new QStandardItem(QString::number(subTotal, 'f', 2)));
     }
+}
+
+void CurrentOrderModel::setPrice(Price price){
+    this->price = price;
+}
+
+void CurrentOrderModel::setActiveSelection(QItemSelectionModel *selection){
+    this->activeSelection = selection;
+}
+
+void CurrentOrderModel::setActionToPerform(Action action){
+    this->actionToPerform = action;
 }
 
 qreal CurrentOrderModel::getTotal(){
     return this->total;
 }
 
-void CurrentOrderModel::applyAction(Action action, QItemSelectionModel *selection){
-    QModelIndexList selectedRows = selection->selectedRows(1);
+void CurrentOrderModel::applyAction(){
+
+    QModelIndexList selectedRows = activeSelection->selectedRows(1);
 
     for(auto it = selectedRows.begin(); it < selectedRows.end(); it++){
         QString selectedArticle = this->data(*it, Qt::DisplayRole).toString();
-        if(action == plusItem){
+        if(actionToPerform == plusItem){
             //Increment quantity of that item
             itemsCount->insert(selectedArticle, itemsCount->value(selectedArticle));
-        }else if(action == minusItem){
+        }else if(actionToPerform == minusItem){
             //Decrement the quantity of that item
             long int newItemCount = static_cast<long int>(itemsCount->value(selectedArticle)-1);
             if(newItemCount >= 0){
@@ -65,7 +87,7 @@ void CurrentOrderModel::applyAction(Action action, QItemSelectionModel *selectio
                 itemsCount->remove(selectedArticle);
                 items->removeAll(selectedArticle);
             }
-        }else if(action == deleteItem){
+        }else if(actionToPerform == deleteItem){
             itemsCount->remove(selectedArticle);
             items->removeAll(selectedArticle);
         }
@@ -87,8 +109,7 @@ void CurrentOrderModel::addArticle(QString articleName){
     updateModel();
 }
 
-void CurrentOrderModel::changePrice(Price price){
-    this->price = price;
+void CurrentOrderModel::updatePrice(){
     updateModel();
 }
 
@@ -97,3 +118,5 @@ void CurrentOrderModel::clear(){
     this->itemsCount->empty();
     updateModel();
 }
+
+

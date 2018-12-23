@@ -23,18 +23,22 @@ private:
     QMap<QString, unsigned int> *itemsCount;
     QStringList *items;
     Price price;
+    Action actionToPerform;
+    QItemSelectionModel *activeSelection;
     void updateModel();
-
 
 public:
     explicit CurrentOrderModel(Catalog *catalog, int rows, QObject *parent=nullptr);
     ~CurrentOrderModel();
+    void setPrice(Price price);
+    void setActiveSelection(QItemSelectionModel *selection);
+    void setActionToPerform(Action action);
     qreal getTotal();
 
 public slots:
-    void applyAction(Action action, QItemSelectionModel *selection);
+    void applyAction();
     void addArticle(QString articleName);
-    void changePrice(Price price);
+    void updatePrice();
     void clear();
 
 signals:
