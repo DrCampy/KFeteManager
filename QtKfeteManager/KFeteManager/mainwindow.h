@@ -2,10 +2,22 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QLabel>
+#include <QDateTime>
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
+
+class PushLabel : public QLabel{
+  Q_OBJECT
+public:
+  PushLabel(QWidget *parent = Q_NULLPTR);
+protected:
+  void mouseReleaseEvent(QMouseEvent *eve);
+signals:
+  void clearAccountSelection();
+};
 
 class MainWindow : public QMainWindow
 {
@@ -16,6 +28,15 @@ public:
     ~MainWindow();
 
 private:
+    QDateTime date;
+    QLabel *clockLabel;
+    PushLabel *accountLabel;
+
+public slots:
+    void updateClock();
+    void updateAccountLabel(QString);
+    //void enteredPassword(QString);
+    void receiveRandomEvent(); //TODO remove
 
 };
 
