@@ -29,19 +29,21 @@ SOURCES += \
         mainwindow.cpp \
     loginview.cpp \
     salesview.cpp \
-    accountview.cpp \
-    article.cpp \
     cartemodel.cpp \
-    catalog.cpp
+    catalog.cpp \
+    userlist.cpp \
+    accountmanagementview.cpp \
+    currentordermodel.cpp
 
 HEADERS += \
         mainwindow.h \
     loginview.h \
     salesview.h \
-    accountview.h \
-    article.h \
     cartemodel.h \
-    catalog.h
+    catalog.h \
+    userlist.h \
+    accountmanagementview.h \
+    currentordermodel.h
 
 
 # Default rules for deployment.
