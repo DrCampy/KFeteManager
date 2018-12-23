@@ -10,11 +10,11 @@
 #include "catalog.h"
 
 
-Article::Article(qreal price, qreal partJobiste, qreal prixAchat, qreal prixReduit, QString nom) : nom(nom){
+Article::Article(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString name) : name(name){
   setPrice(price);
-  setPartJobiste(partJobiste);
-  setPrixAchat(prixAchat);
-  setPrixReduit(prixReduit);
+  setJobistShare(jobistShare);
+  setBuyingPrice(buyingPrice);
+  setReducedPrice(reducedPrice);
 }
 
 qreal Article::getPrice() const{
@@ -25,32 +25,44 @@ void Article::setPrice(qreal p){
   this->price = qRound(p*100)/100;
 }
 
-qreal Article::getPartJobiste() const{
-  return this->partJobiste;
+qreal Article::getJobistShare() const{
+  return this->jobistShare;
 }
 
-void Article::setPartJobiste(qreal pj){
-  this->partJobiste = qRound(pj*100)/100;
+void Article::setJobistShare(qreal js){
+  this->jobistShare = qRound(js*100)/100;
 }
 
-qreal Article::getPrixAchat() const{
-  return this->prixAchat;
+qreal Article::getBuyingPrice() const{
+  return this->buyingPrice;
 }
 
-void Article::setPrixAchat(qreal pa){
-  this->prixAchat = qRound(pa*100)/100;
+void Article::setBuyingPrice(qreal bp){
+  this->buyingPrice= qRound(bp*100)/100;
 }
 
-qreal Article::getPrixReduit() const{
-  return this->prixReduit;
+qreal Article::getReducedPrice() const{
+  return this->reducedPrice;
 }
 
-void Article::setPrixReduit(qreal pr){
-  this->prixReduit = qRound(pr*100)/100;
+void Article::setReducedPrice(qreal rp){
+  this->reducedPrice = qRound(rp*100)/100;
 }
 
-QString Article::getNom() const{
-  return this->nom;
+QString Article::getName() const{
+  return this->name;
+}
+
+Article &Article::operator=(const Article &a){
+    if(&a == this){
+        return *this;
+    }
+    this->name = a.getName();
+    this->setPrice(a.getPrice());
+    this->setJobistShare(a.getJobistShare());
+    this->setBuyingPrice(a.getBuyingPrice());
+    this->setReducedPrice(a.getReducedPrice());
+    return *this;
 }
 
 
@@ -59,32 +71,30 @@ QString Article::getNom() const{
  * CLASS CATALOG
  *
 */
-
+Catalog::Catalog(QObject *parent):QObject(parent){
+    container = new QHash<QString, Article>();
+}
 Catalog::~Catalog(){
-  for(container_t::iterator it = container.begin(); it != container.end(); it++){
-      delete it.value();
-  }
+  delete container;
 }
 
 void Catalog::addArticle(Article &a){
-  QString str = a.getNom();
-  str.resize(std::min(str.size(), static_cast<int>(Article::MAX_NAME_LENGTH)));
-  Article *a2 = new Article(a.getPrice(), a.getPartJobiste(), a.getPrixAchat(), a.getPrixReduit(), str);
-  container.insert(a2->getNom(), a2);
+    QString name = a.getName();
+    name.truncate(Article::MAX_NAME_LENGTH);
+    container->insert(name, a);
 }
 
 void Catalog::deleteArticle(QString &key){
-  delete container.find(key).value();
-  container.remove(key);
+  container->remove(key);
 }
 
 bool Catalog::contains(QString &key) const{
-  return container.contains(key);
+  return container->contains(key);
 }
 
 Article Catalog::getArticle(QString &key) const{
-  container_t::const_iterator it = container.find(key);
-  return **it;
+  auto it = container->find(key);
+  return it.value();
 }
 
 bool Catalog::exportCatalog(QString filename) const{
@@ -93,13 +103,13 @@ bool Catalog::exportCatalog(QString filename) const{
   stream.setAutoFormatting(true);
   stream.writeStartDocument();
   stream.writeStartElement("articles-list");
-  for(auto i = container.begin(); i != container.end(); i++){
+  for(auto i = container->begin(); i != container->end(); i++){
       stream.writeStartElement("article");
-      stream.writeAttribute("nom", i.value()->getNom());
-      stream.writeTextElement("prix", QString::number(i.value()->getPrice()));
-      stream.writeTextElement("part-jobistes", QString::number(i.value()->getPartJobiste()));
-      stream.writeTextElement("prix-achat", QString::number(i.value()->getPrixAchat()));
-      stream.writeTextElement("prix-reduit", QString::number(i.value()->getPrixReduit()));
+      stream.writeAttribute("nom", i.value().getName());
+      stream.writeTextElement("prix", QString::number(i.value().getPrice()));
+      stream.writeTextElement("part-jobistes", QString::number(i.value().getJobistShare()));
+      stream.writeTextElement("prix-achat", QString::number(i.value().getBuyingPrice()));
+      stream.writeTextElement("prix-reduit", QString::number(i.value().getReducedPrice()));
       stream.writeEndElement();//article
   }
   stream.writeEndElement();//articles-list

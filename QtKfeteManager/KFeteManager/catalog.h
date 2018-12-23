@@ -3,33 +3,37 @@
 
 #include <QObject>
 #include <QtGlobal>
+#include <QHash>
+#include <QString>
 
 class Article
 {
 public:
-  explicit Article(qreal price, qreal partJobiste, qreal prixAchat, qreal prixReduit, QString nom);
+  explicit Article(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString name);
 
   qreal getPrice() const;
   void setPrice(qreal p);
 
-  qreal getPartJobiste() const;
-  void setPartJobiste(qreal pj);
+  qreal getJobistShare() const;
+  void setJobistShare(qreal js);
 
-  qreal getPrixAchat() const;
-  void setPrixAchat(qreal pa);
+  qreal getBuyingPrice() const;
+  void setBuyingPrice(qreal bp);
 
-  qreal getPrixReduit() const;
-  void setPrixReduit(qreal pr);
+  qreal getReducedPrice() const;
+  void setReducedPrice(qreal rp);
 
-  QString getNom() const;
+  QString getName() const;
   static const size_t MAX_NAME_LENGTH = 30;
+
+  Article &operator=(const Article &a);
 
 private:
   qreal price;
-  qreal partJobiste;
-  qreal prixAchat;
-  qreal prixReduit;
-  const QString nom;
+  qreal jobistShare;
+  qreal buyingPrice;
+  qreal reducedPrice;
+  QString name;
 
 };
 
@@ -48,8 +52,7 @@ private:
     /*Returns false if no error were raised, true otherwise*/
     bool exportCatalog(QString filename)const;
     bool importCatalog(QString filename);
-    typedef QHash<QString, Article*> container_t;
-    container_t container;
+    QHash<QString, Article> *container;
 
 signals:
 
