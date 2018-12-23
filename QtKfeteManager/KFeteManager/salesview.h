@@ -51,12 +51,14 @@ public:
     explicit TopBar(QWidget *parent = nullptr);
 };
 
-
 class MiddleBar : public QWidget
 {
 Q_OBJECT
 public:
     explicit MiddleBar(QWidget *parent = nullptr);
+    CurrentOrderModel::Action getLastPerformedAction() const;
+    CurrentOrderModel::Price getSelectedPrice() const;
+    void resetPrice();
 
 private:
     QPushButton *plusButton;
@@ -67,6 +69,9 @@ private:
     QPushButton *reducedPriceButton;
     QPushButton *freePriceButton;
 
+    CurrentOrderModel::Action lastPerformedAction;
+    CurrentOrderModel::Price selectedPrice;
+
 private slots:
     void plusSlot();
     void minusSlot();
@@ -74,8 +79,8 @@ private slots:
     void priceSlot(int id);
 
 signals:
-    void buttonPressed(CurrentOrderModel::Action);
-    void priceChanged(CurrentOrderModel::Price);
+    void actionPerformed();
+    void priceChanged();
 };
 
 /*
@@ -86,54 +91,31 @@ class SalesView : public QWidget
     Q_OBJECT
 public:
     explicit SalesView(QWidget *parent = nullptr );
+    void resizeEvent(QResizeEvent *);
+
 
 private:
 
-    CarteView *carteView;
-    TopBar *topBar;
-    Catalog *catalog;
-    QLabel *totalLabel;
-    MiddleBar *middleBar;
+    CarteView   *carteView;
+    TopBar      *topBar;
+    Catalog     *catalog;
+    QLabel      *totalLabel;
+    MiddleBar   *middleBar;
 
     QTableView *currentOrderView;
     CurrentOrderModel *currentOrderModel;
 
 signals:
-    void performAction(CurrentOrderModel::Action, QItemSelectionModel *);
+    void performAction();
 
 public slots:
     void updateTotalLabel();
-    void actionPerformed(CurrentOrderModel::Action action);
+    void actionPerformed();
 
 };
 
 //TODO when validate is pressed, we have to select normal price button again.
 
-/*
-class Commande : public QWidget
-{
-  Q_OBJECT
-public:
-  explicit Commande(Catalog *cat, QWidget *parent = 0);
-  enum Column{Quantite = 0, Article=1, SousTotal=2};
-  enum Tarif{Normal, Reduit, Offert};
-
-public slots:
-  void receiveAction(int);
-  void addArticle(QString);
-
-private:
-  void removeArticle(QString);
-  void recalculerTotaux();
-  void updateTotal();
-
-  QLabel *totLabel, *tarifLabel;
-  Catalog *cat;
-  QMap<QString, QTreeWidgetItem*> *artList;
-  QTreeWidget *treeWidget;
-  Tarif tarif;
-
-};*/
 #endif // SALESVIEW_H
 
 
