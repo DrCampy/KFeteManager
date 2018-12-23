@@ -6,14 +6,23 @@
 #include <QButtonGroup>
 #include <QPushButton>
 #include <QTableView>
-#include "article.h"
+#include <QStandardItemModel>
+#include <QLabel>
+
+#include "catalog.h"
+#include "currentordermodel.h"
+
+class CarteView;
+class TopBar;
+class SalesView;
+class MiddleBar;
+
 
 class CarteView : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CarteView(QWidget *parent = nullptr);
-    explicit CarteView(Catalog *cat, bool hasRights = false, QWidget *parent = nullptr);
+    explicit CarteView(Catalog *cat, QWidget *parent = nullptr);
     void assignButton(int id, QString article);
     bool exportCarte(QString filename) const;
     bool importCarte(QString filename);
@@ -29,28 +38,10 @@ public slots:
 private :
     QButtonGroup *carteButtons;
     static const unsigned int NB_MENU_PAGES = 4, GRID_W = 5, GRID_H = 8;
-    static const QStringList PAGES_NAMES; //defined in carte.cpp
+    static const QStringList PAGES_NAMES;// = (QStringList() << "Bières" << "Snacks" << "Softs" << "Divers");
     QMap<int, QString> *lookupTable;
     Catalog *cat;
-    bool hasRights;
 
-};
-
-class CarteButton : public QPushButton{
-    Q_OBJECT
-    using QPushButton::QPushButton;
-public:
-    void changeColor();
-    void allowColorChange(bool b = true);
-
-public slots:
-    void updateColor(QPalette);
-
-private:
-    bool canChangeColor = false;
-
-protected:
-    void mousePressEvent(QMouseEvent *e);
 };
 
 class TopBar : public QWidget
@@ -58,6 +49,33 @@ class TopBar : public QWidget
     Q_OBJECT
 public:
     explicit TopBar(QWidget *parent = nullptr);
+};
+
+
+class MiddleBar : public QWidget
+{
+Q_OBJECT
+public:
+    explicit MiddleBar(QWidget *parent = nullptr);
+
+private:
+    QPushButton *plusButton;
+    QPushButton *minusButton;
+    QPushButton *deleteButton;
+    QButtonGroup *priceButtonsGroup;
+    QPushButton *normalPriceButton;
+    QPushButton *reducedPriceButton;
+    QPushButton *freePriceButton;
+
+private slots:
+    void plusSlot();
+    void minusSlot();
+    void deleteSlot();
+    void priceSlot(int id);
+
+signals:
+    void buttonPressed(CurrentOrderModel::Action);
+    void priceChanged(CurrentOrderModel::Price);
 };
 
 /*
@@ -70,18 +88,26 @@ public:
     explicit SalesView(QWidget *parent = nullptr );
 
 private:
-    QTableView *currentOrderView;
+
     CarteView *carteView;
     TopBar *topBar;
-    //setModel()
+    Catalog *catalog;
+    QLabel *totalLabel;
+    MiddleBar *middleBar;
+
+    QTableView *currentOrderView;
+    CurrentOrderModel *currentOrderModel;
+
+signals:
+    void performAction(CurrentOrderModel::Action, QItemSelectionModel *);
 
 public slots:
-    void save();
+    void updateTotalLabel();
+    void actionPerformed(CurrentOrderModel::Action action);
+
 };
 
-const QStringList CarteView::PAGES_NAMES = (QStringList() << "Bières" << "Snacks" << "Softs" << "Divers");
-
-
+//TODO when validate is pressed, we have to select normal price button again.
 
 /*
 class Commande : public QWidget
@@ -89,7 +115,6 @@ class Commande : public QWidget
   Q_OBJECT
 public:
   explicit Commande(Catalog *cat, QWidget *parent = 0);
-  enum Action{bPlus, bMoins, bSupprimer, bTarifNormal, bTarifReduit, bOffert};
   enum Column{Quantite = 0, Article=1, SousTotal=2};
   enum Tarif{Normal, Reduit, Offert};
 
