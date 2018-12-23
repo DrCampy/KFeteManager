@@ -102,6 +102,6 @@ bool CarteModel::importCarte(QString filename){
       }
   }
   file->close();
-  emit updateCarte();
+  emit modelUpdated();
   return xml.hasError();
 }//end importCatalog
