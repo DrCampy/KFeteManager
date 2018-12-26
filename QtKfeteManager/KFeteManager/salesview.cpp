@@ -36,9 +36,9 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
+    catalog           = new Catalog(this);
     carteView         = new CarteView(catalog, this);
     topBar            = new TopBar(this);
-    catalog           = new Catalog(this);
     totalLabel        = new QLabel(this);
     middleBar         = new MiddleBar(this);
     currentOrderView  = new QTableView(this);
@@ -136,21 +136,20 @@ CarteView::CarteView(Catalog *cat, QWidget *parent) : QWidget(parent)
     
     QVBoxLayout *vBox = new QVBoxLayout(this); //first of all layouts
     QHBoxLayout *hBox = new QHBoxLayout(); //Layout for page name buttons
-    
+    QStackedLayout *sLayout = new QStackedLayout; //main layout with pages inside
+    QGridLayout *pagesLayout[NB_MENU_PAGES]; // pages
+
     hBox->setSpacing(0);
     vBox->setSpacing(0);
-    QWidget *hBar = new QWidget;
-    QStackedLayout *sLayout = new QStackedLayout; //main layout with pages inside
-    QButtonGroup *tabs = new QButtonGroup(this);
-    carteButtons = new QButtonGroup(this);
-    
-    lookupTable = new QMap<int, QString>();
-    
-    QWidget *pagesWidget = new QWidget[NB_MENU_PAGES]; //widget to store pages
-    QGridLayout *pagesLayout[5]; // pages
-    
+
+    hBar            = new QWidget(this);
+    tabs            = new QButtonGroup(this);
+    carteButtons    = new QButtonGroup(this);
+    lookupTable     = new QMap<int, QString>();
+    pagesWidget     = new QWidget[NB_MENU_PAGES]; //widget to store pages
+    qsp             = new QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
+
     //set a size policy for the buttons to expand at max
-    QSizePolicy qsp(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
     QPushButton *tmp;
     QPalette defaultPalette = QPushButton(nullptr).palette();
     defaultPalette.setColor(QPalette::Button, Qt::lightGray);
@@ -163,7 +162,7 @@ CarteView::CarteView(Catalog *cat, QWidget *parent) : QWidget(parent)
                 //w+(h*GRID_W)+(GRID_H*GRID_W*i)
                 //Generating buttons for the carte
                 tmp = new QPushButton(&pagesWidget[i]);
-                tmp->setSizePolicy(qsp);
+                tmp->setSizePolicy(*qsp);
                 carteButtons->addButton(tmp, w + (h*static_cast<int>(GRID_W)) + (static_cast<int>(GRID_H)*static_cast<int>(GRID_W)*i));
                 pagesLayout[i]->addWidget(tmp, static_cast<int>(h), static_cast<int>(w));
             }
@@ -177,7 +176,7 @@ CarteView::CarteView(Catalog *cat, QWidget *parent) : QWidget(parent)
         tmp = new QPushButton(PAGES_NAMES.at(i), hBar);
         tmp->setMinimumHeight(25);
         tmp->setMaximumHeight(80);
-        tmp->setSizePolicy(qsp);
+        tmp->setSizePolicy(*qsp);
         hBox->addWidget(tmp, Qt::AlignCenter);
         tabs->addButton(tmp, i);
     }
@@ -188,6 +187,12 @@ CarteView::CarteView(Catalog *cat, QWidget *parent) : QWidget(parent)
     connect(tabs, SIGNAL(buttonClicked(int)), sLayout, SLOT(setCurrentIndex(int)));
     connect(carteButtons, SIGNAL(buttonClicked(int)), this, SLOT(buttonClicked(int)) );
     tabs->button(0)->click();
+}
+
+CarteView::~CarteView(){
+    delete qsp;
+    lookupTable->clear();
+    delete lookupTable;
 }
 
 void CarteView::buttonClicked(int id){
