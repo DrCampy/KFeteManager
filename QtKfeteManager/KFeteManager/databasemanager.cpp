@@ -3,6 +3,7 @@
 #include <QSqlRecord>
 #include <QString>
 #include <QStringList>
+#include <QDebug>
 
 #include "databasemanager.h"
 
@@ -43,7 +44,18 @@ DatabaseManager::DatabaseManager(QObject *parent) : QObject(parent)
 
 
 }
+void DatabaseManager::openDatabase(){
+    //Creates default sql database connection
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("./data/KFeteManagerDB.sqlite");
 
+    bool ok = db.open();
+    if(ok){
+        qDebug() << "Database opened.";
+    }else{
+        qDebug() << "Error opening database";
+    }
+}
 
 bool DatabaseManager::checkDatabase(){
     /*
