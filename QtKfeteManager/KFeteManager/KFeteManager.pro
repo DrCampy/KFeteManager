@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -34,7 +34,8 @@ SOURCES += \
     userlist.cpp \
     accountmanagementview.cpp \
     currentordermodel.cpp \
-    carteview.cpp
+    carteview.cpp \
+    databasemanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -45,7 +46,8 @@ HEADERS += \
     userlist.h \
     accountmanagementview.h \
     currentordermodel.h \
-    carteview.h
+    carteview.h \
+    databasemanager.h
 
 
 # Default rules for deployment.
