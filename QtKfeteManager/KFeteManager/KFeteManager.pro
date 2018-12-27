@@ -33,7 +33,8 @@ SOURCES += \
     catalog.cpp \
     userlist.cpp \
     accountmanagementview.cpp \
-    currentordermodel.cpp
+    currentordermodel.cpp \
+    carteview.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -43,7 +44,8 @@ HEADERS += \
     catalog.h \
     userlist.h \
     accountmanagementview.h \
-    currentordermodel.h
+    currentordermodel.h \
+    carteview.h
 
 
 # Default rules for deployment.
