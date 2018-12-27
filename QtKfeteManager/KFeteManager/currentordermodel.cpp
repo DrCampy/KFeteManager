@@ -20,6 +20,7 @@ CurrentOrderModel::CurrentOrderModel(Catalog *catalog, int rows, QObject *parent
     QStringList headers;
     headers << tr("Quantité") << tr("Article") << tr("Sous-total");
     this->setHorizontalHeaderLabels(headers);
+
 }
 
 CurrentOrderModel::~CurrentOrderModel(){
@@ -28,7 +29,8 @@ CurrentOrderModel::~CurrentOrderModel(){
 }
 
 void CurrentOrderModel::updateModel(){
-    this->setRowCount(items->size());
+    if(this->rowCount() != items->size())
+        this->setRowCount(items->size());
     total = 0;
     for(auto it = items->begin(); it < items->end(); it++){
         QString itemName = *it;
@@ -45,7 +47,7 @@ void CurrentOrderModel::updateModel(){
 
         total += subTotal;
 
-        this->setItem(it-items->begin(), 0, new QStandardItem(QString(itemQuantity)));
+        this->setItem(it-items->begin(), 0, new QStandardItem(QString::number(itemQuantity)));
         this->setItem(it-items->begin(), 1, new QStandardItem(itemName));
         this->setItem(it-items->begin(), 2, new QStandardItem(QString::number(subTotal, 'f', 2)));
     }
@@ -79,7 +81,7 @@ void CurrentOrderModel::applyAction(){
         }else if(actionToPerform == minusItem){
             //Decrement the quantity of that item
             long int newItemCount = static_cast<long int>(itemsCount->value(selectedArticle)-1);
-            if(newItemCount >= 0){
+            if(newItemCount > 0){
                 //If we still have that item to display, updates its quantity
                 itemsCount->insert(selectedArticle, static_cast<unsigned int>(newItemCount));
             }else{

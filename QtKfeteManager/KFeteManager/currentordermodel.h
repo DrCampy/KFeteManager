@@ -43,7 +43,8 @@ public slots:
 
 signals:
     void updated();
-
 };
+
+
 
 #endif // CURRENTORDERMODEL_H
