@@ -14,25 +14,23 @@ class CarteModel : public QObject
 {
     Q_OBJECT
 public:
-    explicit CarteModel(QObject *parent = nullptr);
-    ButtonDataWrapper getButton(unsigned int id);
-
+    explicit CarteModel(Catalog *catalog, QString filename, QObject *parent = nullptr);
+    const ButtonDataWrapper *getButton(unsigned int id) const;
+    bool addEntry(unsigned int id, ButtonDataWrapper data);
 private:
-    bool exportCarte(QString filename) const;
-    bool importCarte(QString filename);
-
+    static const unsigned int CARTE_VERSION=0;
+    bool exportCarte() const;
+    bool importCarte();
+    QString filename;
     Catalog *catalog;
-
-    //TODO implement
-    bool updateCarte();
-
-    QMap<unsigned long int, ButtonDataWrapper> table;
-
+    QMap<unsigned int, ButtonDataWrapper> table;
 
 signals:
     void modelUpdated();
+    void articleClicked(QString);
 
 public slots:
+    void buttonClicked(int id);
 
 };
 
