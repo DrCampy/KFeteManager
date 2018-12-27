@@ -22,7 +22,7 @@ qreal Article::getPrice() const{
 }
 
 void Article::setPrice(qreal p){
-  this->price = qRound(p*100)/100;
+  this->price = static_cast<qreal>(qRound(p*100))/100;
 }
 
 qreal Article::getJobistShare() const{
@@ -30,7 +30,7 @@ qreal Article::getJobistShare() const{
 }
 
 void Article::setJobistShare(qreal js){
-  this->jobistShare = qRound(js*100)/100;
+  this->jobistShare = static_cast<qreal>(qRound(js*100))/100;
 }
 
 qreal Article::getBuyingPrice() const{
@@ -38,7 +38,7 @@ qreal Article::getBuyingPrice() const{
 }
 
 void Article::setBuyingPrice(qreal bp){
-  this->buyingPrice= qRound(bp*100)/100;
+  this->buyingPrice= static_cast<qreal>(qRound(bp*100))/100;
 }
 
 qreal Article::getReducedPrice() const{
@@ -46,7 +46,7 @@ qreal Article::getReducedPrice() const{
 }
 
 void Article::setReducedPrice(qreal rp){
-  this->reducedPrice = qRound(rp*100)/100;
+  this->reducedPrice = static_cast<qreal>(qRound(rp*100))/100;
 }
 
 QString Article::getName() const{
