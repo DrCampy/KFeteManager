@@ -14,43 +14,9 @@
 #include "catalog.h"
 #include "currentordermodel.h"
 
-class CarteView;
 class TopBar;
 class SalesView;
 class MiddleBar;
-
-
-class CarteView : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit CarteView(Catalog *cat, QWidget *parent = nullptr);
-    ~CarteView();
-    void assignButton(int id, QString article);
-    bool exportCarte(QString filename) const;
-    bool importCarte(QString filename);
-
-private :
-    QButtonGroup *carteButtons;
-    static const unsigned int NB_MENU_PAGES = 4, GRID_W = 5, GRID_H = 8;
-    static const QStringList PAGES_NAMES;// = (QStringList() << "Bières" << "Snacks" << "Softs" << "Divers");
-    QMap<int, QString> *lookupTable;
-    Catalog *cat;
-    QSizePolicy *qsp;
-    QWidget *hBar, *pagesWidget;
-    QButtonGroup *tabs;
-    QVBoxLayout *vBox;
-
-
-signals:
-    void clicArticle(QString);
-
-private slots:
-    void buttonClicked(int id); //TODO
-
-public slots:
-
-};
 
 class TopBar : public QWidget
 {

@@ -124,86 +124,13 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent)
     hBox->setSpacing(0);
 }
 
-CarteView::CarteView(Catalog *cat, QWidget *parent) : QWidget(parent)
-{
-    //Checks the number of pages
-    if(PAGES_NAMES.size() != NB_MENU_PAGES){
-        throw std::out_of_range("From class Carte : NB_MENU_PAGES not less or equal PAGES_NAMES.size()");
-    }
-    
-    //initialise the articles catalog of article to refer to
-    this->cat = cat;
-    
-    QVBoxLayout *vBox = new QVBoxLayout(this); //first of all layouts
-    QHBoxLayout *hBox = new QHBoxLayout(); //Layout for page name buttons
-    QStackedLayout *sLayout = new QStackedLayout; //main layout with pages inside
-    QGridLayout *pagesLayout[NB_MENU_PAGES]; // pages
-
-    hBox->setSpacing(0);
-    vBox->setSpacing(0);
-
-    hBar            = new QWidget(this);
-    tabs            = new QButtonGroup(this);
-    carteButtons    = new QButtonGroup(this);
-    lookupTable     = new QMap<int, QString>();
-    pagesWidget     = new QWidget[NB_MENU_PAGES]; //widget to store pages
-    qsp             = new QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
-
-    //set a size policy for the buttons to expand at max
-    QPushButton *tmp;
-    QPalette defaultPalette = QPushButton(nullptr).palette();
-    defaultPalette.setColor(QPalette::Button, Qt::lightGray);
-    for(int i = 0; i < static_cast<int>(NB_MENU_PAGES); i++){
-        pagesLayout[i] = new QGridLayout(&pagesWidget[i]);
-        pagesLayout[i]->setSpacing(0);
-        //Fills pages
-        for(int h = 0; h < static_cast<int>(GRID_H); h++){
-            for(int w = 0; w < static_cast<int>(GRID_W); w++){
-                //w+(h*GRID_W)+(GRID_H*GRID_W*i)
-                //Generating buttons for the carte
-                tmp = new QPushButton(&pagesWidget[i]);
-                tmp->setSizePolicy(*qsp);
-                carteButtons->addButton(tmp, w + (h*static_cast<int>(GRID_W)) + (static_cast<int>(GRID_H)*static_cast<int>(GRID_W)*i));
-                pagesLayout[i]->addWidget(tmp, static_cast<int>(h), static_cast<int>(w));
-            }
-        }
-        
-        //insert pages in QStackedLayout
-        sLayout->addWidget(&pagesWidget[i]);
-        
-        //Generating tabs
-        //Insert buttons in buttonGroup for tabs
-        tmp = new QPushButton(PAGES_NAMES.at(i), hBar);
-        tmp->setMinimumHeight(25);
-        tmp->setMaximumHeight(80);
-        tmp->setSizePolicy(*qsp);
-        hBox->addWidget(tmp, Qt::AlignCenter);
-        tabs->addButton(tmp, i);
-    }
-    
-    vBox->addLayout(sLayout, 8);
-    vBox->addLayout(hBox, 1);
-    
-    connect(tabs, SIGNAL(buttonClicked(int)), sLayout, SLOT(setCurrentIndex(int)));
-    connect(carteButtons, SIGNAL(buttonClicked(int)), this, SLOT(buttonClicked(int)) );
-    tabs->button(0)->click();
-}
-
-CarteView::~CarteView(){
-    delete qsp;
-    lookupTable->clear();
-    delete lookupTable;
-}
-
-void CarteView::buttonClicked(int id){
-    if(lookupTable->contains(id)){
-        emit clicArticle( *(lookupTable->find(id)) );
-    }
-}
 
 MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
 {
+    //Defines the way the button will expand
+    QSizePolicy qsp(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
     QVBoxLayout *column = new QVBoxLayout(this);
+    column->setSpacing(0);
 
     //Creates ad hoc buttons
     plusButton         = new QPushButton("+", this);
@@ -233,12 +160,17 @@ MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
     
     //Configures buttons to appear flat
     plusButton->setAutoFillBackground(true);
+    plusButton->setSizePolicy(qsp);
     minusButton->setAutoFillBackground(true);
+    minusButton->setSizePolicy(qsp);
     deleteButton->setAutoFillBackground(true);
+    deleteButton->setSizePolicy(qsp);
     normalPriceButton->setAutoFillBackground(true);
+    normalPriceButton->setSizePolicy(qsp);
     reducedPriceButton->setAutoFillBackground(true);
+    reducedPriceButton->setSizePolicy(qsp);
     freePriceButton->setAutoFillBackground(true);
-
+    freePriceButton->setSizePolicy(qsp);
     //Configures internal state
     lastPerformedAction = CurrentOrderModel::plusItem;
     resetPrice();
