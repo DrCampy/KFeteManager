@@ -4,17 +4,18 @@
 #include <QFile>
 #include <QHash>
 #include <fstream>
-#include <cmath>
+#include <QException>
 #include <QString>
-
+#include <QDebug>
 #include "catalog.h"
 
 
-Article::Article(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString name) : name(name){
+Article::Article(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString name, QString function) : name(name){
   setPrice(price);
   setJobistShare(jobistShare);
   setBuyingPrice(buyingPrice);
   setReducedPrice(reducedPrice);
+  setFunction(function);
 }
 
 qreal Article::getPrice() const{
@@ -53,6 +54,14 @@ QString Article::getName() const{
   return this->name;
 }
 
+void Article::setFunction(QString f){
+    this->function = f.toLower();
+}
+
+QString Article::getFunction() const{
+    return function;
+}
+
 Article &Article::operator=(const Article &a){
     if(&a == this){
         return *this;
@@ -62,6 +71,7 @@ Article &Article::operator=(const Article &a){
     this->setJobistShare(a.getJobistShare());
     this->setBuyingPrice(a.getBuyingPrice());
     this->setReducedPrice(a.getReducedPrice());
+    this->setFunction(a.getFunction());
     return *this;
 }
 
@@ -73,14 +83,20 @@ Article &Article::operator=(const Article &a){
 */
 Catalog::Catalog(QObject *parent):QObject(parent){
     container = new QHash<QString, Article>();
+    functions = new QStringList();
 }
 Catalog::~Catalog(){
   delete container;
+    delete functions;
 }
 
 void Catalog::addArticle(Article &a){
     QString name = a.getName();
     name.truncate(Article::MAX_NAME_LENGTH);
+    if(!functions->contains(a.getFunction())){
+        qDebug() << "Error: unknown function" << a.getFunction();
+        throw new BadFunctionException();
+    }
     container->insert(name, a);
 }
 
@@ -88,7 +104,7 @@ void Catalog::deleteArticle(QString &key){
   container->remove(key);
 }
 
-bool Catalog::contains(QString &key) const{
+bool Catalog::hasArticle(QString &key) const{
   return container->contains(key);
 }
 
@@ -97,88 +113,45 @@ Article Catalog::getArticle(QString &key) const{
   return it.value();
 }
 
-bool Catalog::exportCatalog(QString filename) const{
-  QString *str = new QString;
-  QXmlStreamWriter stream(str);
-  stream.setAutoFormatting(true);
-  stream.writeStartDocument();
-  stream.writeStartElement("articles-list");
-  for(auto i = container->begin(); i != container->end(); i++){
-      stream.writeStartElement("article");
-      stream.writeAttribute("nom", i.value().getName());
-      stream.writeTextElement("prix", QString::number(i.value().getPrice()));
-      stream.writeTextElement("part-jobistes", QString::number(i.value().getJobistShare()));
-      stream.writeTextElement("prix-achat", QString::number(i.value().getBuyingPrice()));
-      stream.writeTextElement("prix-reduit", QString::number(i.value().getReducedPrice()));
-      stream.writeEndElement();//article
-  }
-  stream.writeEndElement();//articles-list
-  stream.writeEndDocument();
+/*
+ * Adds a function to be used by articles. Will be stored in all lower case
+ */
 
-  std::ofstream outfile;
-  outfile.open(filename.toStdString().c_str());
-  outfile << str->toStdString();
-  outfile.close();
-  delete str;
-  return !stream.hasError();
+void Catalog::addFunction(QString s){
+    s = s.toLower();
+    if(!hasFunction(s)){
+        functions->append(s);
+    }
+}
+
+void Catalog::deleteFunction(QString s){
+    s = s.toLower();
+    functions->removeAll(s);
+}
+
+bool Catalog::hasFunction(QString s) const{
+    s = s.toLower();
+    return functions->contains(s);
+}
+
+QStringList Catalog::getFunctions()const{
+    return QStringList(*functions);
+}
+
+bool Catalog::exportCatalog(QString filename) const{
+
 }
 
 //Return true if success
 bool Catalog::importCatalog(QString filename){
-  QFile file(filename);
-  if(!file.exists()){
-      return true;
-  }
-  std::ifstream infile;
-  infile.open(filename.toStdString().c_str());
-  std::string stds((std::istreambuf_iterator<char>(infile)),
-                   std::istreambuf_iterator<char>());
 
-  infile.close();
-  QString s(stds.c_str());
-  QXmlStreamReader xml(s);
-  QString nom;
-  bool prixSet = false, partJobistSet = false, prixAchatSet = false, prixReduitSet = false;
-  qreal prix = 0, partJobist = 0, prixAchat = 0, prixReduit = 0;
-  Article *a;
-
-  if(xml.readNextStartElement() && xml.name() == "articles-list"){
-      while (!xml.atEnd()){ //Tant qu'on est pas à la fin du fichier...
-          while(xml.readNextStartElement()){//On lit le prochain tag
-              if(xml.name() == "article"){ // Si le tag est "Article", commence à importer un article
-                  if(xml.attributes().hasAttribute("nom")){//Vérifie si l'article a un nom
-                      nom = xml.attributes().value("nom").toString();
-                      while (xml.readNextStartElement() && !(prixSet && partJobistSet && prixAchatSet && prixReduitSet)) {
-                          if( (xml.name() == "prix") && !prixSet){
-                              prix = xml.readElementText().toDouble();
-                              prixSet = true;
-                          }else if( (xml.name() == "part-jobistes") && !partJobistSet){
-                              partJobist = xml.readElementText().toDouble();
-                              partJobistSet = true;
-                          }else if( (xml.name() == "prix-achat") && !prixAchatSet){
-                              prixAchat = xml.readElementText().toDouble();
-                              prixAchatSet = true;
-                          }else if( (xml.name() == "prix-reduit") && !prixReduitSet){
-                              prixReduit = xml.readElementText().toDouble();
-                              prixReduitSet = true;
-                          }else{
-                              xml.raiseError("Element inconnu dans le fichier xml");
-                          }
-
-                      }//end while readNextStartElement
-                      if(prixSet && partJobistSet && prixAchatSet){ //if every elt was init, insert new article
-                          a = new Article(prix, partJobist, prixAchat, prixReduit, nom);
-                          this->addArticle(*a);
-                          delete a;
-                          prixSet = false;
-                          partJobistSet =false;
-                          prixAchatSet = false;
-                          prixReduitSet = false;
-                      }//end if sets
-                  }//end if has attribute nom
-              }//end if name == article
-          }//end while readNextElement
-      }//end while !hasEnd
-  }//end if name == articles-list
-  return !xml.hasError();
 }//end importCatalog
+
+
+BadFunctionException *BadFunctionException::clone() const{
+    return new BadFunctionException(*this);
+}
+
+void BadFunctionException::raise() const{
+    throw *this;
+}

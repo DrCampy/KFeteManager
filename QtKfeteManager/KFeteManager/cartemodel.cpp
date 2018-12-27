@@ -124,7 +124,7 @@ bool CarteModel::importCarte(){
                               backgroundColor = QColor(xml.attributes().value("background-color").toString());
                               if(xml.attributes().hasAttribute("text-color")){
                                   textColor = QColor(xml.attributes().value("text-color").toString());
-                                  if(catalog->contains(articleName)){
+                                  if(catalog->hasArticle(articleName)){
                                       table.insert(buttonID, ButtonDataWrapper(articleName, backgroundColor, textColor));
                                   }
                               }
@@ -135,6 +135,7 @@ bool CarteModel::importCarte(){
           }
       }
   }
+  //TODO check that ID is not out of bounds
   file->close();
   emit modelUpdated();
   return xml.hasError();

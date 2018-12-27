@@ -40,8 +40,9 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
 
     catalog             = new Catalog(this);
     //Test datas
-    Article jup(0.9, 0.3, 0.5, 0.6, "Jupiler");
-    Article kasteel(1.8, 0.3, 1.5, 1.6, "Kasteel Rouge");
+    Article jup(0.9, 0.3, 0.5, 0.6, "Jupiler", "Bar");
+    Article kasteel(1.8, 0.3, 1.5, 1.6, "Kasteel Rouge", "Bar");
+    catalog->addFunction("Bar");
     catalog->addArticle(jup);
     catalog->addArticle(kasteel);
 
