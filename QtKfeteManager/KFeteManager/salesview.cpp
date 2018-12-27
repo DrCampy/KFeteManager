@@ -23,6 +23,8 @@
 
 #include "catalog.h"
 #include "salesview.h"
+#include "cartemodel.h"
+#include "carteview.h"
 
 //TODO see QCompleter and QDataWidgetMapper (seen at http://doc.qt.io/qt-5/modelview.html)
 
@@ -36,14 +38,24 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
-    catalog           = new Catalog(this);
-    carteView         = new CarteView(catalog, this);
-    topBar            = new TopBar(this);
-    totalLabel        = new QLabel(this);
-    middleBar         = new MiddleBar(this);
-    currentOrderView  = new QTableView(this);
-    currentOrderModel = new CurrentOrderModel(catalog, 0, this);
-    
+    catalog             = new Catalog(this);
+    //Test datas
+    Article jup(0.9, 0.3, 0.5, 0.6, "Jupiler");
+    Article kasteel(1.8, 0.3, 1.5, 1.6, "Kasteel Rouge");
+    catalog->addArticle(jup);
+    catalog->addArticle(kasteel);
+
+    topBar              = new TopBar(this);
+    totalLabel          = new QLabel(this);
+    middleBar           = new MiddleBar(this);
+    currentOrderModel   = new CurrentOrderModel(catalog, 0, this);
+    currentOrderView    = new QTableView(this);
+    carteModel          = new CarteModel(catalog, "./data/carte.xml", this);
+    carteView           = new CarteView(this);
+
+    //Links the carte model and view
+    carteView->setModel(carteModel);
+
     //The currentOrderVBox contains the current order display on top and the total label bot.
     currentOrderVBox->addWidget(currentOrderView, 10);
     currentOrderVBox->addWidget(totalLabel, 1, Qt::AlignRight);
@@ -58,39 +70,63 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     mainVBox->addLayout(hBox, 6);
     
     //Configure table view. Selectable by row and hide vertical header
-    QHeaderView *vHeader = currentOrderView->verticalHeader();
-    vHeader->setSectionResizeMode(QHeaderView::Fixed);
-    vHeader->setDefaultSectionSize(20);
-    currentOrderView->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-
-    currentOrderView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    currentOrderView->verticalHeader()->hide();
-    currentOrderView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     currentOrderView->setModel(currentOrderModel);
-    
+    currentOrderView->verticalHeader()->hide();
+    currentOrderView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    currentOrderView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    currentOrderView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    currentOrderView->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    currentOrderView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    currentOrderViewResize();
+
     //Connects all the signals
     //From model to this
     connect(currentOrderModel, SIGNAL(updated()), this, SLOT(updateTotalLabel()));
     //From middleBar to this
     connect(middleBar, SIGNAL(actionPerformed()), this, SLOT(actionPerformed()));
-    //From carteView to currentOrderModel
-    connect(carteView, SIGNAL(clicArticle(QString)), currentOrderModel, SLOT(addArticle(QString)));
     //From middleBar to currentOrderModel
-    connect(middleBar, SIGNAL(priceChanged()), currentOrderModel, SLOT(updatePrice()));
+    connect(middleBar, SIGNAL(priceChanged()), this, SLOT(priceUpdated()));
+    connect(this, SIGNAL(updatePrice()), currentOrderModel, SLOT(updatePrice()));
+    connect(this, SIGNAL(performAction()), currentOrderModel, SLOT(applyAction()));
+    //Connect carteModel to currentOrderModel
+    connect(carteModel, SIGNAL(articleClicked(QString)), this, SLOT(articleAdded(QString)));
+    connect(this, SIGNAL(addArticle(QString)), currentOrderModel, SLOT(addArticle(QString)));
 
     updateTotalLabel();
+
+    //Test datas
+    QColor red(255, 0, 0);
+    QColor black(0, 0, 0);
+    QColor white(255, 255, 255);
+    QColor darkRed(127, 0, 0);
+    ButtonDataWrapper bJup(jup.getName(), "#FF0000", "#FFFFFF");
+    ButtonDataWrapper bKast(kasteel.getName(), "#AF00FE", "#000000");
+    //carteModel->addEntry(1, bJup);
+    //carteModel->addEntry(55, bKast);
+
+}
+
+void SalesView::currentOrderViewResize(){
+    currentOrderView->horizontalHeader()->resizeSection(0, 55);
+    currentOrderView->horizontalHeader()->resizeSection(1, 90);
+    currentOrderView->setMinimumWidth(230);
+}
+
+void SalesView::articleAdded(QString s){
+    emit addArticle(s);
+    currentOrderViewResize();
+}
+
+void SalesView::priceUpdated(){
+    currentOrderModel->setPrice(middleBar->getSelectedPrice());
+    emit updatePrice();
+    currentOrderViewResize();
 }
 
 void SalesView::updateTotalLabel(){
     QString text = QString::number(currentOrderModel->getTotal(), 'f', 2);
     text.append(tr(" €"));
     this->totalLabel->setText(text);
-}
-
-void SalesView::resizeEvent(QResizeEvent *) {
-    currentOrderView->setColumnWidth(0, 15*currentOrderView->width()/100);
-    currentOrderView->setColumnWidth(1, 65*currentOrderView->width()/100);
-    currentOrderView->setColumnWidth(2, 20*currentOrderView->width()/100);
 }
 
 /*
@@ -100,7 +136,8 @@ void SalesView::resizeEvent(QResizeEvent *) {
 void SalesView::actionPerformed(){
     currentOrderModel->setActionToPerform(middleBar->getLastPerformedAction());
     currentOrderModel->setActiveSelection(currentOrderView->selectionModel());
-    performAction();
+    emit performAction();
+    currentOrderViewResize();
 }
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent)

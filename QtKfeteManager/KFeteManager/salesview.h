@@ -8,11 +8,11 @@
 #include <QTableView>
 #include <QStandardItemModel>
 #include <QLabel>
-#include <QSizePolicy>
-#include <QVBoxLayout>
 
 #include "catalog.h"
 #include "currentordermodel.h"
+#include "carteview.h"
+#include "cartemodel.h"
 
 class TopBar;
 class SalesView;
@@ -65,11 +65,10 @@ class SalesView : public QWidget
     Q_OBJECT
 public:
     explicit SalesView(QWidget *parent = nullptr );
-    void resizeEvent(QResizeEvent *);
-
 
 private:
 
+    CarteModel  *carteModel;
     CarteView   *carteView;
     TopBar      *topBar;
     Catalog     *catalog;
@@ -78,13 +77,19 @@ private:
 
     QTableView *currentOrderView;
     CurrentOrderModel *currentOrderModel;
+    void currentOrderViewResize();
+
 
 signals:
     void performAction();
+    void updatePrice();
+    void addArticle(QString);
 
 public slots:
     void updateTotalLabel();
     void actionPerformed();
+    void priceUpdated();
+    void articleAdded(QString);
 
 };
 
