@@ -1,7 +1,8 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
-
+#include <QList>
 #include <QStringList>
+
 /*   tables: Articles, Functions, Clients, SaleSessions, HeldSession, FunctionBenefits
 
      Articles: (Name, sellPrice, jShare, bPrice, reducedPrice, function)
@@ -33,7 +34,7 @@ private:
             saleSessionsFields, heldSessionFields, functionBenefitsFields,
     OrderDetailsFields, OrderContentFields, OrderClientFields;
 
-    static QStringList allNames[];
+    static QList<QStringList> allNames;
 
 public:
     static bool checkDatabase();
