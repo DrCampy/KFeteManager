@@ -4,33 +4,44 @@
 #include <QString>
 #include <QStringList>
 #include <QDebug>
+#include <QSqlQuery>
 
 #include "databasemanager.h"
 
 QStringList DatabaseManager::tables =
-        QStringList() << "Articles" << "Functions" << "Clients"
-                      << "SaleSessions" <<"HeldSession" <<"FunctionBenefits";
+        QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
+                      <<"HeldSession" <<"FunctionBenefits" << "OrderDetails"
+                     << "OrderContent" << "OrderClient";
 
 QStringList DatabaseManager::articlesFields =
         QStringList() << "Name" << "sellPrice" << "jShare"
-                      << "reducedPrice" << "function";
+                      << "bPrice" << "reducedPrice" << "function";
 
 QStringList DatabaseManager::functionsFields =
-        QStringList() << "Name" << "ID";
+        QStringList() << "Name" << "Id";
 
 QStringList DatabaseManager::clientsFields =
         QStringList() << "Name" << "phone" << "address" << "email"
-                      << "limit" << "isJobist" << "balance";
+                      << "negLimit" << "isJobist" << "balance";
 
 QStringList DatabaseManager::saleSessionsFields =
-        QStringList() << "OpeningTime" << "closingTime" << "jShare"
-                      << "openAmount" << "closeAmount" << "soldAmount";
+        QStringList() << "OpeningTime" << "closingTime" << "openAmount"
+                      << "closeAmount" << "soldAmount";
 
 QStringList DatabaseManager::heldSessionFields =
         QStringList() << "Name" << "SessionTime";
 
 QStringList DatabaseManager::functionBenefitsFields =
-        QStringList() << "FctID" << "SessionTime";
+        QStringList() << "FctId" << "SessionTime" << "amount";
+
+QStringList DatabaseManager::OrderDetailsFields =
+        QStringList() << "OrderID" << "sessionTime" << "orderNumber";
+
+QStringList DatabaseManager::OrderContentFields =
+        QStringList() << "OrderId" << "Article" << "amount";
+
+QStringList DatabaseManager::OrderClientFields =
+        QStringList() << "OrderId" << "Client";
 
 QStringList DatabaseManager::allNames[] = {DatabaseManager::articlesFields,
                                          DatabaseManager::functionsFields,
@@ -39,11 +50,7 @@ QStringList DatabaseManager::allNames[] = {DatabaseManager::articlesFields,
                                          DatabaseManager::heldSessionFields,
                                          DatabaseManager::functionBenefitsFields
                                         };
-DatabaseManager::DatabaseManager(QObject *parent) : QObject(parent)
-{
 
-
-}
 void DatabaseManager::openDatabase(){
     //Creates default sql database connection
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
@@ -63,47 +70,8 @@ bool DatabaseManager::checkDatabase(){
 
      Returns:
             True   if the database seems OK.
-            False  if ther is a problem.
-
-     tables: Articles, Functions, Clients, SaleSessions, HeldSession, FunctionBenefits
-
-     Articles: (Name, sellPrice, jShare, reducedPrice, function)
-
-     Functions: (Name, ID)
-
-     Clients: (Name, phone, address, email, limit, isJobist, balance)
-
-     SaleSessions: (OpeningTime, closingTime, jShare, openAmount, closeAmount, soldAmount)
-
-     HeldSession: (Name, SessionTime)
-
-     FunctionBenefits: (FctID, SessionTime)
-      */
-
-    QStringList tables;
-    tables << "Articles" << "Functions" << "Clients"
-                   << "SaleSessions" <<"HeldSession" <<"FunctionBenefits";
-
-    QStringList articlesFields, functionsFields, clientsFields,
-            saleSessionsFields, heldSessionFields, functionBenefitsFields;
-
-    articlesFields << "Name" << "sellPrice" << "jShare"
-                   << "reducedPrice" << "function";
-
-    functionsFields << "Name" << "ID";
-
-    clientsFields << "Name" << "phone" << "address" << "email"
-                  << "limit" << "isJobist" << "balance";
-
-    saleSessionsFields << "OpeningTime" << "closingTime" << "jShare"
-                       << "openAmount" << "closeAmount" << "soldAmount";
-
-    heldSessionFields << "Name" << "SessionTime";
-
-    functionBenefitsFields << "FctID" << "SessionTime";
-
-    QStringList allNames[]={articlesFields, functionsFields, clientsFields, saleSessionsFields,
-                        heldSessionFields, functionBenefitsFields};
+            False  if there is a problem.
+    */
 
     //Check if default database opened.
     if(!QSqlDatabase::contains()){
@@ -136,4 +104,130 @@ bool DatabaseManager::checkDatabase(){
         }
     }
     return true;
+}
+
+void DatabaseManager::createDatabase(){
+    QSqlQuery createArticles("CREATE TABLE IF NOT EXISTS"
+                             "Articles("
+                             "Name TEXT NOT NULL PRIMARY KEY,"
+                             "sellPrice NUMERIC NOT NULL,"
+                             "jShare NUMERIC NOT NULL,"
+                             "bPrice NUMERIC NOT NULL,"
+                             "reducedPrice NUMERIC NOT NULL,"
+                             "function INTEGER DEFAULT 0 REFERENCES Functions(Id) ON UPDATE CASCADE ON DELETE SET DEFAULT);"
+                             );
+    if(!createArticles.last()){
+        qDebug() << "Error Creating Articles";
+        return;
+    }
+
+    QSqlQuery createFunctions("CREATE TABLE IF NOT EXISTS"
+                              "Functions("
+                              "Name TEXT NOT NULL UNIQUE,"
+                              "Id INTEGER NOT NULL UNIQUE,"
+                              "PRIMARY KEY(Name, Id));"
+                              );
+    if(!createFunctions.last()){
+        qDebug() << "Error Creating Functions";
+        return;
+    }
+
+    QSqlQuery createClients("CREATE TABLE IF NOT EXISTS"
+                            "Clients("
+                            "Name TEXT NOT NULL PRIMARY KEY,"
+                            "phone TEXT,"
+                            "address TEXT,"
+                            "email TEXT,"
+                            "negLimit NUMERIC,"
+                            "isJobiste INTEGER,"
+                            "balance NUMERIC NOT NULL);"
+                            );
+    if(!createClients.last()){
+        qDebug() << "Error Creating Clients";
+        return;
+    }
+
+    QSqlQuery createSaleSessions("CREATE TABLE IF NOT EXISTS"
+                                 "SaleSessions("
+                                 "OpeningTime DATE NOT NULL PRIMARY KEY,"
+                                 "closingTime DATE,"
+                                 "openAmount NUMERIC,"
+                                 "closeAmount NUMERIC,"
+                                 "soldAmount NUMERIC);"
+                                 );
+    if(!createSaleSessions.last()){
+        qDebug() << "Error Creating SaleSessions";
+        return;
+    }
+
+    QSqlQuery createHeldSession("CREATE TABLE IF NOT EXISTS"
+                                "HeldSession("
+                                "Name TEXT NOT NULL REFERENCES Clients(Name) ON DELETE CASCADE ON UPDATE CASCADE,"
+                                "SessionTime DATE NOT NULL REFERENCES SaleSessions(OpeningTime) ON DELETE CASCADE ON UPDATE CASCADE,"
+                                "PRIMARY KEY(Name, SessionTime));"
+                                );
+    if(!createHeldSession.last()){
+        qDebug() << "Error Creating HeldSession";
+        return;
+    }
+
+    QSqlQuery createFunctionBenefits("CREATE TABLE IF NOT EXISTS"
+                                     "FunctionBenefits("
+                                     "FctId INTEGER NOT NULL DEFAULT 0 REFERENCES Functions(Id) ON DELETE SET DEFAULT ON UPDATE CASCADE,"
+                                     "SessionTime DATE NOT NULL REFERENCES SaleSessions(OpeningTime) ON DELETE NO ACTION ON UPDATE CASCADE,"
+                                     "amount NUMERIC,"
+                                     "PRIMARY KEY(FctId, SessionTime));"
+                                     );
+    if(!createFunctionBenefits.last()){
+        qDebug() << "Error Creating FunctionBenefits";
+        return;
+    }
+
+    QSqlQuery createOrderDetails("CREATE TABLE IF NOT EXISTS"
+                                 "OrderDetails("
+                                 "OrderId INTEGER PRIMARY KEY,"
+                                 "sessionTime DATE NOT NULL REFERENCES SaleSessions(OpeningTime) ON DELETE CASCADE,"
+                                 "orderNumber INTEGER NOT NULL,"
+                                 "UNIQUE(sessionTime, orderNumber));"
+                                 );
+    if(!createOrderDetails.last()){
+        qDebug() << "Error Creating OrderDetails";
+        return;
+    }
+
+    QSqlQuery createOrderContent("CREATE TABLE IF NOT EXISTS"
+                                 "OrderContent("
+                                     "OrderId INTEGER NOT NULL REFERENCES OrderDetails(OrderId) ON DELETE CASCADE,"
+                                     "Article TEXT NOT NULL REFERENCES Articles(Name) ON DELETE NO ACTION,"
+                                     "amount INTEGER NOT NULL CHECK(amount > 0),"
+                                     "PRIMARY KEY(OrderId, Article));"
+                                 );
+    if(!createOrderContent.last()){
+        qDebug() << "Error Creating OrderContent";
+        return;
+    }
+
+    QSqlQuery createOrderClient("CREATE TABLE IF NOT EXISTS"
+                                "OrderClient("
+                                    "OrderId INTEGER NOT NULL REFERENCES OrderDetails(OrderId) ON DELETE CASCADE,"
+                                    "Client TEXT NOT NULL REFERENCES Clients(Name) ON DELETE NO ACTION,"
+                                   "PRIMARY KEY(OrderId, Client));"
+                                );
+    if(!createOrderClient.last()){
+        qDebug() << "Error Creating OrderClient";
+        return;
+    }
+
+    QSqlQuery insertDefaultFunction("INSERT INTO Functions VALUES('Unknown Function', 0);");
+    if(!insertDefaultFunction.last()){
+        qDebug() << "Error inserting default function";
+        return;
+    }
+}
+
+void DatabaseManager::closeDatabase(){
+    if(QSqlDatabase::contains()){
+        QSqlDatabase::database().close();
+    }
+
 }

@@ -1,42 +1,45 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
-#include <QObject>
+#include <QStringList>
+/*   tables: Articles, Functions, Clients, SaleSessions, HeldSession, FunctionBenefits
 
+     Articles: (Name, sellPrice, jShare, bPrice, reducedPrice, function)
 
-class DatabaseManager : public QObject
+     Functions: (Name, Id)
+
+     Clients: (Name, phone, address, email, negLimit, isJobist, balance)
+
+     SaleSessions: (OpeningTime, closingTime, openAmount, closeAmount, soldAmount)
+
+     HeldSession: (Name, SessionTime)
+
+     FunctionBenefits: (FctId, SessionTime)
+
+     OrderDetails: (OrderId, sessionTime, orderNumber)
+
+     OrderContent: (OrderId, Article, amount)
+
+     OrderClient: (OrderId, Client)
+      */
+
+class DatabaseManager
 {
-    Q_OBJECT
 private:
     static QStringList tables;
-    tables << "Articles" << "Functions" << "Clients"
-                   << "SaleSessions" <<"HeldSession" <<"FunctionBenefits";
+
 
     static QStringList articlesFields, functionsFields, clientsFields,
-            saleSessionsFields, heldSessionFields, functionBenefitsFields;
+            saleSessionsFields, heldSessionFields, functionBenefitsFields,
+    OrderDetailsFields, OrderContentFields, OrderClientFields;
 
-    articlesFields << "Name" << "sellPrice" << "jShare"
-                   << "reducedPrice" << "function";
+    static QStringList allNames[];
 
-    functionsFields << "Name" << "ID";
-
-    clientsFields << "Name" << "phone" << "address" << "email"
-                  << "limit" << "isJobist" << "balance";
-
-    saleSessionsFields << "OpeningTime" << "closingTime" << "jShare"
-                       << "openAmount" << "closeAmount" << "soldAmount";
-
-    heldSessionFields << "Name" << "SessionTime";
-
-    functionBenefitsFields << "FctID" << "SessionTime";
-
-    QStringList allNames[]={articlesFields, functionsFields, clientsFields, saleSessionsFields,
-                        heldSessionFields, functionBenefitsFields};
 public:
-    explicit DatabaseManager(QObject *parent = nullptr);
     static bool checkDatabase();
     static void openDatabase();
     static void closeDatabase();
+    static void createDatabase();
 };
 
 #endif // DATABASEMANAGER_H
