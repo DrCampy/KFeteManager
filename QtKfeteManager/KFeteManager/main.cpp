@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QMessageBox>
+#include <QDebug>
 
 #include "mainwindow.h"
 #include "databasemanager.h"
@@ -27,6 +28,10 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         DatabaseManager::createDatabase();
+        if(!DatabaseManager::checkDatabase()){
+            qDebug() << "Unable to create Database";
+            return EXIT_FAILURE;
+        }
 
     }
 
