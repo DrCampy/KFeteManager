@@ -14,7 +14,7 @@ class CarteModel : public QObject
 {
     Q_OBJECT
 public:
-    explicit CarteModel(Catalog *catalog, QString filename, QObject *parent = nullptr);
+    explicit CarteModel(QString filename, QObject *parent = nullptr);
     const ButtonDataWrapper *getButton(unsigned int id) const;
     bool addEntry(unsigned int id, ButtonDataWrapper data);
 private:
@@ -22,7 +22,6 @@ private:
     bool exportCarte() const;
     bool importCarte();
     QString filename;
-    Catalog *catalog;
     QMap<unsigned int, ButtonDataWrapper> table;
 
 signals:

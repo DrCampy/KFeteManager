@@ -12,9 +12,8 @@
 #include "catalog.h"
 #include "cartemodel.h"
 
-CarteModel::CarteModel(Catalog *catalog, QString filename, QObject *parent) : QObject(parent), filename(filename)
+CarteModel::CarteModel(QString filename, QObject *parent) : QObject(parent), filename(filename)
 {
-    this->catalog = catalog;
     this->importCarte();
 }
 
@@ -124,7 +123,7 @@ bool CarteModel::importCarte(){
                               backgroundColor = QColor(xml.attributes().value("background-color").toString());
                               if(xml.attributes().hasAttribute("text-color")){
                                   textColor = QColor(xml.attributes().value("text-color").toString());
-                                  if(catalog->hasArticle(articleName)){
+                                  if(Article(articleName).exists()){
                                       table.insert(buttonID, ButtonDataWrapper(articleName, backgroundColor, textColor));
                                   }
                               }
