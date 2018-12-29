@@ -3,55 +3,21 @@
 #include <QMap>
 #include <QtGlobal>
 
+#include "databasemanager.h"
 #include "clientlist.h"
-/*
-ClientList::ClientList(QObject *parent) : QObject(parent)
-{
-    clientList = new QMap<QString, Client>();
-}
 
-ClientList::~ClientList(){
-    delete clientList;
-}
+Client::Client(QString name) : name(name){}
 
-void ClientList::addClient(Client u){
-    if(hasClient(u.getName())){
-        throw new DuplicateClientException();
+void Client::create(QString phone, QString address, QString email, qreal limit, bool isJobist, qreal balance){
+
+    if(!isJobist && limit < 0){
+        limit = 0;
+    }else if(limit < LIMIT_MIN){
+        limit = LIMIT_MIN;
     }
 
-    clientList->insert(u.getName(), u);
+    DatabaseManager::addClient(*this, phone, address, email, limit, isJobist, balance);
 }
-
-void ClientList::delClient(QString clientName){
-    clientList->remove(clientName);
-}
-
-bool ClientList::hasClient(QString clientName){
-    return clientList->contains(clientName);
-}
-
-bool ClientList::importList(){
-    //TODO implement
-    return true;
-}
-
-bool ClientList::exportList(){
-    return true;
-}*/
-
-Client::Client(QString name, QString Phone, QString adresse, QString email,
-               qreal limite, bool isJobiste) : name(name){
-
-  setAddress(adresse);
-  setEmail(email);
-  setJobist(isJobiste);
-  setLimit(limite);
-  setPhone(Phone);
-}
-
-/*Client::Client(Client &c){
-    *this = c;
-}*/
 
 QString Client::getName() const{
     return this->name;
@@ -59,50 +25,53 @@ QString Client::getName() const{
 
 void Client::setPhone(QString tel){
   tel.remove(QRegularExpression("^(0-9./)"));
-  //this->Phone = tel;
+  DatabaseManager::updateClientPhone(*this, tel);
 }
 
 QString Client::getPhone() const{
-  //return this->Phone;
+  return DatabaseManager::getClientPhone(*this);
 }
 
 void Client::setAddress(QString adr){
   adr.remove(QRegularExpression("^(a-zA-Z0-9,.)"));
-  //this->address = adr;
+  DatabaseManager::updateClientAddress(*this, adr);
 }
 
 QString Client::getAddress() const{
-  //return this->address;
+  return DatabaseManager::getClientAddress(*this);
 }
 
 void Client::setEmail(QString email){
-  //this->email = email;
+  DatabaseManager::updateClientEmail(*this, email);
 }
 
 QString Client::getEmail() const{
-  //return this->email;
+  return DatabaseManager::getClientEmail(*this);
 }
 
 void Client::setJobist(bool isJobist){
-  //this->bIsJobist = isJobist;
+  DatabaseManager::updateIsClientJobist(*this, isJobist);
 }
 
 bool Client::isJobist() const{
-  //return this->bIsJobist;
+  return DatabaseManager::isClientJobist(*this);
 }
 
 void Client::setLimit(qreal limit){
-  /*if(!isJobist() || limit > 0){
-      this->limit = 0;
-    }else if(limit < LIMIT_MIN){
-      this->limit = LIMIT_MIN;
-    }else{
-      this->limit = limit;
-    }*/
+  if(!isJobist() || limit > 0){
+     limit = 0;
+  }else if(limit < LIMIT_MIN){
+     limit = LIMIT_MIN;
+  }
+  DatabaseManager::updateClientLimit(*this, limit);
+}
+
+bool Client::exists() const{
+    return DatabaseManager::hasClient(*this);
 }
 
 qreal Client::getLimit() const{
-  //return this->limit;
+  return DatabaseManager::getClientLimit(*this);
 }
 
 /*Client::ResultatOperation Client::deposit(qreal montant, PriorityLevel level){
@@ -122,7 +91,7 @@ qreal Client::getLimit() const{
 }*/
 
 qreal Client::getBalance() const{
-  //return this->balance;
+  return DatabaseManager::getClientBalance(*this);
 }
 
 Client &Client::operator=(const Client &u){
@@ -130,11 +99,6 @@ Client &Client::operator=(const Client &u){
         return *this;
     }
     this->name = u.getName();
-    this->setPhone(u.getPhone());
-    this->setAddress(u.getAddress());
-    this->setEmail(u.getEmail());
-    this->setLimit(u.getLimit());
-    this->setJobist(u.isJobist());
     return *this;
 }
 
