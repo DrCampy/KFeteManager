@@ -10,12 +10,13 @@
 
 #include "catalog.h"
 
+//TODO refer to Order in order.h
 class CurrentOrderModel : public QStandardItemModel
 {
     Q_OBJECT
 public:
     enum Action{plusItem, minusItem, deleteItem};
-    enum Price{normal, reduced, free};
+    enum Price{normal, reduced, free}; //TODO order.h
 
 private:
     qreal total;
