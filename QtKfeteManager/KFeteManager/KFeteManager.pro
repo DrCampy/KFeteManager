@@ -31,11 +31,11 @@ SOURCES += \
     salesview.cpp \
     cartemodel.cpp \
     catalog.cpp \
-    userlist.cpp \
     accountmanagementview.cpp \
     currentordermodel.cpp \
     carteview.cpp \
-    databasemanager.cpp
+    databasemanager.cpp \
+    clientlist.cpp \
     order.cpp
 
 HEADERS += \
@@ -44,11 +44,11 @@ HEADERS += \
     salesview.h \
     cartemodel.h \
     catalog.h \
-    userlist.h \
     accountmanagementview.h \
     currentordermodel.h \
     carteview.h \
-    databasemanager.h
+    databasemanager.h \
+    clientlist.h \
     order.h
 
 
