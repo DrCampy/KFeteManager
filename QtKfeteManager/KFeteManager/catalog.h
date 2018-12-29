@@ -6,82 +6,42 @@
 #include <QHash>
 #include <QString>
 #include <QException>
+#include <QVariant>
 
 class Article
 {
 public:
-  explicit Article(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString name, QString function);
+    explicit Article(QString name);
 
-  qreal getPrice() const;
-  void setPrice(qreal p);
+    void create(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString function);
+    bool exists() const;
 
-  qreal getJobistShare() const;
-  void setJobistShare(qreal js);
+    qreal getPrice() const;
+    void setPrice(qreal p);
 
-  qreal getBuyingPrice() const;
-  void setBuyingPrice(qreal bp);
+    qreal getJobistShare() const;
+    void setJobistShare(qreal js);
 
-  qreal getReducedPrice() const;
-  void setReducedPrice(qreal rp);
+    qreal getBuyingPrice() const;
+    void setBuyingPrice(qreal bp);
 
-  QString getFunction() const;
-  void setFunction(QString f);
+    qreal getReducedPrice() const;
+    void setReducedPrice(qreal rp);
 
-  QString getName() const;
-  static const size_t MAX_NAME_LENGTH = 30;
+    QString getFunction() const;
+    void setFunction(QString f);
 
-  Article &operator=(const Article &a);
-  bool operator==(const Article &a) const;
-  bool operator<(const Article &a) const;
-  operator QString() const{return this->getName();}
+    QString getName() const;
+    static const size_t MAX_NAME_LENGTH = 30;
 
-private:
-  qreal price;
-  qreal jobistShare;
-  qreal buyingPrice;
-  qreal reducedPrice;
-  QString name;
-  QString function;
-
-};
-
-
-class Catalog : public QObject
-{
-    Q_OBJECT
-public:
-    explicit Catalog(QObject *parent = nullptr);
-    ~Catalog();
-
-    void addArticle(Article &a);
-    void deleteArticle(QString &key);
-    Article getArticle(QString &key) const;
-    bool hasArticle(QString &key) const;
-
-    void addFunction(QString s);
-    void deleteFunction(QString s);
-    bool hasFunction(QString s) const;
-    QStringList getFunctions() const;
-
+    Article &operator=(const Article &a);
+    bool operator==(const Article &a) const;
+    bool operator<(const Article &a) const;
+    operator QString() const{return this->getName();}
 
 private:
-    /*Returns false if no error were raised, true otherwise*/
-    bool exportCatalog(QString filename)const;
-    bool importCatalog(QString filename);
-    QHash<QString, Article> *container;
-    QStringList *functions;
+    QString name;
 
-signals:
-
-public slots:
 };
-
-class BadFunctionException : public QException
-{
-public:
-    void raise() const override;
-    BadFunctionException *clone() const override;
-};
-
 
 #endif // CATALOG_H
