@@ -75,6 +75,13 @@ Article &Article::operator=(const Article &a){
     return *this;
 }
 
+bool Article::operator==(const Article &a) const{
+    return(a.getName() == this->getName());
+}
+
+bool Article::operator<(const Article &a) const{
+    return(this->getName() < a.getName());
+}
 
 /*
  *

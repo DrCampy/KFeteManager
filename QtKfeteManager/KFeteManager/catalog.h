@@ -31,6 +31,9 @@ public:
   static const size_t MAX_NAME_LENGTH = 30;
 
   Article &operator=(const Article &a);
+  bool operator==(const Article &a) const;
+  bool operator<(const Article &a) const;
+  operator QString() const{return this->getName();}
 
 private:
   qreal price;
@@ -41,6 +44,7 @@ private:
   QString function;
 
 };
+
 
 class Catalog : public QObject
 {
