@@ -36,6 +36,7 @@ SOURCES += \
     currentordermodel.cpp \
     carteview.cpp \
     databasemanager.cpp
+    order.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -48,6 +49,7 @@ HEADERS += \
     currentordermodel.h \
     carteview.h \
     databasemanager.h
+    order.h
 
 
 # Default rules for deployment.
