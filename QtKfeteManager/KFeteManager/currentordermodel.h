@@ -9,6 +9,7 @@
 #include <QItemSelectionModel>
 
 #include "catalog.h"
+#include "order.h"
 
 //TODO refer to Order in order.h
 class CurrentOrderModel : public QStandardItemModel
@@ -16,22 +17,21 @@ class CurrentOrderModel : public QStandardItemModel
     Q_OBJECT
 public:
     enum Action{plusItem, minusItem, deleteItem};
-    enum Price{normal, reduced, free}; //TODO order.h
 
 private:
-    qreal total;
-    Catalog *catalog;
-    QMap<QString, unsigned int> *itemsCount;
-    QStringList *items;
-    Price price;
+    Order *order;
+    //qreal total;
+    //QMap<QString, unsigned int> *itemsCount;
+    //QStringList *items;
+    //Order::Price price;
     Action actionToPerform;
     QItemSelectionModel *activeSelection;
     void updateModel();
 
 public:
-    explicit CurrentOrderModel(Catalog *catalog, int rows, QObject *parent=nullptr);
+    explicit CurrentOrderModel(int rows, QObject *parent=nullptr);
     ~CurrentOrderModel();
-    void setPrice(Price price);
+    void setPrice(Order::Price price);
     void setActiveSelection(QItemSelectionModel *selection);
     void setActionToPerform(Action action);
     qreal getTotal();
