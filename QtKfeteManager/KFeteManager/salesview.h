@@ -31,7 +31,7 @@ Q_OBJECT
 public:
     explicit MiddleBar(QWidget *parent = nullptr);
     CurrentOrderModel::Action getLastPerformedAction() const;
-    CurrentOrderModel::Price getSelectedPrice() const;
+    Order::Price getSelectedPrice() const;
     void resetPrice();
 
 private:
@@ -44,7 +44,7 @@ private:
     QPushButton *freePriceButton;
 
     CurrentOrderModel::Action lastPerformedAction;
-    CurrentOrderModel::Price selectedPrice;
+    Order::Price selectedPrice;
 
 private slots:
     void plusSlot();
@@ -71,7 +71,6 @@ private:
     CarteModel  *carteModel;
     CarteView   *carteView;
     TopBar      *topBar;
-    Catalog     *catalog;
     QLabel      *totalLabel;
     MiddleBar   *middleBar;
 
