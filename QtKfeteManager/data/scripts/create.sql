@@ -11,7 +11,7 @@ Articles(
 
 CREATE TABLE IF NOT EXISTS
 Functions(
-    Name TEXT NOT NULL UNIQUE COLLATE NOCASE, --Functions with the same name but different case will be considered identical
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE, --Functions with the same name but different case will be considered identical
     Id INTEGER PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS
