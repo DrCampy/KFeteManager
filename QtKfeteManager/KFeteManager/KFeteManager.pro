@@ -36,7 +36,8 @@ SOURCES += \
     carteview.cpp \
     databasemanager.cpp \
     clientlist.cpp \
-    order.cpp
+    order.cpp \
+    catalogmanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -49,10 +50,14 @@ HEADERS += \
     carteview.h \
     databasemanager.h \
     clientlist.h \
-    order.h
+    order.h \
+    catalogmanager.h
 
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    scripts.qrc
