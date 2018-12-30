@@ -15,14 +15,17 @@ class CarteModel : public QObject
     Q_OBJECT
 public:
     explicit CarteModel(QString filename, QObject *parent = nullptr);
+    ~CarteModel();
     const ButtonDataWrapper *getButton(unsigned int id) const;
     bool addEntry(unsigned int id, ButtonDataWrapper data);
+    const QStringList *getArticlesList();
 private:
     static const unsigned int CARTE_VERSION=0;
     bool exportCarte() const;
     bool importCarte();
     QString filename;
     QMap<unsigned int, ButtonDataWrapper> table;
+    QStringList *articles;
 
 signals:
     void modelUpdated();

@@ -14,7 +14,12 @@
 
 CarteModel::CarteModel(QString filename, QObject *parent) : QObject(parent), filename(filename)
 {
+    this->articles = new QStringList();
     this->importCarte();
+}
+
+CarteModel::~CarteModel(){
+    delete articles;
 }
 
 const ButtonDataWrapper *CarteModel::getButton(unsigned int id) const{
@@ -125,6 +130,7 @@ bool CarteModel::importCarte(){
                                   textColor = QColor(xml.attributes().value("text-color").toString());
                                   if(Article(articleName).exists()){
                                       table.insert(buttonID, ButtonDataWrapper(articleName, backgroundColor, textColor));
+                                      articles->append(articleName);
                                   }
                               }
                           }
@@ -135,11 +141,15 @@ bool CarteModel::importCarte(){
       }
   }
   //TODO check that ID is not out of bounds
+  articles->removeDuplicates();
   file->close();
   emit modelUpdated();
   return xml.hasError();
 }//end importCatalog
 
+const QStringList *CarteModel::getArticlesList(){
+    return this->articles;
+}
 
 ButtonDataWrapper::ButtonDataWrapper(QString name, QColor backgroundColor, QColor textColor) :
     name(name), backgroundColor(backgroundColor), textColor(textColor)
