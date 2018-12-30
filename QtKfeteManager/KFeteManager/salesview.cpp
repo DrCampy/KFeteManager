@@ -40,17 +40,11 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
     //Test datas
-    qDebug() << 1;
     Article jup("Jupiler");
-    qDebug() << 2;
     jup.create(0.9, 0.3, 0.5, 0.6, "Bar");
-    qDebug() << 3;
     Article kasteel("Kasteel Rouge");
-    qDebug() << 4;
     kasteel.create(1.8, 0.3, 1.5, 1.6, "Bar");
-    qDebug() << 5;
     DatabaseManager::addFunction("Bar");
-    qDebug() << 6;
 
     topBar              = new TopBar(this);
     totalLabel          = new QLabel(this);
