@@ -18,15 +18,15 @@ void Order::addArticle(Article &a){
         qreal subtotal = 0;
         switch(price){
         case normal:
-            subtotal = a.getPrice() * count;
+            subtotal = a.getPrice();
             break;
         case reduced:
-            subtotal = a.getReducedPrice() * count;
+            subtotal = a.getReducedPrice();
             break;
         case free:
             break;
         }
-        content->insert(a, QPair<uint, qreal>(count, subtotal));
+        content->insert(a, QPair<uint, qreal>(count, subtotal*count));
         total += subtotal;
     }else{
         //In case we already had some of these articles but it suddenly was deleted from database
@@ -44,10 +44,6 @@ Client *Order::getClient() const{
 
 void Order::setPrice(Order::Price price){
     this->price = price;
-    if(price == free){
-        total = 0;
-        return;
-    }
     total = 0;
     for(auto it : content->keys()){
         qreal subtotal = 0;
@@ -80,11 +76,10 @@ void Order::removeArticle(Article &a){
         //Gets the current count for that article, minus 1.
         unsigned int count = content->value(a).first-1;
 
-        //Adapts the total
-        total -= content->value(a).second;
-
         //If we do not have this article anymore, removes it
         if(count == 0){
+            //Adapts the total
+            total -= content->value(a).second;
             content->remove(a);
             return;
         }
@@ -93,17 +88,22 @@ void Order::removeArticle(Article &a){
         qreal subtotal = 0;
         switch(price){
         case normal:
-            subtotal = a.getPrice() * content->value(a).first;
+            subtotal = a.getPrice();
             break;
         case reduced:
-            subtotal = a.getReducedPrice() * content->value(a).first;
+            subtotal = a.getReducedPrice();
             break;
         case free:
             break;
         }
 
+        //Adapts the total
+        total -= subtotal;
         //updates the new subtotal
-        content->insert(a, QPair<uint, qreal>(count, subtotal));
+        content->insert(a, QPair<uint, qreal>(count, subtotal*count));
+        if(total < 1e-3 && total > -1e-3){
+            total = 0;
+        }
     }
 }
 
@@ -113,6 +113,9 @@ void Order::deleteArticle(Article &a){
         //adapts th total for that article
         total -= content->value(a).second;
         content->remove(a);
+    }
+    if(total < 1e-3 && total > -1e-3){
+        total = 0;
     }
 }
 
