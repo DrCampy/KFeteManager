@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QWidget>
 #include <QButtonGroup>
+#include <QWidgetAction>
+#include <QToolButton>
+#include <QLineEdit>
 
 #include "catalog.h"
 #include "cartemodel.h"
@@ -22,9 +25,29 @@ private :
     static const QStringList PAGES_NAMES;
     QButtonGroup *carteButtons;
     CarteModel *model;
+    QToolButton *search;
 
 public slots:
     void updateView();
+
+};
+
+class Searcher : public QWidgetAction
+{
+    Q_OBJECT
+public:
+    explicit Searcher(const QStringList *list, QWidget *parent = nullptr);
+    QWidget *createWidget(QWidget *parent);
+
+private:
+    const QStringList *list;
+    QLineEdit *lineEdit;
+
+public slots:
+void returnPressed();
+
+signals:
+void articleSearched(QString);
 
 };
 

@@ -5,6 +5,10 @@
 #include <QPushButton>
 #include <QMap>
 #include <QDebug>
+#include <QToolButton>
+#include <QCompleter>
+#include <QLineEdit>
+
 #include "carteview.h"
 #include "cartemodel.h"
 
@@ -58,6 +62,16 @@ CarteView::CarteView(QWidget *parent) : QWidget(parent)
         hBox->addWidget(tmp, Qt::AlignCenter);
         tabs->addButton(tmp, i);
     }
+    //Inserts the search button
+    search = new QToolButton(this);
+    search->setText(tr("&Rechercher"));
+    search->setPopupMode(QToolButton::InstantPopup);
+    search->setArrowType(Qt::NoArrow);
+    search->setShortcut(Qt::CTRL+Qt::Key_F);
+    search->setMinimumHeight(25);
+    search->setMaximumHeight(80);
+    search->setSizePolicy(qsp);
+    hBox->addWidget(search);
 
     vBox->addLayout(sLayout, 8);
     vBox->addLayout(hBox, 1);
@@ -97,8 +111,28 @@ void CarteView::updateView(){
 
 void CarteView::setModel(CarteModel *model){
     this->model = model;
+    Searcher *searcher = new Searcher(model->getArticlesList());
+    search->addAction(searcher);
     connect(carteButtons, SIGNAL(buttonClicked(int)), model, SLOT(buttonClicked(int)) );
     connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));
+    connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
     updateView();
 }
 
+Searcher::Searcher(const QStringList *list, QWidget *parent) : QWidgetAction (parent){
+    this->list = list;
+}
+
+QWidget *Searcher::createWidget(QWidget *parent){
+    QCompleter *completer = new QCompleter(*list, parent);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    lineEdit = new QLineEdit(parent);
+    lineEdit->setCompleter(completer);
+    lineEdit->setFocus(Qt::MenuBarFocusReason);
+    connect(lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressed()));
+    return lineEdit;
+}
+
+void Searcher::returnPressed(){
+    emit articleSearched(lineEdit->text());
+}
