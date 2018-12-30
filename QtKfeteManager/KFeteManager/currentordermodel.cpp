@@ -28,20 +28,26 @@ CurrentOrderModel::~CurrentOrderModel(){
 void CurrentOrderModel::updateModel(){
     //gets the conten of the order.
     auto orderContent = order->getContent();
-
-    if(this->rowCount() != orderContent->size())
+    int previousRowCount = this->rowCount();
+    if( previousRowCount != orderContent->size())
         this->setRowCount(orderContent->size());
     int i = 0;
     for(auto it : orderContent->keys()){
         QString itemName = it;
         uint itemQuantity = orderContent->value(it).first;
         qreal itemSubTotal = orderContent->value(it).second;
-
-        this->setItem(i, 0, new QStandardItem(QString::number(itemQuantity)));
-        this->setItem(i, 1, new QStandardItem(itemName));
-        this->setItem(i, 2, new QStandardItem(QString::number(itemSubTotal, 'f', 2)));
+        if(this->item(i)){
+            this->item(i, 0)->setText(QString::number(itemQuantity));
+            this->item(i, 1)->setText(itemName);
+            this->item(i, 2)->setText(QString::number(itemSubTotal, 'f', 2));
+        }else{
+            this->setItem(i, 0, new QStandardItem(QString::number(itemQuantity)));
+            this->setItem(i, 1, new QStandardItem(itemName));
+            this->setItem(i, 2, new QStandardItem(QString::number(itemSubTotal, 'f', 2)));
+        }
         i++;
     }
+    emit updated();
 }
 
 void CurrentOrderModel::setPrice(Order::Price price){
