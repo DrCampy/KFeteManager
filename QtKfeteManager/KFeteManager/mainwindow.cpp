@@ -5,6 +5,9 @@
 #include <QMouseEvent>
 #include <QTimer>
 
+#include <QMenuBar>
+#include <QMenu>
+
 #include "mainwindow.h"
 #include "loginview.h"
 #include "salesview.h"
@@ -19,13 +22,38 @@ MainWindow::MainWindow(QWidget *parent) :
     clockTimer->start(5000);
     connect(clockTimer, SIGNAL(timeout()), this, SLOT(updateClock()));
 
+    this->setMenuBar(new QMenuBar()); //Takes ownership
+
+    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+
+    QAction *action = fileMenu->addAction(tr("&Fermer la session de vente"));
+    connect(action, SIGNAL(triggered()), this, SLOT(closeSession()));
+
+    action = fileMenu->addAction(tr("Gérer la base de données"), this, "SLOT(manageDB())");
+    connect(action, SIGNAL(triggered()), this, SLOT(manageDB()));
+
+    QMenu *editMenu = menuBar()->addMenu(tr("&Editer"));
+    action = editMenu->addAction(tr("Editer la &carte"));
+    connect(action, SIGNAL(triggered()), this, SLOT(editCarte()));
+
+    action = editMenu->addAction(tr("Editer le c&atalogue"));
+    connect(action, SIGNAL(triggered()), this, SLOT(editCatalog()));
+
+    QMenu *managementMenu = menuBar()->addMenu(tr("&Gestion"));
+    action = managementMenu->addAction(tr("Effectuer les &paiements"));
+    connect(action, SIGNAL(triggered()), this, SLOT(payJobists()));
+
+    managementMenu->addAction(tr("Statistiques financières"));
+    connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
+
     updateClock();
     updateAccountLabel("");
 
     statusBar()->addWidget(clockLabel);
     statusBar()->addPermanentWidget(accountLabel);
 
-    this->setCentralWidget(new SalesView(this));
+    sales = new SalesView(this);
+    this->setCentralWidget(sales);
 
     //TODO fixme
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
@@ -67,4 +95,12 @@ void PushLabel::mouseReleaseEvent(QMouseEvent *eve){
     if( (eve->button() == Qt::LeftButton) && this->rect().contains(posMouse)){
         emit clearAccountSelection();
     }
+}
+
+void MainWindow::closeSession(){
+    emit receiveRandomEvent();
+}
+
+void MainWindow::manageDB(){
+    emit receiveRandomEvent();
 }

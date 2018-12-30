@@ -4,19 +4,24 @@
 #include <QMainWindow>
 #include <QLabel>
 #include <QDateTime>
+#include <QMenuBar>
+
+#include "salesview.h"
+#include "accountmanagementview.h"
+#include "loginview.h"
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 class PushLabel : public QLabel{
-  Q_OBJECT
+    Q_OBJECT
 public:
-  PushLabel(QWidget *parent = Q_NULLPTR);
+    PushLabel(QWidget *parent = Q_NULLPTR);
 protected:
-  void mouseReleaseEvent(QMouseEvent *eve);
+    void mouseReleaseEvent(QMouseEvent *eve);
 signals:
-  void clearAccountSelection();
+    void clearAccountSelection();
 };
 
 class MainWindow : public QMainWindow
@@ -28,6 +33,7 @@ public:
     ~MainWindow();
 
 private:
+    SalesView *sales;
     QDateTime date;
     QLabel *clockLabel;
     PushLabel *accountLabel;
@@ -37,6 +43,14 @@ public slots:
     void updateAccountLabel(QString);
     //void enteredPassword(QString);
     void receiveRandomEvent(); //TODO remove
+
+    //From the menu
+    void closeSession();
+    void manageDB();
+    //void editCarte();
+    //void editCatalog();
+    //void payJobists();
+    //void statistics();
 
 };
 
