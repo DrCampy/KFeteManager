@@ -40,11 +40,24 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
     //Test datas
+    if(DatabaseManager::hasFunction("Bar") == 0){
+        DatabaseManager::addFunction("Bar");
+        qDebug() << "Inserted function Bar";
+    }
+
     Article jup("Jupiler");
-    jup.create(0.9, 0.3, 0.5, 0.6, "Bar");
+    if(!jup.exists()){
+        jup.create(0.9, 0.3, 0.5, 0.6, "Bar");
+        qDebug() << "Inserted article Jupiler";
+
+    }
+
     Article kasteel("Kasteel Rouge");
-    kasteel.create(1.8, 0.3, 1.5, 1.6, "Bar");
-    DatabaseManager::addFunction("Bar");
+    if(!kasteel.exists()){
+        kasteel.create(1.8, 0.3, 1.5, 1.6, "Bar");
+        qDebug() << "Inserted article Kasteel";
+
+    }
 
     topBar              = new TopBar(this);
     totalLabel          = new QLabel(this);
