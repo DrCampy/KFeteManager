@@ -12,7 +12,7 @@
 
      Articles: (Name, sellPrice, jShare, bPrice, reducedPrice, function)
 
-     Functions: (Name, Id)
+     Functions: (name, Id)
 
      Clients: (Name, phone, address, email, negLimit, isJobist, balance)
 
@@ -61,30 +61,62 @@ public:
     static void createDatabase();
     static bool executeScript(QString filename, QSqlQuery &query);
 
+    //TODO find where they should go. Class Function in catalog.h ?
+    static uint addFunction(QString name);
+    static uint hasFunction(QString name);
+    static QList<QString> getFunctions();
+
 protected:
     //Managing articles
-    static bool hasArticle(const Article &a);
-    static bool addArticle(const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function);
-    static void delArticle(const Article &a);
-    static qreal getArticlePrice(const Article &a);
-    static qreal getArticleReducedPrice(const Article &a);
-    static qreal getArticleJobistShare(const Article &a);
-    static qreal getArticleBuyingPrice(const Article &a);
-    static QString getArticleFunction(const Article &a);
+    //General purpose
+    static bool         hasArticle                  (const Article &a);
+    static bool         addArticle                  (const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function);
+    static bool         updateArticleField          (const Article &a, QString field, QVariant value);
+    static QVariant     getArticleField             (const Article &a, QString field);
+    static void         delArticle                  (const Article &a);
+    static void         extractArticle              (const Article &a, qreal &price, qreal &jShare, qreal &bPrice, qreal &redPrice, QString &function);
+    static QStringList  articlesList                ();
 
-    //Clients: (Name, phone, address, email, negLimit, isJobist, balance)
-    //Managing clients
-    static bool hasClient(const Client &c);
-    static bool addClient(const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist);
-    static void delClient(const Client &c);
-    static QString getClientPhone(const Client &c);
-    static QString getClientAddress(const Client &c);
-    static QString getClientEmail(const Client &c);
-    static qreal getClientLimit(const Client &c);
-    static bool isClientJobist(const Client &c);
-    static qreal getClientBalance(const Client &c);
+    //getters
+    static qreal        getArticlePrice             (const Article &a);
+    static qreal        getArticleReducedPrice      (const Article &a);
+    static qreal        getArticleJobistShare       (const Article &a);
+    static qreal        getArticleBuyingPrice       (const Article &a);
+    static QString      getArticleFunction          (const Article &a);
 
-    static unsigned long int addFunction(QString name);
+    //setters
+    static bool         updateArticlePrice          (const Article &a, qreal value);
+    static bool         updateArticleReducedPrice   (const Article &a, qreal value);
+    static bool         updateArticleJobistShare    (const Article &a, qreal value);
+    static bool         updateArticleBuyingPrice    (const Article &a, qreal value);
+    static bool         updateArticleFunction       (const Article &a, QString value);
+
+    /*
+     * Managing clients
+     */
+    //general purpose
+    static bool         updateClientField           (const Client &c, QString field, QVariant value);
+    static QVariant     getClientField              (const Client &c, QString field);
+    static bool         hasClient                   (const Client &c);
+    static bool         addClient                   (const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist, qreal balance = 0);
+    static void         delClient                   (const Client &c);
+
+    //getters
+    static QString      getClientPhone              (const Client &c);
+    static QString      getClientAddress            (const Client &c);
+    static QString      getClientEmail              (const Client &c);
+    static qreal        getClientLimit              (const Client &c);
+    static bool         isClientJobist              (const Client &c);
+    static qreal        getClientBalance            (const Client &c);
+
+    //setters
+    static bool         updateClientPhone           (const Client &c, QString value);
+    static bool         updateClientAddress         (const Client &c, QString value);
+    static bool         updateClientEmail           (const Client &c, QString value);
+    static bool         updateClientLimit           (const Client &c, qreal value);
+    static bool         updateIsClientJobist        (const Client &c, bool value);
+    static bool         updateClientBalance         (const Client &c, qreal value);
+
 
     //Declaring friends classes
     friend Article;

@@ -15,14 +15,14 @@
 QStringList DatabaseManager::tables =
         QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
                       <<"HeldSession" << "OrderDetails" << "OrderContent"
-                      << "OrderClient" << "Config";
+                     << "OrderClient" << "Config";
 
 QStringList DatabaseManager::articlesFields =
         QStringList() << "Name" << "sellPrice" << "jShare"
                       << "bPrice" << "reducedPrice" << "function";
 
 QStringList DatabaseManager::functionsFields =
-        QStringList() << "Name" << "Id";
+        QStringList() << "name" << "Id";
 
 QStringList DatabaseManager::clientsFields =
         QStringList() << "Name" << "phone" << "address" << "email"
@@ -125,7 +125,7 @@ bool DatabaseManager::checkDatabase(){
 
 void DatabaseManager::createDatabase(){
     QSqlQuery querry;
-    executeScript("./data/scripts/create.sql", querry);
+    executeScript(":/create-script.sql", querry);
 }
 
 bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
@@ -140,36 +140,36 @@ bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
     //for each statement
     for(auto it = statements.begin(); it < statements.end(); it++){
         QString finalStatement;
-       QVector<QStringRef> lines = (*it).split('\n', QString::SkipEmptyParts);
-       //for each line split comments
-       for(auto it2 = lines.begin(); it2 < lines.end(); it2++){
+        QVector<QStringRef> lines = (*it).split('\n', QString::SkipEmptyParts);
+        //for each line split comments
+        for(auto it2 = lines.begin(); it2 < lines.end(); it2++){
 
-           //If we are a line that starts with a comment, skip it
-           if((*it2).startsWith("--")){
-               continue;
-           }
-           auto linePart = (*it2).split("--", QString::SkipEmptyParts);
+            //If we are a line that starts with a comment, skip it
+            if((*it2).startsWith("--")){
+                continue;
+            }
+            auto linePart = (*it2).split("--", QString::SkipEmptyParts);
 
-           //The instruction part is at index 0. The rest is only comments.
-           finalStatement.append(linePart.at(0));
-           finalStatement.append(' ');
+            //The instruction part is at index 0. The rest is only comments.
+            finalStatement.append(linePart.at(0));
+            finalStatement.append(' ');
 
-       }
+        }
 
-       if(finalStatement.isEmpty()){
-           continue;
-       }
+        if(finalStatement.isEmpty()){
+            continue;
+        }
 
-       //Appends final ';'
-       finalStatement.append(';');
+        //Appends final ';'
+        finalStatement.append(';');
 
-       //Executes statement
-       int ret = query.exec(finalStatement);
-       if(!ret){
-           qDebug() << "Error processing statement number " << it-statements.begin()+1 << " from file " << filename <<".";
-           qDebug() << "Details: " << query.lastError().text();
-           return false;
-       }
+        //Executes statement
+        int ret = query.exec(finalStatement);
+        if(!ret){
+            qDebug() << "Error processing statement number " << it-statements.begin()+1 << " from file " << filename <<".";
+            qDebug() << "Details: " << query.lastError().text();
+            return false;
+        }
     }
     return true;
 }
@@ -181,25 +181,20 @@ void DatabaseManager::closeDatabase(){
 
 }
 
-bool DatabaseManager::hasArticle(const Article &a){
+
+//Articles management
+//GENERAL PURPOSE FUNCTIONS
+bool        DatabaseManager::hasArticle(const Article &a){
     QSqlQuery query;
-    query.prepare("SELECT Name FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
+    query.prepare("SELECT Name FROM Articles WHERE Name=:name;");
+    query.bindValue(":name", a.getName());
+    bool ret = query.exec();//QString("SELECT Name FROM Articles WHERE Name='").append(a).append("';"));
     if(!ret){
         qDebug() << "Finding article " << a << " failed.";
         qDebug() << query.lastError().text();
         return false;
     }
-    if(query.size() == 1){
-        return true;
-    }else if(query.size() == 0){
-        return false;
-    }
-
-    //this should never happen because name is a primary key.
-    qDebug() << "Error: found " << query.size() << " entries for article " << a << " but expected only one.";
-    return true;
+    return query.next();
 }
 
 /*
@@ -207,28 +202,78 @@ bool DatabaseManager::hasArticle(const Article &a){
  * If the database already contains the article,
  * updates the value of the existing entry.
  */
-bool DatabaseManager::addArticle(const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function){
+bool        DatabaseManager::addArticle                 (const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function){
     QSqlQuery query;
-    query.prepare("INSERT OR UPDATE INTO Articles(Name, sellPrice, jShare, bPrice, reducedPrice, function)"
-                  "VALUES(?, ?, ?, ?, ?, ?);");
-    query.addBindValue(a.getName());
-    query.addBindValue(price);
-    query.addBindValue(jShare);
-    query.addBindValue(bPrice);
-    query.addBindValue(redPrice);
-    query.addBindValue(function);
+    uint f = hasFunction(function);
+    query.prepare("INSERT OR REPLACE INTO Articles(Name, sellPrice, jShare, bPrice, reducedPrice, function)"
+                  " VALUES(:name, :price, :jShare, :bPrice, :redPrice, :f);");
+    query.bindValue(":price", price);
+    query.bindValue(":jShare", jShare);
+    query.bindValue(":bPrice", bPrice);
+    query.bindValue(":redPrice", redPrice);
+    query.bindValue(":f", f);
+    query.bindValue(":name", a.getName());
     int ret = query.exec();
     if(!ret){
         qDebug() << "Inserting article " << a << " failed.";
         qDebug() << query.lastError().text();
     }
+
     return ret;
 }
 
-void DatabaseManager::delArticle(const Article &a){
+bool        DatabaseManager::updateArticleField         (const Article &a, QString field, QVariant value){
     QSqlQuery query;
-    query.prepare("DELETE FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
+    query.prepare(QString("UPDATE Articles SET ").append(field).append("=:value WHERE Name=:name;"));
+
+    //Manages the particular case of the fields function
+    if(field == "function"){
+        query.bindValue(":value", QString("(SELECT Id FROM Functions WHERE name='").append(value.toString()).append("')"));
+    }else{
+        query.bindValue(":value", value);
+    }
+
+    query.bindValue(":name", a.getName());
+    bool ret = query.exec();
+    if(!ret){
+        qDebug() << "Error updating field " << field << " with value " << value << " for article " << a;
+        qDebug() << query.lastError().text();
+    }
+    return ret;
+}
+
+QVariant    DatabaseManager::getArticleField            (const Article &a, QString field){
+    QSqlQuery query;
+
+    //Manages the particular case of the fields function
+    if(field == "function"){
+        query.prepare("SELECT Functions.Name "
+                      "FROM( SELECT Name, function FROM Articles WHERE Name=:name) "
+                      "INNER JOIN Functions ON Articles.function=Functions.Id);");
+
+    }else{
+        query.prepare(QString("SELECT ").append(field).append(" FROM Articles WHERE Name=:name;"));
+    }
+
+    query.bindValue(":name", a.getName());
+
+    bool ret = query.exec();
+    if(!ret){
+        qDebug() << "Error getting field " << field << " of article " << a;
+        qDebug() << query.lastError().text();
+        return QVariant();
+    }
+    if(!query.next()){
+        return QVariant();
+    }else{
+        return query.value(0);
+    }
+}
+
+void        DatabaseManager::delArticle                 (const Article &a){
+    QSqlQuery query;
+    query.prepare("DELETE FROM Articles WHERE Name=:name;");
+    query.bindValue(":name", a.getName());
     int ret = query.exec();
     if(!ret){
         qDebug() << "Deleting article " << a << " failed.";
@@ -236,113 +281,174 @@ void DatabaseManager::delArticle(const Article &a){
     }
 }
 
-qreal DatabaseManager::getArticlePrice(const Article &a){
+void        DatabaseManager::extractArticle             (const Article &a, qreal &price, qreal &jShare, qreal &bPrice, qreal &redPrice, QString &function){
     QSqlQuery query;
-    query.prepare("SELECT sellPrice FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
+
+    //Manages the particular case of the fields function
+    query.prepare("SELECT Articles.sellPrice, Articles.jShare, Articles.bPrice, Articles.reducedPrice, Functions.name "
+                  "FROM( SELECT * FROM Articles WHERE Name=:name) "
+                  "INNER JOIN Functions ON Articles.function=Functions.id);");
+
+    query.bindValue(":name", a.getName());
+
+    bool ret = query.exec();
     if(!ret){
-        qDebug() << "Getting price of article " << a << " failed.";
+        qDebug() << "Error getting article " << a;
         qDebug() << query.lastError().text();
-        return qQNaN();
+        return;
     }
-    if(query.size() == 0)
-        return qQNaN();
-    return query.value(0).toReal();
+    if(query.next()){
+        price    = query.value("Articles.sellPrice").toReal();
+        jShare   = query.value("Articles.jShare").toReal();
+        bPrice   = query.value("Articles.bPrice").toReal();
+        redPrice = query.value("Articles.reducedPrice").toReal();
+        function = query.value("Functions.name").toString();
+    }
 }
 
-qreal DatabaseManager::getArticleReducedPrice(const Article &a){
+QStringList DatabaseManager::articlesList               (){
     QSqlQuery query;
-    query.prepare("SELECT reducedPrice FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
+
+    //Executes the query
+    bool ret = query.exec("SELECT Name FROM Articles;");
+
+    QStringList list;
     if(!ret){
-        qDebug() << "Getting reduced price of article " << a << " failed.";
+        qDebug() << "Error getting articles list";
         qDebug() << query.lastError().text();
-        return qQNaN();
+        return list;
     }
-    if(query.size() == 0)
+
+    //Creates the list
+    while(query.next()){
+        list.append(query.value(0).toString());
+    }
+
+    return list;
+}
+//ACCESSORS FUNCTIONS
+qreal       DatabaseManager::getArticlePrice            (const Article &a){
+    QVariant ret = getArticleField(a, "sellPrice");
+    if(ret.isNull())
         return qQNaN();
-    return query.value(0).toReal();
+    else
+        return ret.toReal();
 }
 
-qreal DatabaseManager::getArticleJobistShare(const Article &a){
-    QSqlQuery query;
-    query.prepare("SELECT jShare FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting jobist share of article " << a << " failed.";
-        qDebug() << query.lastError().text();
+qreal       DatabaseManager::getArticleReducedPrice     (const Article &a){
+    QVariant ret = getArticleField(a, "reducedPrice");
+    if(ret.isNull())
         return qQNaN();
-    }
-    if(query.size() == 0)
-        return qQNaN();
-    return query.value(0).toReal();
+    else
+        return ret.toReal();
 }
 
-qreal DatabaseManager::getArticleBuyingPrice(const Article &a){
-    QSqlQuery query;
-    query.prepare("SELECT bPrice FROM Articles WHERE Name=?;");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting buying price of article " << a << " failed.";
-        qDebug() << query.lastError().text();
+qreal       DatabaseManager::getArticleJobistShare      (const Article &a){
+    QVariant ret = getArticleField(a, "jShare");
+    if(ret.isNull())
         return qQNaN();
-    }
-    if(query.size() == 0)
-        return qQNaN();
-    return query.value(0).toReal();
+    else
+        return ret.toReal();
 }
 
-QString DatabaseManager::getArticleFunction(const Article &a){
-    QSqlQuery query;
-    query.prepare("SELECT Functions.Name "
-                  "FROM( SELECT Name, function  FROM Articles WHERE Name=?) "
-                  "INNER JOIN Functions ON Articles.function=Functions.Name);");
-    query.addBindValue(a.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting function of article " << a << " failed.";
-        qDebug() << query.lastError().text();
+qreal       DatabaseManager::getArticleBuyingPrice      (const Article &a){
+    QVariant ret = getArticleField(a, "bPrice");
+    if(ret.isNull())
+        return qQNaN();
+    else
+        return ret.toReal();
+}
+
+QString     DatabaseManager::getArticleFunction         (const Article &a){
+    QVariant ret = getArticleField(a, "function");
+    if(ret.isNull())
         return "";
-    }
-    if(query.size() == 0)
-        return "";
-    return query.value(0).toString();
+    else
+        return ret.toString();
 }
 
-bool DatabaseManager::hasClient(const Client &c){
+//SETTERS FUNCTIONS
+
+bool        DatabaseManager::updateArticlePrice          (const Article &a, qreal value){
+    return updateArticleField(a, "sellPrice", value);
+}
+
+bool        DatabaseManager::updateArticleReducedPrice   (const Article &a, qreal value){
+    return updateArticleField(a, "reducedPrice", value);
+}
+
+bool        DatabaseManager::updateArticleJobistShare    (const Article &a, qreal value){
+    return updateArticleField(a, "jShare", value);
+
+}
+
+bool        DatabaseManager::updateArticleBuyingPrice    (const Article &a, qreal value){
+    return updateArticleField(a, "bPrice", value);
+}
+
+bool        DatabaseManager::updateArticleFunction       (const Article &a, QString value){
+    return updateArticleField(a, "function", value);
+}
+
+
+//Client management
+bool        DatabaseManager::updateClientField          (const Client &c, QString field, QVariant value){
     QSqlQuery query;
-    query.prepare("SELECT Name FROM Clients WHERE Name=?;");
+    query.prepare("UPDATE Clients SET ?=? WHERE Name=?;");
+    query.addBindValue(field);
+    query.addBindValue(value);
     query.addBindValue(c.getName());
+    bool ret = query.exec();
+    if(!ret){
+        qDebug() << "Error updating field " << field << " with value " << value << " for client " << c;
+        qDebug() << query.lastError().text();
+    }
+    return ret;
+}
+
+QVariant    DatabaseManager::getClientField             (const Client &c, QString field){
+    QSqlQuery query;
+
+    query.prepare(QString("SELECT ").append(field).append(" FROM Clients WHERE Name=:name;"));
+    query.bindValue(":name", c.getName());
+
+    bool ret = query.exec();
+    if(!ret){
+        qDebug() << "Error getting field " << field << " of client " << c;
+        qDebug() << query.lastError().text();
+        return QVariant();
+    }
+
+    if(!query.next()){
+        return QVariant();
+    }else{
+        return query.value(0);
+    }
+}
+
+bool        DatabaseManager::hasClient                  (const Client &c){
+    QSqlQuery query;
+    query.prepare("SELECT Name FROM Clients WHERE Name=:name;");
+    query.bindValue(":name", c.getName(), QSql::Out);
     int ret = query.exec();
     if(!ret){
-        qDebug() << "Finding client" << c << " failed.";
+        qDebug() << "Finding client" << c << " faile    d.";
         qDebug() << query.lastError().text();
         return false;
     }
-    if(query.size() == 1){
-        return true;
-    }else if(query.size() == 0){
-        return false;
-    }
-
-    //this should never happen because name is a primary key.
-    qDebug() << "Error: found " << query.size() << " entries for client " << c << " but expected only one.";
-    return true;
+    return query.next();
 }
 
-bool DatabaseManager::addClient(const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist){
+bool        DatabaseManager::addClient                  (const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist, qreal balance){
     QSqlQuery query;
-    query.prepare("INSERT OR UPDATE INTO Clients(Name, phone, address, email, negLimit, isJobist) VALUES(?,?,?,?,?);");
+    query.prepare("INSERT OR UPDATE INTO Clients(Name, phone, address, email, negLimit, isJobist, balance) VALUES(?,?,?,?,?,?);");
     query.addBindValue(c.getName());
     query.addBindValue(phone);
     query.addBindValue(address);
     query.addBindValue(email);
     query.addBindValue(negLimit);
     query.addBindValue(isJobist);
+    query.addBindValue(balance);
     int ret = query.exec();
     if(!ret){
         qDebug() << "Inserting " << c << " failed.";
@@ -351,10 +457,10 @@ bool DatabaseManager::addClient(const Client &c, QString phone, QString address,
     return ret;
 }
 
-void DatabaseManager::delClient(const Client &c){
+void        DatabaseManager::delClient                  (const Client &c){
     QSqlQuery query;
-    query.prepare("DELETE FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
+    query.prepare("DELETE FROM Clients WHERE Name=:name;");
+    query.bindValue(":name", c.getName());
     int ret = query.exec();
     if(!ret){
         qDebug() << "Deleting client" << c << " failed.";
@@ -362,97 +468,80 @@ void DatabaseManager::delClient(const Client &c){
     }
 }
 
-QString DatabaseManager::getClientPhone(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT phone FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting phone of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+
+//ACCESSORS FUNCTIONS
+QString     DatabaseManager::getClientPhone             (const Client &c){
+    QVariant ret = getClientField(c, "phone");
+    if(ret.isNull()){
         return "";
     }
-    if(query.size() == 0)
-        return "";
-    return query.value(0).toString();
+    return ret.toString();
 }
 
-
-QString DatabaseManager::getClientAddress(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT address FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting address of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+QString     DatabaseManager::getClientAddress           (const Client &c){
+    QVariant ret = getClientField(c, "address");
+    if(ret.isNull()){
         return "";
     }
-    if(query.size() == 0)
-        return "";
-    return query.value(0).toString();
+    return ret.toString();
 }
 
-QString DatabaseManager::getClientEmail(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT email FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting email of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+QString     DatabaseManager::getClientEmail             (const Client &c){
+    QVariant ret = getClientField(c, "email");
+    if(ret.isNull()){
         return "";
     }
-    if(query.size() == 0)
-        return "";
-    return query.value(0).toString();
+    return ret.toString();
 }
 
-qreal DatabaseManager::getClientLimit(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT negLimit FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting limit of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+qreal       DatabaseManager::getClientLimit             (const Client &c){
+    QVariant ret = getClientField(c, "negLimit");
+    if(ret.isNull()){
         return qQNaN();
     }
-    if(query.size() == 0)
-        return qQNaN();
-    return query.value(0).toReal();
+    return ret.toReal();
 }
 
-bool DatabaseManager::isClientJobist(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT isJobist FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting limit of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+bool        DatabaseManager::isClientJobist             (const Client &c){
+    QVariant ret = getClientField(c, "isJobist");
+    if(ret.isNull()){
         return false;
     }
-    if(query.size() == 0)
-        return false;
-
     //SQlite does not support bool. Stores integer 1 for of true, 0 for false.
-    return (query.value(0).toInt() == 1);
+    return (ret.toInt() == 1);
 }
 
-qreal DatabaseManager::getClientBalance(const Client &c){
-    QSqlQuery query;
-    query.prepare("SELECT balance FROM Clients WHERE Name=?;");
-    query.addBindValue(c.getName());
-    int ret = query.exec();
-    if(!ret){
-        qDebug() << "Getting balance of client " << c << " failed.";
-        qDebug() << query.lastError().text();
+qreal       DatabaseManager::getClientBalance           (const Client &c){
+    QVariant ret = getClientField(c, "phone");
+    if(ret.isNull()){
         return qQNaN();
     }
-    if(query.size() == 0)
-        return qQNaN();
-    return query.value(0).toReal();
+    return ret.toReal();
+}
+
+//SETTERS FUNCTIONS
+bool        DatabaseManager::updateClientPhone          (const Client &c, QString value){
+    return updateClientField(c, "phone", value);
+}
+
+bool        DatabaseManager::updateClientAddress        (const Client &c, QString value){
+    return updateClientField(c, "address", value);
+}
+
+bool        DatabaseManager::updateClientEmail          (const Client &c, QString value){
+    return updateClientField(c, "email", value);
+}
+
+bool        DatabaseManager::updateClientLimit          (const Client &c, qreal value){
+    return updateClientField(c, "negLimit", value);
+}
+
+bool        DatabaseManager::updateIsClientJobist       (const Client &c, bool value){
+    return updateClientField(c, "isJobist", value);
+}
+
+bool        DatabaseManager::updateClientBalance        (const Client &c, qreal value){
+    return updateClientField(c, "balance", value);
 }
 
 /*
@@ -461,7 +550,62 @@ qreal DatabaseManager::getClientBalance(const Client &c){
  * then the functions return the ID already allocated to that function.
  * Comparison of functions is NOT CasE SeNsiTIvE
  */
-unsigned long int DatabaseManager::addFunction(QString name){
+uint        DatabaseManager::addFunction            (QString name){
     name = name.trimmed();
+    QSqlQuery query;
+    query.prepare("INSERT OR IGNORE INTO Functions(name) VALUES(?);");
+    query.addBindValue(name);
+    int ret = query.exec();
+    if(!ret){
+        qDebug() << "Inserting function " << name << " failed.";
+        qDebug() << query.lastError().text();
+        return 0;
+    }
+    query.prepare("SELECT Id FROM Functions WHERE name=?;");
+    query.addBindValue(name, QSql::Out);
+    ret = query.exec();
+    if(!ret){
+        qDebug() << "Getting id of function " << name << " failed.";
+        qDebug() << query.lastError().text();
+        return 0;
+    }
+    if(query.next()){
+        return query.value(0).toUInt();
+    }
+    return 0;
+}
 
+uint DatabaseManager::hasFunction(QString name){
+    name = name.trimmed();
+    QSqlQuery query;
+    query.prepare("SELECT Id FROM Functions WHERE name=:name;");
+    query.bindValue(":name", name);
+    bool ret = query.exec();
+    if(!ret){
+        qDebug() << "Finding function " << name << " failed.";
+        qDebug() << query.lastError().text();
+        return 0;
+    }
+
+    if(query.next()){
+        uint val = query.value(0).toUInt();
+        return val;
+    }
+    qDebug() << "Function " << name << " not found.";
+    return 0;
+}
+
+QList<QString> DatabaseManager::getFunctions(){
+    QSqlQuery query;
+    int ret = query.exec("SELECT name FROM Functions;");
+    if(!ret){
+        qDebug() << "Listing functions failed.";
+        qDebug() << query.lastError().text();
+        return QList<QString>();
+    }
+    QList<QString> list;
+    while(query.next()){
+        list.append(query.value(0).toString());
+    }
+    return list;
 }
