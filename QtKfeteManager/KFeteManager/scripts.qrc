@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="create-script.sql">data/scripts/create.sql</file>
+    </qresource>
+</RCC>
