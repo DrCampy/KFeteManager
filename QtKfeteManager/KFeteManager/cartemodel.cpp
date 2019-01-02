@@ -143,6 +143,7 @@ bool CarteModel::importCarte(){
   //TODO check that ID is not out of bounds
   articles->removeDuplicates();
   file->close();
+  delete file;
   emit modelUpdated();
   return xml.hasError();
 }//end importCatalog
