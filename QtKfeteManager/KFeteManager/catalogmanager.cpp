@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFormLayout>
 #include <QListView>
 #include <QTableView>
 #include <QLabel>
@@ -17,59 +18,65 @@
 #include <QSqlRelationalDelegate>
 #include <QDebug>
 #include <QCompleter>
+#include <QDoubleSpinBox>
+#include <QSpacerItem>
 
 #include "catalogmanager.h"
-
+#include "databasemanager.h"
 
 CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 {
+    QWidget *form = new QWidget(this);
     //Init all private members
-    price       = new QLineEdit(this);
-    bPrice      = new QLineEdit(this);
-    jShare      = new QLineEdit(this);
-    rPrice      = new QLineEdit(this);
-    function    = new QComboBox(this);
+    price       = new QDoubleSpinBox(form);
+    bPrice      = new QDoubleSpinBox(form);
+    jShare      = new QDoubleSpinBox(form);
+    rPrice      = new QDoubleSpinBox(form);
+    function    = new QComboBox(form);
     mapper      = new QDataWidgetMapper(this);
     validate    = new QPushButton(tr("Valider"));
     sqlModel    = new QSqlRelationalTableModel(this);
-    QSqlTableModel *fctModel    = new QSqlTableModel(this);
-
     QVBoxLayout *rightSidebar   = new QVBoxLayout();
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
-    QVBoxLayout *formLayout     = new QVBoxLayout();
-    QDoubleValidator *v         = new QDoubleValidator(this);
+    QFormLayout *formLayout     = new QFormLayout();
     QListView *articlesView     = new QListView(this);
+    QSizePolicy qsp(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    QFont font = this->font();
+    font.setPointSize(13);
+    articlesView->setFont(font);
 
     //Imediately links the views and the models
     sqlModel->setTable("Articles");
-    fctModel->setTable("Functions");
-    fctModel->select();
 
     //A few indexes
-    int nameIndex           = sqlModel->record().indexOf("Name");
-    int priceIndex          = sqlModel->record().indexOf("sellPrice");
-    int jobShareIndex       = sqlModel->record().indexOf("jShare");
-    int bPriceIndex         = sqlModel->record().indexOf("bPrice");
-    int redPriceIndex       = sqlModel->record().indexOf("reducedPrice");
-    int functionIndex       = sqlModel->record().indexOf("function");
-    int functionMode        = fctModel->record().indexOf("name");
+    nameIndex           = sqlModel->record().indexOf("Name");
+    priceIndex          = sqlModel->record().indexOf("sellPrice");
+    jobShareIndex       = sqlModel->record().indexOf("jShare");
+    bPriceIndex         = sqlModel->record().indexOf("bPrice");
+    redPriceIndex       = sqlModel->record().indexOf("reducedPrice");
+    functionIndex       = sqlModel->record().indexOf("function");
+    {
+        auto tmp = new QSqlTableModel();
+        tmp->setTable("Functions");
+        functionNameIndex = tmp->record().indexOf("name");
+        delete tmp;
+    }
+
+    //Configures the sql model
+    sqlModel->setRelation(functionIndex, QSqlRelation("Functions", "Id", "name"));
+    sqlModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    sqlModel->select();
 
     //Configure widgets
     //LineEdits and combobox
-    v->setNotation(QDoubleValidator::StandardNotation);
-    price->setValidator(new QDoubleValidator());
-    bPrice->setValidator(v);
-    jShare->setValidator(v);
-    rPrice->setValidator(v);
     validate->setEnabled(false);
 
-    //Model
-    sqlModel->setRelation(functionIndex, QSqlRelation("Functions", "Id", "name"));
-    sqlModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-
     //Views
-    //articlesView->setModelColumn(nameIndex); //Sets the column to the name
+    articlesView->setModel(sqlModel);
+    articlesView->setModelColumn(nameIndex); //Sets the column to the name
     articlesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    function->setModel(sqlModel->relationModel(functionIndex));
+    function->setModelColumn(functionNameIndex);
 
     //Mapper
     mapper->setModel(sqlModel);
@@ -78,71 +85,115 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     mapper->addMapping(jShare, jobShareIndex);
     mapper->addMapping(rPrice, redPriceIndex);
     mapper->addMapping(function, functionIndex);
+    mapper->setItemDelegate(new QSqlRelationalDelegate(mapper));
     mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
 
-    function->setModel(sqlModel);
-    function->setModelColumn(functionIndex);
-    function->setItemDelegate(new QSqlRelationalDelegate(function));
+    //sets size policy
+    for(auto it: form->findChildren<QWidget *>()){
+        it->setSizePolicy(qsp);
+        it->setMaximumHeight(50);
+    }
 
-    /*QCompleter *completer = new QCompleter(this);
-    completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
-    completer->setModel(fctModel);
-    completer->setCompletionColumn(functionMode);
-    function->setCompleter(completer);*/
-
-
+    //Configures the spinboxes
+    for(auto it: form->findChildren<QDoubleSpinBox *>()){
+        it->setSingleStep(0.1);
+        it->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        it->setSuffix(tr(" €"));
+    }
 
     //Layout items
-    formLayout->addWidget(new QLabel(tr("Prix de vente :"), this), 0, Qt::AlignBottom);
-    formLayout->addWidget(price, 0, Qt::AlignTop);
-
-    formLayout->addWidget(new QLabel(tr("Prix d'achat :"), this), 0, Qt::AlignBottom);
-    formLayout->addWidget(bPrice, 0, Qt::AlignTop);
-
-    formLayout->addWidget(new QLabel(tr("Part jobiste :"), this), 0, Qt::AlignBottom);
-    formLayout->addWidget(jShare, 0, Qt::AlignTop);
-
-    formLayout->addWidget(new QLabel(tr("Prix réduit :"), this), 0, Qt::AlignBottom);
-    formLayout->addWidget(rPrice, 0, Qt::AlignTop);
-
-    formLayout->addWidget(new QLabel(tr("Fonction :"), this), 0, Qt::AlignBottom);
-    formLayout->addWidget(function, 0, Qt::AlignTop);
-
+    QLabel *formTitle = new QLabel(tr("Article sélectionné:"));
+    formTitle->setFont(font);
+    formLayout->addWidget(formTitle);
+    formLayout->setAlignment(formTitle, Qt::AlignCenter);
+    formLayout->addRow(tr("Prix de vente :"), price);
+    formLayout->addRow(tr("Prix d'achat :"), bPrice);
+    formLayout->addRow(tr("Part jobiste :"), jShare);
+    formLayout->addRow(tr("Prix réduit :"), rPrice);
+    formLayout->addRow(tr("Fonction :"), function);
     formLayout->addWidget(validate);
 
-    rightSidebar->addLayout(formLayout);
-    mainLayout->addWidget(articlesView);
-    mainLayout->addLayout(rightSidebar);
+    for(auto it: form->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)){
+        it->setFont(font);
+        formLayout->labelForField(it)->setFont(font);
+    }
+    validate->setFont(font);
 
-    //TODO do not work
-    setTabOrder(price, bPrice);
-    setTabOrder(bPrice, jShare);
-    setTabOrder(jShare, rPrice);
-    //setTabOrder(rPrice, function);
-    //setTabOrder(function, validate);
-    //this->setTabOrder(validate, price);
+    //Functions management
+    QWidget *fctManager = new QWidget(this);
+    QFormLayout *fctManagerLayout = new QFormLayout();
+    QPushButton *addFunction = new QPushButton(tr("Ajouter une fonction"), fctManager);
+    QPushButton *delFunction = new QPushButton(tr("Supprimer"), fctManager);
+    QLabel *addFunctionLabel = new QLabel(tr("Ajouter une fonction :"), fctManager);
+    QLabel *delFunctionLabel = new QLabel(tr("Supprimer une fonction :"), fctManager);
+    QLineEdit *newFunctionName = new QLineEdit(fctManager);
+    QComboBox *selectedFct = new QComboBox(fctManager);
+    fctManagerLayout->addRow(addFunctionLabel);
+    fctManagerLayout->addRow(tr("Nom :"), newFunctionName);
+    fctManagerLayout->addRow(addFunction);
+    fctManagerLayout->addItem(new QSpacerItem(10, 80));
+    fctManagerLayout->addRow(delFunctionLabel);
+    fctManagerLayout->addRow(tr("Fonction à supprimer :"), selectedFct);
+    fctManagerLayout->addRow(delFunction);
 
-    articlesView->setModel(sqlModel);
-    sqlModel->select();
+    newFunctionName->setObjectName("New function name");
+    auto functions = sqlModel->relationModel(functionIndex);
+    functions->select();
+    selectedFct->setObjectName("Selected Function");
+    selectedFct->setModel(functions);
+    selectedFct->setModelColumn(functionNameIndex);
+    selectedFct->setCurrentIndex(0);
 
-    connect(price, SIGNAL(editingFinished()), this, SLOT(entryModified()));
-    connect(bPrice, SIGNAL(editingFinished()), this, SLOT(entryModified()));
-    connect(jShare, SIGNAL(editingFinished()), this, SLOT(entryModified()));
-    connect(rPrice, SIGNAL(editingFinished()), this, SLOT(entryModified()));
+    for(auto it: fctManager->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)){
+        it->setFont(font);
+        auto label = fctManagerLayout->labelForField(it);
+        if(label){
+            label->setFont(font);
+        }
+    }
+
+    rightSidebar->addLayout(formLayout, 2);
+    //rightSidebar->addItem(new QSpacerItem(10, 80));
+    rightSidebar->addLayout(fctManagerLayout, 1);
+    mainLayout->addWidget(articlesView, 3);
+    mainLayout->addLayout(rightSidebar, 4);
+
+    //Connects the signals and slots
+    connect(price, SIGNAL(valueChanged(double)), this, SLOT(entryModified()));
+    connect(bPrice, SIGNAL(valueChanged(double)), this, SLOT(entryModified()));
+    connect(jShare, SIGNAL(valueChanged(double)), this, SLOT(entryModified()));
+    connect(rPrice, SIGNAL(valueChanged(double)), this, SLOT(entryModified()));
     connect(function, SIGNAL(currentIndexChanged(int)), this, SLOT(entryModified()));
-    connect(validate, SIGNAL(clicked()), this, SLOT(entryValidated()));
     connect(articlesView, SIGNAL(clicked(const QModelIndex)), mapper, SLOT(setCurrentModelIndex(const QModelIndex)));
+    connect(articlesView, SIGNAL(clicked(const QModelIndex)), this, SLOT(entryNotModified()));
+    connect(validate, SIGNAL(clicked()), this, SLOT(entryValidated()));
+    connect(addFunction, SIGNAL(clicked()), this, SLOT(addFunction()));
 }
 
+//To be triggered when the content of the form changes
+//Enables the validate button
 void CatalogManager::entryModified(){
-    isEntryModified = true;
-    validate->setEnabled(isEntryModified);
+    validate->setEnabled(true);
 }
 
+//Used to submit datas from the form as well as
+//disable the validate button
 void CatalogManager::entryValidated(){
-    mapper->submit();
-    sqlModel->submitAll();
-    isEntryModified = false;
     validate->setEnabled(false);
-
+    mapper->submit();
 }
+
+//Used to keep the validate button disables in case we change the index in the ListView
+void CatalogManager::entryNotModified(){
+    validate->setEnabled(false);
+}
+
+void CatalogManager::addFunction(){
+    auto fctName = this->findChild<QLineEdit *>("New function name");
+    DatabaseManager::addFunction(fctName->text());
+    fctName->clear();
+    sqlModel->relationModel(functionIndex)->select();
+    auto fctSelected = this->findChild<QComboBox *>("Selected Function");
+    fctSelected->setCurrentIndex(0);
+}
+

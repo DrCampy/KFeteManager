@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QSqlRelationalTableModel>
 #include <QSqlRelationalDelegate>
+#include <QDoubleSpinBox>
 
 class CatalogManager : public QWidget
 {
@@ -17,17 +18,23 @@ public:
 
 private:
     //Form widgets
-    QLineEdit *price, *bPrice, *jShare, *rPrice;
+    QDoubleSpinBox *price, *bPrice, *jShare, *rPrice;
     QComboBox *function;
     QDataWidgetMapper *mapper;
-    bool isEntryModified = false;
     QPushButton *validate;
     QSqlRelationalTableModel *sqlModel;
+
+    int nameIndex, priceIndex, jobShareIndex, bPriceIndex, redPriceIndex,
+    functionIndex, functionNameIndex;
+
 signals:
     void validateEntry();
+
 public slots:
+    void entryNotModified();
     void entryModified();
     void entryValidated();
+    void addFunction();
 };
 
 #endif // CATALOGMANAGER_H
