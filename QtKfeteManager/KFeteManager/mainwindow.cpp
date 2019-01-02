@@ -11,6 +11,7 @@
 #include "mainwindow.h"
 #include "loginview.h"
 #include "salesview.h"
+#include "catalogmanager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -46,6 +47,8 @@ MainWindow::MainWindow(QWidget *parent) :
     managementMenu->addAction(tr("Statistiques financières"));
     connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
 
+    //TODO button about
+
     updateClock();
     updateAccountLabel("");
 
@@ -53,8 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->addPermanentWidget(accountLabel);
 
     sales = new SalesView(this);
-    this->setCentralWidget(sales);
-
+    //this->setCentralWidget(sales);
+    this->setCentralWidget(new CatalogManager(this));
     //TODO fixme
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
 }
