@@ -20,30 +20,32 @@
 #include <QCompleter>
 #include <QDoubleSpinBox>
 #include <QSpacerItem>
+#include <QInputDialog>
+#include <QMessageBox>
 
 #include "catalogmanager.h"
 #include "databasemanager.h"
 
 CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 {
-    QWidget *form = new QWidget(this);
     //Init all private members
-    price       = new QDoubleSpinBox(form);
-    bPrice      = new QDoubleSpinBox(form);
-    jShare      = new QDoubleSpinBox(form);
-    rPrice      = new QDoubleSpinBox(form);
-    function    = new QComboBox(form);
+    price       = new QDoubleSpinBox(this);
+    bPrice      = new QDoubleSpinBox(this);
+    jShare      = new QDoubleSpinBox(this);
+    rPrice      = new QDoubleSpinBox(this);
+    function    = new QComboBox(this);
     mapper      = new QDataWidgetMapper(this);
     validate    = new QPushButton(tr("Valider"));
     sqlModel    = new QSqlRelationalTableModel(this);
     QVBoxLayout *rightSidebar   = new QVBoxLayout();
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
     QFormLayout *formLayout     = new QFormLayout();
-    QListView *articlesView     = new QListView(this);
+    QListView   *articlesView   = new QListView(this);
+    QLabel      *formTitle      = new QLabel(tr("Article sélectionné:"));
+
     QSizePolicy qsp(QSizePolicy::Preferred, QSizePolicy::Preferred);
     QFont font = this->font();
     font.setPointSize(13);
-    articlesView->setFont(font);
 
     //Imediately links the views and the models
     sqlModel->setTable("Articles");
@@ -88,22 +90,7 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     mapper->setItemDelegate(new QSqlRelationalDelegate(mapper));
     mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
 
-    //sets size policy
-    for(auto it: form->findChildren<QWidget *>()){
-        it->setSizePolicy(qsp);
-        it->setMaximumHeight(50);
-    }
-
-    //Configures the spinboxes
-    for(auto it: form->findChildren<QDoubleSpinBox *>()){
-        it->setSingleStep(0.1);
-        it->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        it->setSuffix(tr(" €"));
-    }
-
     //Layout items
-    QLabel *formTitle = new QLabel(tr("Article sélectionné:"));
-    formTitle->setFont(font);
     formLayout->addWidget(formTitle);
     formLayout->setAlignment(formTitle, Qt::AlignCenter);
     formLayout->addRow(tr("Prix de vente :"), price);
@@ -113,47 +100,60 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     formLayout->addRow(tr("Fonction :"), function);
     formLayout->addWidget(validate);
 
-    for(auto it: form->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)){
-        it->setFont(font);
-        formLayout->labelForField(it)->setFont(font);
-    }
-    validate->setFont(font);
-
     //Functions management
-    QWidget *fctManager = new QWidget(this);
     QFormLayout *fctManagerLayout = new QFormLayout();
-    QPushButton *addFunction = new QPushButton(tr("Ajouter une fonction"), fctManager);
-    QPushButton *delFunction = new QPushButton(tr("Supprimer"), fctManager);
-    QLabel *addFunctionLabel = new QLabel(tr("Ajouter une fonction :"), fctManager);
-    QLabel *delFunctionLabel = new QLabel(tr("Supprimer une fonction :"), fctManager);
-    QLineEdit *newFunctionName = new QLineEdit(fctManager);
-    QComboBox *selectedFct = new QComboBox(fctManager);
+    QLabel      *addFunctionLabel = new QLabel(tr("Ajouter une fonction :"), this);
+    QLabel      *delFunctionLabel = new QLabel(tr("Supprimer une fonction :"), this);
+    QPushButton *quitButton       = new QPushButton(tr("Quitter"));
+    auto        *functionsModel   = sqlModel->relationModel(functionIndex);
+
+    addFunctionButton       = new QPushButton(tr("Ajouter une fonction"), this);
+    delFunctionButton       = new QPushButton(tr("Supprimer"), this);
+    newFunctionLineEdit     = new QLineEdit(this);
+    selectedFctCombo        = new QComboBox(this);
+
     fctManagerLayout->addRow(addFunctionLabel);
-    fctManagerLayout->addRow(tr("Nom :"), newFunctionName);
-    fctManagerLayout->addRow(addFunction);
-    fctManagerLayout->addItem(new QSpacerItem(10, 80));
+    fctManagerLayout->addRow(tr("Nom :"), newFunctionLineEdit);
+    fctManagerLayout->addRow(addFunctionButton);
     fctManagerLayout->addRow(delFunctionLabel);
-    fctManagerLayout->addRow(tr("Fonction à supprimer :"), selectedFct);
-    fctManagerLayout->addRow(delFunction);
+    fctManagerLayout->addRow(tr("Fonction à supprimer :"), selectedFctCombo);
+    fctManagerLayout->addRow(delFunctionButton);
+    functionsModel->select();
+    selectedFctCombo->setModel(functionsModel);
+    selectedFctCombo->setModelColumn(functionNameIndex);
+    selectedFctCombo->setCurrentIndex(1); //Selects the first function
+    articlesView->setFont(font);
 
-    newFunctionName->setObjectName("New function name");
-    auto functions = sqlModel->relationModel(functionIndex);
-    functions->select();
-    selectedFct->setObjectName("Selected Function");
-    selectedFct->setModel(functions);
-    selectedFct->setModelColumn(functionNameIndex);
-    selectedFct->setCurrentIndex(0);
-
-    for(auto it: fctManager->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)){
+    //Sets fonts
+    for(auto it: this->findChildren<QWidget *>()){
         it->setFont(font);
         auto label = fctManagerLayout->labelForField(it);
         if(label){
-            label->setFont(font);
+            //label->setFont(font);
+        }
+        label = formLayout->labelForField(it);
+        if(label){
+            //label->setFont(font);
         }
     }
 
+    //sets size policy
+    for(auto it: this->findChildren<QLabel *>()){
+        //it->setSizePolicy(qsp);
+        //it->setMaximumHeight(50);
+    }
+
+    //Configures the spinboxes
+    for(auto it: this->findChildren<QDoubleSpinBox *>()){
+        //it->setSizePolicy(qsp);
+        //it->setMaximumHeight(50);
+        it->setSingleStep(0.1);
+        it->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        it->setSuffix(tr(" €"));
+    }
+
+    rightSidebar->addWidget(quitButton);
     rightSidebar->addLayout(formLayout, 2);
-    //rightSidebar->addItem(new QSpacerItem(10, 80));
     rightSidebar->addLayout(fctManagerLayout, 1);
     mainLayout->addWidget(articlesView, 3);
     mainLayout->addLayout(rightSidebar, 4);
@@ -167,7 +167,11 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     connect(articlesView, SIGNAL(clicked(const QModelIndex)), mapper, SLOT(setCurrentModelIndex(const QModelIndex)));
     connect(articlesView, SIGNAL(clicked(const QModelIndex)), this, SLOT(entryNotModified()));
     connect(validate, SIGNAL(clicked()), this, SLOT(entryValidated()));
-    connect(addFunction, SIGNAL(clicked()), this, SLOT(addFunction()));
+    connect(addFunctionButton, SIGNAL(clicked()), this, SLOT(addFunction()));
+    connect(delFunctionButton, SIGNAL(clicked()), this, SLOT(delFunction()));
+    connect(quitButton, SIGNAL(clicked()), this, SIGNAL(finished()));
+    connect(selectedFctCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(selectedFctChanged(int)));
+
 }
 
 //To be triggered when the content of the form changes
@@ -189,11 +193,40 @@ void CatalogManager::entryNotModified(){
 }
 
 void CatalogManager::addFunction(){
-    auto fctName = this->findChild<QLineEdit *>("New function name");
-    DatabaseManager::addFunction(fctName->text());
-    fctName->clear();
+    DatabaseManager::addFunction(newFunctionLineEdit->text());
+    newFunctionLineEdit->clear();
+    refreshFctModel();
+    this->entryNotModified();
+}
+
+void CatalogManager::delFunction(){
+    //ask for confirmation
+    QString input = QInputDialog::getText(this, tr("Veuillez confirmer la suppression"),
+                                          tr("Pour confirmer la suppression de la fonction, "
+                                             "veuillez entrer son nom :").append(selectedFctCombo->currentText()), QLineEdit::Normal);
+    if(input == selectedFctCombo->currentText()){
+        DatabaseManager::delFunction(input);
+    }else{
+        QMessageBox::warning(this, tr("Erreur"), tr("Le nom entré est incorrect. La fonction n'est pas supprimée."));
+    }
+    refreshFctModel();
+}
+
+void CatalogManager::refreshFctModel(){
+    int selectedFunctionIndex = function->currentIndex();
+    int selectedFctSelectedIndex = selectedFctCombo->currentIndex();
     sqlModel->relationModel(functionIndex)->select();
-    auto fctSelected = this->findChild<QComboBox *>("Selected Function");
-    fctSelected->setCurrentIndex(0);
+    selectedFctCombo->setCurrentIndex(selectedFctSelectedIndex);
+    function->setCurrentIndex(selectedFunctionIndex);
+    this->entryNotModified();
+}
+
+
+void CatalogManager::selectedFctChanged(int i){
+    if(i == 0){
+        delFunctionButton->setEnabled(false);
+    }else{
+        delFunctionButton->setEnabled(true);
+    }
 }
 
