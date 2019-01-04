@@ -68,7 +68,7 @@ Prices(
     Id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE);
 
-INSERT OR REPLACE INTO Functions VALUES('Unknown Function', 0);
+INSERT OR REPLACE INTO Functions VALUES('No Function', 0);
 INSERT OR IGNORE INTO Config VALUES("CurrentSession", "");
 INSERT OR IGNORE INTO Config VALUES("CurrentSessionOrderId", 0);
 INSERT OR IGNORE INTO Config VALUES("PinHash", ""); --TODO Edit for real default hash
