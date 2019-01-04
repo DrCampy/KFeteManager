@@ -67,11 +67,13 @@ void DatabaseManager::openDatabase(){
     if(!ok){
         qDebug() << "Error opening database";
     }
-    QSqlQuery foreign_keys;
-    bool res = foreign_keys.exec("PRAGMA foreign_keys=ON;");
+    QSqlQuery query;
+    bool res = query.exec("PRAGMA foreign_keys=ON;");
     if(!res){
         qDebug()<<"Error seting PRAGMA foreign_keys=ON";
     }
+    query.exec(QString("REPLACE INTO Functions(Id, name) VALUES(0,'").append(QObject::tr("Pas de fonction")).append("');"));
+
 }
 
 bool DatabaseManager::checkDatabase(){
@@ -608,4 +610,15 @@ QList<QString> DatabaseManager::getFunctions(){
         list.append(query.value(0).toString());
     }
     return list;
+}
+
+void DatabaseManager::delFunction(QString name){
+    QSqlQuery query;
+    query.prepare("DELETE FROM Functions WHERE name=?;");
+    query.addBindValue(name);
+    int ret = query.exec();
+    if(!ret){
+        qDebug() << "Deleting function failed.";
+        qDebug() << query.lastError().text();
+    }
 }

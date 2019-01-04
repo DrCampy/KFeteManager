@@ -65,6 +65,7 @@ public:
     static uint addFunction(QString name);
     static uint hasFunction(QString name);
     static QList<QString> getFunctions();
+    static void delFunction(QString name);
 
 protected:
     //Managing articles
