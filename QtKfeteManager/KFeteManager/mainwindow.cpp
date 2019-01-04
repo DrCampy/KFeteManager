@@ -4,7 +4,7 @@
 #include <QStatusBar>
 #include <QMouseEvent>
 #include <QTimer>
-
+#include <QStackedWidget>
 #include <QMenuBar>
 #include <QMenu>
 
@@ -16,6 +16,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
+    center = new QStackedWidget(this);
     clockLabel = new QLabel(this);
     accountLabel = new PushLabel(this);
     accountLabel->setToolTip(tr("Cliquez pour supprimer"));
@@ -54,12 +55,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     statusBar()->addWidget(clockLabel);
     statusBar()->addPermanentWidget(accountLabel);
-
-    sales = new SalesView(this);
-    //this->setCentralWidget(sales);
-    this->setCentralWidget(new CatalogManager(this));
+    center->addWidget(new SalesView(center));
+    center->addWidget(new CatalogManager(center));
+    center->setCurrentIndex(0);
+    this->setCentralWidget(center);
     //TODO fixme
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
+    connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
 }
 
 MainWindow::~MainWindow()
@@ -106,4 +108,12 @@ void MainWindow::closeSession(){
 
 void MainWindow::manageDB(){
     emit receiveRandomEvent();
+}
+
+void MainWindow::editCatalog(){
+    center->setCurrentIndex(1);
+}
+
+void MainWindow::backToSales(){
+    center->setCurrentIndex(0);
 }

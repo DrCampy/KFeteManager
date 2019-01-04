@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QDateTime>
 #include <QMenuBar>
+#include <QStackedWidget>
 
 #include "salesview.h"
 #include "accountmanagementview.h"
@@ -33,7 +34,7 @@ public:
     ~MainWindow();
 
 private:
-    SalesView *sales;
+    QStackedWidget *center;
     QDateTime date;
     QLabel *clockLabel;
     PushLabel *accountLabel;
@@ -43,12 +44,13 @@ public slots:
     void updateAccountLabel(QString);
     //void enteredPassword(QString);
     void receiveRandomEvent(); //TODO remove
+    void backToSales();
 
     //From the menu
     void closeSession();
     void manageDB();
     //void editCarte();
-    //void editCatalog();
+    void editCatalog();
     //void payJobists();
     //void statistics();
 
