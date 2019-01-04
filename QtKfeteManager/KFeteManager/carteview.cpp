@@ -111,7 +111,7 @@ void CarteView::updateView(){
 
 void CarteView::setModel(CarteModel *model){
     this->model = model;
-    Searcher *searcher = new Searcher(model->getArticlesList());
+    Searcher *searcher = new Searcher(model->getArticlesList(), this);
     search->addAction(searcher);
     connect(carteButtons, SIGNAL(buttonClicked(int)), model, SLOT(buttonClicked(int)) );
     connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));

@@ -21,6 +21,7 @@ CurrentOrderModel::CurrentOrderModel(int rows, QObject *parent)
 }
 
 CurrentOrderModel::~CurrentOrderModel(){
+    delete order;
     //delete itemsCount;
     //delete items;
 }
