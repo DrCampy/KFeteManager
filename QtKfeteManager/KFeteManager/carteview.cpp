@@ -12,7 +12,7 @@
 #include "carteview.h"
 #include "cartemodel.h"
 
-CarteView::CarteView(QWidget *parent) : QWidget(parent)
+CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
 {
     //Checks the number of pages
     if(PAGES_NAMES.size() != NB_MENU_PAGES){
@@ -24,6 +24,7 @@ CarteView::CarteView(QWidget *parent) : QWidget(parent)
     QStackedLayout *sLayout = new QStackedLayout(); //main layout with pages inside
     QButtonGroup *tabs      = new QButtonGroup(this);
     carteButtons            = new QButtonGroup(this);
+    this->inUse = inUse;
     hBox->setSpacing(0);
     vBox->setSpacing(0);
 
@@ -60,17 +61,18 @@ CarteView::CarteView(QWidget *parent) : QWidget(parent)
         hBox->addWidget(tmp, Qt::AlignCenter);
         tabs->addButton(tmp, i);
     }
-    //Inserts the search button
-    search = new QToolButton(this);
-    search->setText(tr("&Rechercher"));
-    search->setPopupMode(QToolButton::InstantPopup);
-    search->setArrowType(Qt::NoArrow);
-    search->setShortcut(Qt::CTRL+Qt::Key_F);
-    search->setMinimumHeight(25);
-    search->setMaximumHeight(80);
-    search->setSizePolicy(qsp);
-    hBox->addWidget(search);
-
+    if(inUse){
+        //Inserts the search button
+        search = new QToolButton(this);
+        search->setText(tr("&Rechercher"));
+        search->setPopupMode(QToolButton::InstantPopup);
+        search->setArrowType(Qt::NoArrow);
+        search->setShortcut(Qt::CTRL+Qt::Key_F);
+        search->setMinimumHeight(25);
+        search->setMaximumHeight(80);
+        search->setSizePolicy(qsp);
+        hBox->addWidget(search);
+    }
     vBox->addLayout(sLayout, 8);
     vBox->addLayout(hBox, 1);
 
@@ -82,9 +84,12 @@ CarteView::CarteView(QWidget *parent) : QWidget(parent)
 
 void CarteView::updateButton(unsigned int id){
     auto details = model->getButton(id);
+
     if(details == nullptr){
         //disables button;
-        carteButtons->button(static_cast<int>(id))->setDisabled(true);
+        if(inUse){
+            carteButtons->button(static_cast<int>(id))->setDisabled(true);
+        }
     }else{
         QAbstractButton *button = carteButtons->button(static_cast<int>(id));
         button->setDisabled(false);
@@ -93,11 +98,9 @@ void CarteView::updateButton(unsigned int id){
         ss.append(details->getTextColor().name());
         ss.append("; background-color: ");
         ss.append(details->getBackgroundColor().name());
-        //ss.append(";");
         ss.append("; border: none;");
         button->setStyleSheet(ss);
         button->setText(details->getName());
-        qDebug() << ss;
     }
 }
 
@@ -109,11 +112,13 @@ void CarteView::updateView(){
 
 void CarteView::setModel(CarteModel *model){
     this->model = model;
-    Searcher *searcher = new Searcher(model->getArticlesList(), this);
-    search->addAction(searcher);
     connect(carteButtons, SIGNAL(buttonClicked(int)), model, SLOT(buttonClicked(int)) );
     connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));
-    connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
+    if(inUse){
+        Searcher *searcher = new Searcher(model->getArticlesList(), this);
+        search->addAction(searcher);
+        connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
+    }
     updateView();
 }
 

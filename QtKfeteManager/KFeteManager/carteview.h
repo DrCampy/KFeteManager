@@ -10,12 +10,17 @@
 
 #include "catalog.h"
 #include "cartemodel.h"
+//#include "cartemanager.h"
+
+class CarteManager;
+class CarteView;
+class Searcher;
 
 class CarteView : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CarteView(QWidget *parent = nullptr);
+    explicit CarteView(QWidget *parent = nullptr, bool inUse = true);
     void assignButton(int id, QString article);
     void setModel(CarteModel *model);
     void updateButton(unsigned int id);
@@ -26,9 +31,12 @@ private :
     QButtonGroup *carteButtons;
     CarteModel *model;
     QToolButton *search;
+    bool inUse; //This variable determines if we see the searchbar and if the buttons can be disabled.
 
 public slots:
     void updateView();
+
+friend CarteManager;
 
 };
 
@@ -40,7 +48,7 @@ public:
     QWidget *createWidget(QWidget *parent);
 
 private:
-    const QStringList *list;
+    const QStringList *list; //todo rename. Name is ambiguous
     QLineEdit *lineEdit;
 
 public slots:
