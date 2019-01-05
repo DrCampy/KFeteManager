@@ -65,6 +65,7 @@ class SalesView : public QWidget
     Q_OBJECT
 public:
     explicit SalesView(QWidget *parent = nullptr );
+    CarteModel *getCarteModel();
 
 private:
 

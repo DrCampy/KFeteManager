@@ -154,6 +154,10 @@ void SalesView::actionPerformed(){
     currentOrderViewResize();
 }
 
+CarteModel *SalesView::getCarteModel(){
+    return carteModel;
+}
+
 TopBar::TopBar(QWidget *parent) : QWidget(parent)
 {
     QHBoxLayout *hBox = new QHBoxLayout(this);
