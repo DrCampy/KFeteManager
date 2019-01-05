@@ -27,11 +27,15 @@
 CarteManager::CarteManager(CarteModel *carteModel, QWidget *parent) : QWidget(parent)
 {
 
+    articlesModel       = new QSqlTableModel(this);
+    articlesView        = new QListView(this);
+    carteView           = new CarteView(this, false);
+    previewButton       = new QPushButton(this);
+    validateButton      = new QPushButton(tr("Valider"), this);
+    this->carteModel    = carteModel;
+
     QVBoxLayout         *middleColumn           = new QVBoxLayout();
     QHBoxLayout         *mainLayout             = new QHBoxLayout(this);
-    QSqlTableModel      *articlesModel          = new QSqlTableModel(this);
-    QColorDialog        *backColor              = new QColorDialog(this);
-    QColorDialog        *textColor              = new QColorDialog(this);
     QPushButton         *quit                   = new QPushButton(tr("Quitter"), this);
     QPushButton         *changeBackColor        = new QPushButton(tr("Changer la couleur de fond"), this);
     QPushButton         *changeTextColor        = new QPushButton(tr("Changer la couleur du texte"), this);
@@ -47,17 +51,8 @@ CarteManager::CarteManager(CarteModel *carteModel, QWidget *parent) : QWidget(pa
     line2->setFrameShadow(QFrame::Sunken);
     line2->setLineWidth(1);
 
-    articlesView        = new QListView(this);
-    carteView           = new CarteView(this, false);
-    previewButton       = new QPushButton(this);
-    validateButton      = new QPushButton(tr("Valider"), this);
-    this->carteModel    = carteModel;
-
-
-    defaultTextColor = previewButton->palette().color(QWidget::backgroundRole());
-    defaultBackgroundColor = previewButton->palette().color(QWidget::foregroundRole());
-
-    qDebug() << "Texte : " << defaultTextColor << " Background : " << defaultBackgroundColor;
+    defaultBackgroundColor = previewButton->palette().color(QWidget::backgroundRole());
+    defaultTextColor = previewButton->palette().color(QWidget::foregroundRole());
 
     carteView->setModel(carteModel);
     articlesModel->setTable("Articles");
@@ -84,7 +79,10 @@ CarteManager::CarteManager(CarteModel *carteModel, QWidget *parent) : QWidget(pa
     connect(quit, SIGNAL(clicked()), this, SIGNAL(finished()));
     connect(carteView->carteButtons, SIGNAL(buttonClicked(int)), this, SLOT(selectButton(int)));
     connect(articlesView, SIGNAL(activated(const QModelIndex)), this, SLOT(selectedArticle(const QModelIndex)));
-
+    connect(changeTextColor, SIGNAL(clicked()), this, SLOT(selectTextColor()));
+    connect(changeBackColor, SIGNAL(clicked()), this, SLOT(selectBackgroundColor()));
+    connect(validateButton, SIGNAL(clicked()), this, SLOT(confirmChanges()));
+    connect(previewButton, SIGNAL(clicked()), this, SLOT(resetPreview()));
 }
 
 void CarteManager::selectButton(int i){
@@ -97,8 +95,9 @@ void CarteManager::selectButton(int i){
     }else{
         backgroundColor = defaultBackgroundColor;
         textColor = defaultTextColor;
-        text = tr("<Vide>");
+        text = tr("");
     }
+    articlesModel->select();
     loadPreview();
 }
 
@@ -106,19 +105,43 @@ void CarteManager::selectButton(int i){
 void CarteManager::loadPreview(){
     QString ss;
     ss.append("color: ");
-    ss.append(backgroundColor.name());
-    ss.append("; background-color: ");
     ss.append(textColor.name());
-    ss.append(";");// border: none;");
+    ss.append("; background-color: ");
+    ss.append(backgroundColor.name());
+    ss.append(";");
     previewButton->setStyleSheet(ss);
-    previewButton->setText(text);
+    if(text == ""){
+        previewButton->setText(tr("<Vide>"));
+    }else{
+        previewButton->setText(text);
+    }
 }
 
 void CarteManager::confirmChanges(){
-
+    ButtonDataWrapper data(text, backgroundColor, textColor);
+    carteModel->addEntry(static_cast<unsigned int>(selectedIndex), data);
 }
 
 void CarteManager::selectedArticle(const QModelIndex &index){
     this->text = index.data().toString();
+    loadPreview();
+}
+
+void CarteManager::selectTextColor(){
+    QColorDialog *color = new QColorDialog(this);
+    textColor = color->getColor(textColor, this, tr("Sélectionnez la couleur du texte"));
+    loadPreview();
+}
+
+void CarteManager::selectBackgroundColor(){
+    QColorDialog *color = new QColorDialog(this);
+    backgroundColor = color->getColor(backgroundColor, this, tr("Sélectionnez la couleur du fond"));
+    loadPreview();
+}
+
+void CarteManager::resetPreview(){
+    this->text = tr("");
+    textColor = defaultTextColor;
+    backgroundColor = defaultBackgroundColor;
     loadPreview();
 }

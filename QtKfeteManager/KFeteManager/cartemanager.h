@@ -6,6 +6,7 @@
 #include <QString>
 #include <QPushButton>
 #include <QColorDialog>
+#include <QSqlTableModel>
 
 #include "cartemodel.h"
 #include "carteview.h"
@@ -24,7 +25,7 @@ private:
     QListView       *articlesView;
     CarteModel      *carteModel;
     CarteView       *carteView;
-
+    QSqlTableModel  *articlesModel;
     int selectedIndex = 0;
 
     QString text;
@@ -43,6 +44,9 @@ public slots:
     void selectButton(int);
     void confirmChanges();
     void selectedArticle(const QModelIndex &index);
+    void selectTextColor();
+    void selectBackgroundColor();
+    void resetPreview();
 };
 
 #endif // CARTEMANAGER_H
