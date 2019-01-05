@@ -147,6 +147,8 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
         it->setSingleStep(0.1);
         it->setButtonSymbols(QAbstractSpinBox::NoButtons);
         it->setSuffix(tr(" €"));
+        it->setMinimum(-qInf());
+        it->setMaximum(qInf());
     }
 
     QFrame *line1 = new QFrame(this);
