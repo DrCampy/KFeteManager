@@ -593,7 +593,6 @@ uint DatabaseManager::hasFunction(QString name){
         uint val = query.value(0).toUInt();
         return val;
     }
-    qDebug() << "Function " << name << " not found.";
     return 0;
 }
 
