@@ -47,7 +47,6 @@ CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
                 gridLayout->addWidget(tmp, static_cast<int>(h), static_cast<int>(w));
             }
         }
-
         //insert pages in QStackedLayout
         sLayout->addWidget(page);
 
@@ -61,6 +60,7 @@ CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
         hBox->addWidget(tmp, Qt::AlignCenter);
         tabs->addButton(tmp, i);
     }
+
     if(inUse){
         //Inserts the search button
         search = new QToolButton(this);
@@ -87,6 +87,10 @@ void CarteView::updateButton(unsigned int id){
 
     if(details == nullptr){
         //disables button;
+        QAbstractButton *button = carteButtons->button(static_cast<int>(id));
+        QString ss;
+        button->setStyleSheet("");
+        button->setText("");
         if(inUse){
             carteButtons->button(static_cast<int>(id))->setDisabled(true);
         }
@@ -108,6 +112,9 @@ void CarteView::updateView(){
     for(unsigned int i = 0; i < NB_MENU_PAGES*GRID_H*GRID_W; i++){
         updateButton(i);
     }
+    if(inUse){
+        searcher->refreshList(model->getArticlesList());
+    }
 }
 
 void CarteView::setModel(CarteModel *model){
@@ -115,7 +122,7 @@ void CarteView::setModel(CarteModel *model){
     connect(carteButtons, SIGNAL(buttonClicked(int)), model, SLOT(buttonClicked(int)) );
     connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));
     if(inUse){
-        Searcher *searcher = new Searcher(model->getArticlesList(), this);
+        searcher = new Searcher(model->getArticlesList(), this);
         search->addAction(searcher);
         connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
     }
@@ -123,6 +130,15 @@ void CarteView::setModel(CarteModel *model){
 }
 
 Searcher::Searcher(const QStringList *list, QWidget *parent) : QWidgetAction (parent){
+    this->list = list;
+}
+
+Searcher::~Searcher(){
+    delete list;
+}
+
+void Searcher::refreshList(QStringList *list){
+    delete this->list;
     this->list = list;
 }
 

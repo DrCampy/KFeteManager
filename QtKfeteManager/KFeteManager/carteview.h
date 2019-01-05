@@ -7,10 +7,10 @@
 #include <QWidgetAction>
 #include <QToolButton>
 #include <QLineEdit>
+#include <QColor>
 
 #include "catalog.h"
 #include "cartemodel.h"
-//#include "cartemanager.h"
 
 class CarteManager;
 class CarteView;
@@ -31,6 +31,7 @@ private :
     QButtonGroup *carteButtons;
     CarteModel *model;
     QToolButton *search;
+    Searcher *searcher;
     bool inUse; //This variable determines if we see the searchbar and if the buttons can be disabled.
 
 public slots:
@@ -45,7 +46,9 @@ class Searcher : public QWidgetAction
     Q_OBJECT
 public:
     explicit Searcher(const QStringList *list, QWidget *parent = nullptr);
+    ~Searcher();
     QWidget *createWidget(QWidget *parent);
+    void refreshList(QStringList *list);
 
 private:
     const QStringList *list; //todo rename. Name is ambiguous
