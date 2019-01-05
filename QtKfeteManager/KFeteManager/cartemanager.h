@@ -10,6 +10,8 @@
 #include "cartemodel.h"
 #include "carteview.h"
 
+class CarteManager;
+
 class CarteManager : public QWidget
 {
     Q_OBJECT
@@ -23,10 +25,24 @@ private:
     CarteModel      *carteModel;
     CarteView       *carteView;
 
+    int selectedIndex = 0;
+
+    QString text;
+    QColor backgroundColor;
+    QColor textColor;
+
+    QColor defaultBackgroundColor;
+    QColor defaultTextColor;
+
+    void loadPreview();
+
 signals:
     void finished();
 
 public slots:
+    void selectButton(int);
+    void confirmChanges();
+    void selectedArticle(const QModelIndex &index);
 };
 
 #endif // CARTEMANAGER_H
