@@ -12,7 +12,7 @@
 #include "carteview.h"
 #include "cartemodel.h"
 
-CarteView::CarteView(bool searchBar, QWidget *parent) : QWidget(parent)
+CarteView::CarteView(QWidget *parent) : QWidget(parent)
 {
     //Checks the number of pages
     if(PAGES_NAMES.size() != NB_MENU_PAGES){
@@ -24,7 +24,6 @@ CarteView::CarteView(bool searchBar, QWidget *parent) : QWidget(parent)
     QStackedLayout *sLayout = new QStackedLayout(); //main layout with pages inside
     QButtonGroup *tabs      = new QButtonGroup(this);
     carteButtons            = new QButtonGroup(this);
-    this->searchBar         = searchBar;
     hBox->setSpacing(0);
     vBox->setSpacing(0);
 
@@ -63,18 +62,17 @@ CarteView::CarteView(bool searchBar, QWidget *parent) : QWidget(parent)
         hBox->addWidget(tmp, Qt::AlignCenter);
         tabs->addButton(tmp, i);
     }
-    if(searchBar){
-        //Inserts the search button
-        search = new QToolButton(this);
-        search->setText(tr("&Rechercher"));
-        search->setPopupMode(QToolButton::InstantPopup);
-        search->setArrowType(Qt::NoArrow);
-        search->setShortcut(Qt::CTRL+Qt::Key_F);
-        search->setMinimumHeight(25);
-        search->setMaximumHeight(80);
-        search->setSizePolicy(qsp);
-        hBox->addWidget(search);
-    }
+    //Inserts the search button
+    search = new QToolButton(this);
+    search->setText(tr("&Rechercher"));
+    search->setPopupMode(QToolButton::InstantPopup);
+    search->setArrowType(Qt::NoArrow);
+    search->setShortcut(Qt::CTRL+Qt::Key_F);
+    search->setMinimumHeight(25);
+    search->setMaximumHeight(80);
+    search->setSizePolicy(qsp);
+    hBox->addWidget(search);
+
     vBox->addLayout(sLayout, 8);
     vBox->addLayout(hBox, 1);
 
@@ -113,13 +111,11 @@ void CarteView::updateView(){
 
 void CarteView::setModel(CarteModel *model){
     this->model = model;
-    if(searchBar){
-        Searcher *searcher = new Searcher(model->getArticlesList(), this);
-        search->addAction(searcher);
-        connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
-    }
-    connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));
+    Searcher *searcher = new Searcher(model->getArticlesList(), this);
+    search->addAction(searcher);
     connect(carteButtons, SIGNAL(buttonClicked(int)), model, SLOT(buttonClicked(int)) );
+    connect(model, SIGNAL(modelUpdated()), this, SLOT(updateView()));
+    connect(searcher, SIGNAL(articleSearched(QString)), model, SIGNAL(articleClicked(QString)));
     updateView();
 }
 

@@ -15,7 +15,7 @@ class CarteView : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CarteView(bool searchBar, QWidget *parent = nullptr);
+    explicit CarteView(QWidget *parent = nullptr);
     void assignButton(int id, QString article);
     void setModel(CarteModel *model);
     void updateButton(unsigned int id);
@@ -26,7 +26,6 @@ private :
     QButtonGroup *carteButtons;
     CarteModel *model;
     QToolButton *search;
-    bool searchBar;
 
 public slots:
     void updateView();
