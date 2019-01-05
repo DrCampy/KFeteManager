@@ -31,8 +31,6 @@ CarteView::CarteView(QWidget *parent) : QWidget(parent)
     QSizePolicy qsp(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
 
     QPushButton *tmp;
-    QPalette defaultPalette = QPushButton(nullptr).palette();
-    defaultPalette.setColor(QPalette::Button, Qt::lightGray);
     for(int i = 0; i < static_cast<int>(NB_MENU_PAGES); i++){
         QWidget *page = new QWidget(this);
         QGridLayout *gridLayout = new QGridLayout(page);
