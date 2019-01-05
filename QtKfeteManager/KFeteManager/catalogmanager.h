@@ -9,6 +9,8 @@
 #include <QSqlRelationalTableModel>
 #include <QSqlRelationalDelegate>
 #include <QDoubleSpinBox>
+#include <QLabel>
+
 class CatalogManager : public QWidget
 {
     Q_OBJECT
@@ -19,19 +21,19 @@ private:
     QSqlRelationalTableModel *sqlModel;
     int nameIndex, priceIndex, jobShareIndex, bPriceIndex, redPriceIndex,
     functionIndex, functionNameIndex;
-
+    QListView *articlesView;
     //Form widgets
     QDoubleSpinBox      *price, *bPrice, *jShare, *rPrice;
     QComboBox           *function;
     QDataWidgetMapper   *mapper;
-    QPushButton         *validate;
+    QPushButton         *validate, *deleteArticleButton;
+    QLabel              *formTitle;
 
     //Function management widgets
     QPushButton *addFunctionButton;
     QPushButton *delFunctionButton;
     QLineEdit   *newFunctionLineEdit;
     QComboBox   *selectedFctCombo;
-
     void refreshFctModel();
 
 
@@ -40,12 +42,14 @@ signals:
     void finished();
 
 public slots:
-    void entryNotModified();
+    void selectionChanged();
     void entryModified();
     void entryValidated();
     void addFunction();
     void delFunction();
     void selectedFctChanged(int i);
+    void createArticle();
+    void deleteArticle();
 
 };
 

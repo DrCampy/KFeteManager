@@ -22,6 +22,8 @@
 #include <QSpacerItem>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QSqlError>
+
 
 #include "catalogmanager.h"
 #include "databasemanager.h"
@@ -29,21 +31,22 @@
 CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 {
     //Init all private members
-    price       = new QDoubleSpinBox(this);
-    bPrice      = new QDoubleSpinBox(this);
-    jShare      = new QDoubleSpinBox(this);
-    rPrice      = new QDoubleSpinBox(this);
-    function    = new QComboBox(this);
-    mapper      = new QDataWidgetMapper(this);
-    validate    = new QPushButton(tr("Valider"));
-    sqlModel    = new QSqlRelationalTableModel(this);
+    price           = new QDoubleSpinBox(this);
+    bPrice          = new QDoubleSpinBox(this);
+    jShare          = new QDoubleSpinBox(this);
+    rPrice          = new QDoubleSpinBox(this);
+    function        = new QComboBox(this);
+    mapper          = new QDataWidgetMapper(this);
+    validate        = new QPushButton(tr("Valider"), this);
+    deleteArticleButton   = new QPushButton(tr("Supprimer"), this);
+    sqlModel        = new QSqlRelationalTableModel(this);
+    articlesView    = new QListView(this);
+    formTitle       = new QLabel(tr("Article sélectionné : Aucun"), this);
+
     QVBoxLayout *rightSidebar   = new QVBoxLayout();
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
     QFormLayout *formLayout     = new QFormLayout();
-    QListView   *articlesView   = new QListView(this);
-    QLabel      *formTitle      = new QLabel(tr("Article sélectionné:"));
 
-    QSizePolicy qsp(QSizePolicy::Preferred, QSizePolicy::Preferred);
     QFont font = this->font();
     font.setPointSize(13);
 
@@ -66,10 +69,10 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 
     //Configures the sql model
     sqlModel->setRelation(functionIndex, QSqlRelation("Functions", "Id", "name"));
-    sqlModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     sqlModel->select();
-
+    sqlModel->setEditStrategy(QSqlTableModel::OnRowChange);
     //Configure widgets
+    deleteArticleButton->setEnabled(false);
     //LineEdits and combobox
     validate->setEnabled(false);
 
@@ -77,37 +80,38 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     articlesView->setModel(sqlModel);
     articlesView->setModelColumn(nameIndex); //Sets the column to the name
     articlesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    sqlModel->sort(nameIndex, Qt::AscendingOrder);
     function->setModel(sqlModel->relationModel(functionIndex));
     function->setModelColumn(functionNameIndex);
 
     //Mapper
     mapper->setModel(sqlModel);
+    mapper->setItemDelegate(new QSqlRelationalDelegate(mapper));
     mapper->addMapping(price, priceIndex);
     mapper->addMapping(bPrice, bPriceIndex);
     mapper->addMapping(jShare, jobShareIndex);
     mapper->addMapping(rPrice, redPriceIndex);
     mapper->addMapping(function, functionIndex);
-    mapper->setItemDelegate(new QSqlRelationalDelegate(mapper));
     mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
 
     //Layout items
-    formLayout->addWidget(formTitle);
-    formLayout->setAlignment(formTitle, Qt::AlignCenter);
+    formLayout->addRow(formTitle);
     formLayout->addRow(tr("Prix de vente :"), price);
     formLayout->addRow(tr("Prix d'achat :"), bPrice);
     formLayout->addRow(tr("Part jobiste :"), jShare);
     formLayout->addRow(tr("Prix réduit :"), rPrice);
     formLayout->addRow(tr("Fonction :"), function);
     formLayout->addWidget(validate);
+    formLayout->addWidget(deleteArticleButton);
 
     //Functions management
     QFormLayout *fctManagerLayout = new QFormLayout();
     QLabel      *addFunctionLabel = new QLabel(tr("Ajouter une fonction :"), this);
     QLabel      *delFunctionLabel = new QLabel(tr("Supprimer une fonction :"), this);
-    QPushButton *quitButton       = new QPushButton(tr("Quitter"));
+    QPushButton *quitButton       = new QPushButton(tr("Quitter"), this);
     auto        *functionsModel   = sqlModel->relationModel(functionIndex);
 
-    addFunctionButton       = new QPushButton(tr("Ajouter une fonction"), this);
+    addFunctionButton       = new QPushButton(tr("Ajouter"), this);
     delFunctionButton       = new QPushButton(tr("Supprimer"), this);
     newFunctionLineEdit     = new QLineEdit(this);
     selectedFctCombo        = new QComboBox(this);
@@ -122,39 +126,48 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     selectedFctCombo->setModel(functionsModel);
     selectedFctCombo->setModelColumn(functionNameIndex);
     selectedFctCombo->setCurrentIndex(1); //Selects the first function
-    articlesView->setFont(font);
+
+    QPushButton *addArticleButton = new QPushButton(tr("Créer un nouvel article"), this);
 
     //Sets fonts
     for(auto it: this->findChildren<QWidget *>()){
         it->setFont(font);
         auto label = fctManagerLayout->labelForField(it);
         if(label){
-            //label->setFont(font);
+            label->setFont(font);
         }
         label = formLayout->labelForField(it);
         if(label){
-            //label->setFont(font);
+            label->setFont(font);
         }
-    }
-
-    //sets size policy
-    for(auto it: this->findChildren<QLabel *>()){
-        //it->setSizePolicy(qsp);
-        //it->setMaximumHeight(50);
     }
 
     //Configures the spinboxes
     for(auto it: this->findChildren<QDoubleSpinBox *>()){
-        //it->setSizePolicy(qsp);
-        //it->setMaximumHeight(50);
         it->setSingleStep(0.1);
         it->setButtonSymbols(QAbstractSpinBox::NoButtons);
         it->setSuffix(tr(" €"));
     }
 
-    rightSidebar->addWidget(quitButton);
-    rightSidebar->addLayout(formLayout, 2);
-    rightSidebar->addLayout(fctManagerLayout, 1);
+    QFrame *line1 = new QFrame(this);
+    line1->setFrameShape(QFrame::HLine);
+    line1->setFrameShadow(QFrame::Sunken);
+    line1->setLineWidth(1);
+    QFrame *line2 = new QFrame(this);
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+    line2->setLineWidth(1);
+
+    formLayout->setAlignment(Qt::AlignCenter);
+    fctManagerLayout->setAlignment(Qt::AlignBottom);
+
+    rightSidebar->addWidget(quitButton, 0, Qt::AlignTop);
+    rightSidebar->addLayout(formLayout, 0);
+    rightSidebar->addWidget(line1, 0, Qt::AlignHCenter);
+    rightSidebar->addWidget(addArticleButton, 0, Qt::AlignHCenter);
+    rightSidebar->addWidget(line2, 0, Qt::AlignHCenter);
+    rightSidebar->addLayout(fctManagerLayout, 0);
+
     mainLayout->addWidget(articlesView, 3);
     mainLayout->addLayout(rightSidebar, 4);
 
@@ -165,13 +178,14 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     connect(rPrice, SIGNAL(valueChanged(double)), this, SLOT(entryModified()));
     connect(function, SIGNAL(currentIndexChanged(int)), this, SLOT(entryModified()));
     connect(articlesView, SIGNAL(clicked(const QModelIndex)), mapper, SLOT(setCurrentModelIndex(const QModelIndex)));
-    connect(articlesView, SIGNAL(clicked(const QModelIndex)), this, SLOT(entryNotModified()));
+    connect(articlesView, SIGNAL(clicked(const QModelIndex)), this, SLOT(selectionChanged()));
     connect(validate, SIGNAL(clicked()), this, SLOT(entryValidated()));
     connect(addFunctionButton, SIGNAL(clicked()), this, SLOT(addFunction()));
     connect(delFunctionButton, SIGNAL(clicked()), this, SLOT(delFunction()));
     connect(quitButton, SIGNAL(clicked()), this, SIGNAL(finished()));
     connect(selectedFctCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(selectedFctChanged(int)));
-
+    connect(addArticleButton, SIGNAL(clicked()), this, SLOT(createArticle()));
+    connect(deleteArticleButton, SIGNAL(clicked()), this, SLOT(deleteArticle()));
 }
 
 //To be triggered when the content of the form changes
@@ -183,20 +197,37 @@ void CatalogManager::entryModified(){
 //Used to submit datas from the form as well as
 //disable the validate button
 void CatalogManager::entryValidated(){
+    bool tmp = mapper->submit();
+    if(tmp == true){
+        qDebug() << "Validate returned true";
+    }else{
+        qDebug() << "Validate returned false";
+    }
+    qDebug() << sqlModel->lastError().text();
     validate->setEnabled(false);
-    mapper->submit();
+
 }
 
 //Used to keep the validate button disables in case we change the index in the ListView
-void CatalogManager::entryNotModified(){
+// and update the title of the form
+void CatalogManager::selectionChanged(){
     validate->setEnabled(false);
+    QString formTitleStr(tr("Article sélectionné : "));
+    QString articleName = articlesView->currentIndex().data().toString();
+    if(articleName == ""){
+        formTitleStr.append("Aucun");
+    }else{
+        formTitleStr.append(articleName);
+    }
+    formTitle->setText(formTitleStr);
+    deleteArticleButton->setEnabled(true);
 }
 
 void CatalogManager::addFunction(){
     DatabaseManager::addFunction(newFunctionLineEdit->text());
     newFunctionLineEdit->clear();
     refreshFctModel();
-    this->entryNotModified();
+    this->selectionChanged();
 }
 
 void CatalogManager::delFunction(){
@@ -218,7 +249,7 @@ void CatalogManager::refreshFctModel(){
     sqlModel->relationModel(functionIndex)->select();
     selectedFctCombo->setCurrentIndex(selectedFctSelectedIndex);
     function->setCurrentIndex(selectedFunctionIndex);
-    this->entryNotModified();
+    this->selectionChanged();
 }
 
 
@@ -230,3 +261,30 @@ void CatalogManager::selectedFctChanged(int i){
     }
 }
 
+void CatalogManager::createArticle(){
+    QString input = QInputDialog::getText(
+                this, tr("Créer un nouvel article"),
+                tr("Veuillez entrer un nom pour le nouvel article."),
+                QLineEdit::Normal);
+    Article a(input);
+    a.create();
+    auto selection = articlesView->currentIndex();
+    sqlModel->select();
+    articlesView->setCurrentIndex(selection);
+    mapper->setCurrentModelIndex(selection);
+}
+
+void CatalogManager::deleteArticle(){
+    QString input = QInputDialog::getText(this, tr("Veuillez confirmer la suppression"),
+                                          tr("Pour confirmer la suppression de l'article, "
+                                          "veuillez entrer son nom :").append(articlesView->currentIndex().data().toString()),
+                                          QLineEdit::Normal);
+
+    if(input == articlesView->currentIndex().data().toString()){
+        sqlModel->removeRow(articlesView->currentIndex().row());
+    }else{
+        QMessageBox::warning(this, tr("Erreur"), tr("Le nom entré est incorrect. L'article n'est pas supprimé."));
+    }
+    sqlModel->select();
+
+}
