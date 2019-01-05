@@ -13,7 +13,7 @@ class Article
 public:
     explicit Article(QString name);
 
-    void create(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString function);
+    void create(qreal price = 0, qreal jobistShare = 0, qreal buyingPrice = 0, qreal reducedPrice = 0, QString function = QString());
     bool exists() const;
 
     qreal getPrice() const;
