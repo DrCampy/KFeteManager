@@ -12,6 +12,7 @@
 #include "loginview.h"
 #include "salesview.h"
 #include "catalogmanager.h"
+#include "cartemanager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -55,13 +56,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     statusBar()->addWidget(clockLabel);
     statusBar()->addPermanentWidget(accountLabel);
-    center->addWidget(new SalesView(center));
+    SalesView *salesView = new SalesView(center);
+    center->addWidget(salesView);
     center->addWidget(new CatalogManager(center));
+    center->addWidget(new CarteManager(salesView->getCarteModel(), center));
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
     //TODO fixme
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
+    connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
 }
 
 MainWindow::~MainWindow()
@@ -108,6 +112,10 @@ void MainWindow::closeSession(){
 
 void MainWindow::manageDB(){
     emit receiveRandomEvent();
+}
+
+void MainWindow::editCarte(){
+    center->setCurrentIndex(2);
 }
 
 void MainWindow::editCatalog(){

@@ -49,7 +49,7 @@ public slots:
     //From the menu
     void closeSession();
     void manageDB();
-    //void editCarte();
+    void editCarte();
     void editCatalog();
     //void payJobists();
     //void statistics();
