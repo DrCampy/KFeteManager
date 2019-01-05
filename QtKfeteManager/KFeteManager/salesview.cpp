@@ -65,7 +65,7 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     currentOrderModel   = new CurrentOrderModel(0, this);
     currentOrderView    = new QTableView(this);
     carteModel          = new CarteModel("./data/carte.xml", this);
-    carteView           = new CarteView(this);
+    carteView           = new CarteView(true, this);
 
     //Links the carte model and view
     carteView->setModel(carteModel);
@@ -141,6 +141,10 @@ void SalesView::updateTotalLabel(){
     QString text = QString::number(currentOrderModel->getTotal(), 'f', 2);
     text.append(tr(" €"));
     this->totalLabel->setText(text);
+}
+
+CarteModel *SalesView::getCarteModel(){
+    return carteModel;
 }
 
 /*
@@ -230,8 +234,6 @@ MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
     connect(minusButton, SIGNAL(clicked()), this, SLOT(minusSlot()));
     connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteSlot()));
     connect(priceButtonsGroup, SIGNAL(buttonPressed(int)), this, SLOT(priceSlot(int)));
-    
-
 }
 
 void MiddleBar::plusSlot(){
