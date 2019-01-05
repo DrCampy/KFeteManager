@@ -24,10 +24,10 @@ CarteModel::~CarteModel(){
 
 const ButtonDataWrapper *CarteModel::getButton(unsigned int id) const{
     auto res = table.find(id);
-    if(res != table.end()){
-        return new ButtonDataWrapper(res.value());
-    }else{
+    if(res == table.end()){
         return nullptr;
+    }else{
+        return new ButtonDataWrapper(res.value());
     }
 }
 

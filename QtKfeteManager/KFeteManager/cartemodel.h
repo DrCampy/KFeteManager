@@ -8,6 +8,7 @@
 
 #include "catalog.h"
 
+class CarteModel;
 class ButtonDataWrapper;
 
 class CarteModel : public QObject
