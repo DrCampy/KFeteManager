@@ -37,7 +37,8 @@ SOURCES += \
     databasemanager.cpp \
     clientlist.cpp \
     order.cpp \
-    catalogmanager.cpp
+    catalogmanager.cpp \
+    cartemanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -51,7 +52,8 @@ HEADERS += \
     databasemanager.h \
     clientlist.h \
     order.h \
-    catalogmanager.h
+    catalogmanager.h \
+    cartemanager.h
 
 
 # Default rules for deployment.
