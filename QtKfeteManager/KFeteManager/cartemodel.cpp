@@ -32,9 +32,29 @@ const ButtonDataWrapper *CarteModel::getButton(unsigned int id) const{
 }
 
 bool CarteModel::addEntry(unsigned int id, ButtonDataWrapper data){
-    table.insert(id, data);
+    Article a(data.getName());
+    if(a.exists()){
+        //If a is a real article, sets the button and updates the list
+        unsigned int entriesCount = nbEntries.value(data.getName(), 0);
+        nbEntries.insert(data.getName(), entriesCount+1);
+        table.insert(id, data);
+        articles->append(data.getName());
+        articles->removeDuplicates();
+    }else{
+        //If we add a non-existing entry, clears that button
+        //Decrease by one the count of the entry that previously was at that button
+        if(table.contains(id)){
+            ButtonDataWrapper prevEntry = table.value(id);
+            table.remove(id);
+            unsigned int entriesCount = nbEntries.value(prevEntry.getName());
+            if(entriesCount > 1){
+                nbEntries.insert(prevEntry.getName(), entriesCount-1);
+            }else{
+                nbEntries.remove(prevEntry.getName());
+            }
+        }
+    }
     emit modelUpdated();
-
     return exportCarte();
 }
 
@@ -130,7 +150,8 @@ bool CarteModel::importCarte(){
                                   textColor = QColor(xml.attributes().value("text-color").toString());
                                   if(Article(articleName).exists()){
                                       table.insert(buttonID, ButtonDataWrapper(articleName, backgroundColor, textColor));
-                                      articles->append(articleName);
+                                      unsigned int entriesCount = nbEntries.value(articleName, 0);
+                                      nbEntries.insert(articleName, entriesCount+1);
                                   }
                               }
                           }
@@ -141,22 +162,18 @@ bool CarteModel::importCarte(){
       }
   }
   //TODO check that ID is not out of bounds
-  articles->removeDuplicates();
   file->close();
   delete file;
   emit modelUpdated();
   return xml.hasError();
 }//end importCatalog
 
-const QStringList *CarteModel::getArticlesList(){
-    return this->articles;
+QStringList *CarteModel::getArticlesList(){
+    return new QStringList(this->nbEntries.keys());
 }
 
 ButtonDataWrapper::ButtonDataWrapper(QString name, QColor backgroundColor, QColor textColor) :
-    name(name), backgroundColor(backgroundColor), textColor(textColor)
-{
-//Empty
-};
+    name(name), backgroundColor(backgroundColor), textColor(textColor){/*Empty*/};
 
 QString ButtonDataWrapper::getName() const{
     return name;
@@ -170,3 +187,18 @@ QColor ButtonDataWrapper::getBackgroundColor() const{
     return backgroundColor;
 }
 
+ButtonDataWrapper &ButtonDataWrapper::operator=(const ButtonDataWrapper &a){
+    if(&a == this){
+        return *this;
+    }
+    this->name = a.getName();
+    this->backgroundColor = a.getBackgroundColor();
+    this->textColor = a.getTextColor();
+    return *this;
+}
+
+bool ButtonDataWrapper::operator==(const ButtonDataWrapper &a) const{
+    if(getName() == a.getName() && getTextColor() == a.getTextColor() && getBackgroundColor() == a.getBackgroundColor())
+        return true;
+    return false;
+}
