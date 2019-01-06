@@ -74,24 +74,16 @@ qreal Client::getLimit() const{
   return DatabaseManager::getClientLimit(*this);
 }
 
-/*Client::ResultatOperation Client::deposit(qreal montant, PriorityLevel level){
-  qreal tmp = getBalance()-montant;
-  if(tmp >= 0 || level == Admin){
-      balance -= montant;
-    }else if( (tmp >= this->getLimit()) && (tmp < 0) && level == Limit ){
-      balance -= montant;
-    }else if( tmp >= 0){
-      balance -= montant;
-    }else if( (tmp >= this->getLimit()) && (tmp < 0) && level == Normal){
-      return Negatif;
-    }else{
-      return Echec;
-    }
-  return Reussi;
-}*/
+void Client::deposit(qreal amount){
+    DatabaseManager::updateClientBalance(*this, this->getBalance()+amount);
+}
 
 qreal Client::getBalance() const{
   return DatabaseManager::getClientBalance(*this);
+}
+
+bool Client::isNull() const{
+    return this->getName() == "";
 }
 
 Client &Client::operator=(const Client &u){
@@ -109,6 +101,7 @@ bool Client::operator==(const Client &c) const{
 bool Client::operator<(const Client &c) const{
     return this->getName() < c.getName();
 }
+
 
 DuplicateClientException *DuplicateClientException::clone() const{
     return new DuplicateClientException(*this);

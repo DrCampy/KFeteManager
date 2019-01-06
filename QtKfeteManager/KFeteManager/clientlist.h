@@ -35,9 +35,10 @@ public:
     void setLimit(qreal limit);
     qreal getLimit() const;
 
-    //ResultatOperation deposit(qreal montant, PriorityLevel level = Normal);
+    void deposit(qreal amount);
     qreal getBalance() const;
 
+    bool isNull() const;
 
     Client &operator=(const Client &u);
 
