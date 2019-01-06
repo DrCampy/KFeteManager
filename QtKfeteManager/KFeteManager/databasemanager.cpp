@@ -14,8 +14,8 @@
 
 QStringList DatabaseManager::tables =
         QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
-                      <<"HeldSession" << "OrderDetails" << "OrderContent"
-                     << "OrderClient" << "Config";
+                      <<"HeldSession" << "Transactions" << "IsOrder" << "OrderContent"
+                      << "CashMoves" << "OrderClient" << "Config";
 
 QStringList DatabaseManager::articlesFields =
         QStringList() << "Name" << "sellPrice" << "jShare"
@@ -35,14 +35,20 @@ QStringList DatabaseManager::saleSessionsFields =
 QStringList DatabaseManager::heldSessionFields =
         QStringList() << "Name" << "SessionTime";
 
-QStringList DatabaseManager::OrderDetailsFields =
-        QStringList() << "OrderID" << "sessionTime" << "orderNumber";
+QStringList DatabaseManager::TransactionsFields =
+        QStringList() << "Id" << "sessionTime" << "lineNumber" << "total";
+
+QStringList DatabaseManager::IsOrderFields =
+        QStringList() << "Id" << "price";
 
 QStringList DatabaseManager::OrderContentFields =
-        QStringList() << "OrderId" << "Article" << "amount";
+        QStringList() << "Id" << "article" << "quantity";
 
 QStringList DatabaseManager::OrderClientFields =
-        QStringList() << "OrderId" << "Client";
+        QStringList() << "Id" << "client";
+
+QStringList DatabaseManager::CashMovesFields =
+        QStringList() << "Id" << "client";
 
 QStringList DatabaseManager::configFields =
         QStringList() << "Field" << "value";
@@ -52,9 +58,11 @@ QList<QStringList> DatabaseManager::allNames = {DatabaseManager::articlesFields,
                                                 DatabaseManager::clientsFields,
                                                 DatabaseManager::saleSessionsFields,
                                                 DatabaseManager::heldSessionFields,
-                                                DatabaseManager::OrderDetailsFields,
+                                                DatabaseManager::TransactionsFields,
+                                                DatabaseManager::IsOrderFields,
                                                 DatabaseManager::OrderContentFields,
                                                 DatabaseManager::OrderClientFields,
+                                                DatabaseManager::CashMovesFields,
                                                 DatabaseManager::configFields
                                                };
 
@@ -73,7 +81,6 @@ void DatabaseManager::openDatabase(){
         qDebug()<<"Error seting PRAGMA foreign_keys=ON";
     }
     query.exec(QString("REPLACE INTO Functions(Id, name) VALUES(0,'").append(QObject::tr("Pas de fonction")).append("');"));
-
 }
 
 bool DatabaseManager::checkDatabase(){
@@ -128,6 +135,31 @@ bool DatabaseManager::checkDatabase(){
 void DatabaseManager::createDatabase(){
     QSqlQuery querry;
     executeScript(":/create-script.sql", querry);
+
+    //Create triggers
+    QSqlQuery query;
+    bool ret = query.exec("CREATE TRIGGER order_check "
+                          "BEFORE INSERT ON IsOrder "
+                          "WHEN NEW.Id IN (SELECT Id FROM CashMoves) "
+                          "BEGIN "
+                          "    SELECT Raise(FAIL, 'Line number is already a cash move (withdraw/deposit)'); "
+                          "END;");
+    if(!ret){
+        qDebug() << "Error adding first trigger: ";
+        qDebug() << query.lastError().text();
+    }
+
+    ret = query.exec("CREATE TRIGGER cashMove_check "
+                     "BEFORE INSERT ON CashMoves "
+                     "WHEN NEW.Id IN (SELECT Id FROM IsOrder) "
+                     "BEGIN "
+                     "    SELECT Raise(FAIL, 'Line number is already an order.'); "
+                     "END;");
+    if(!ret){
+        qDebug() << "Error adding second trigger: ";
+        qDebug() << query.lastError().text();
+    }
+
 }
 
 bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
@@ -157,8 +189,8 @@ bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
             finalStatement.append(' ');
 
         }
-
-        if(finalStatement.isEmpty()){
+        finalStatement = finalStatement.trimmed();
+        if(finalStatement.isEmpty() || finalStatement == " " || finalStatement == "\n"){
             continue;
         }
 

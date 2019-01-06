@@ -49,8 +49,8 @@ private:
 
 
     static QStringList articlesFields, functionsFields, clientsFields,
-    saleSessionsFields, heldSessionFields,
-    OrderDetailsFields, OrderContentFields, OrderClientFields, configFields;
+    saleSessionsFields, heldSessionFields, TransactionsFields, IsOrderFields,
+    OrderContentFields, OrderClientFields, CashMovesFields, configFields;
 
     static QList<QStringList> allNames;
 

@@ -39,45 +39,62 @@ HeldSession(
     PRIMARY KEY(Name, SessionTime));
 
 CREATE TABLE IF NOT EXISTS
-OrderDetails(
-    OrderId INTEGER PRIMARY KEY,
-    sessionTime DATE NOT NULL REFERENCES SaleSessions(OpeningTime) ON DELETE CASCADE,
-    orderNumber INTEGER NOT NULL,
-    UNIQUE(sessionTime, orderNumber));
+Transactions(
+    Id INTEGER PRIMARY KEY,
+    sessionTime DATE NOT NULL REFERENCES SalesSessions(OpeningTime) ON DELETE CASCADE,
+    lineNumber INT NOT NULL,
+    total REAL NOT NULL,
+    UNIQUE(sessionTime, lineNumber));
+
+CREATE TABLE IF NOT EXISTS
+IsOrder(
+    Id INTEGER PRIMARY KEY REFERENCES Transactions(Id) ON DELETE CASCADE,
+    price TEXT NOT NULL,
+    CHECK (price IN('normal', 'reduced', 'free')));
 
 CREATE TABLE IF NOT EXISTS
 OrderContent(
-    OrderId INTEGER NOT NULL REFERENCES OrderDetails(OrderId) ON DELETE CASCADE,
-    Article TEXT NOT NULL REFERENCES Articles(Name) ON DELETE NO ACTION,
-    amount INTEGER NOT NULL CHECK(amount > 0),
-    PRIMARY KEY(OrderId, Article));
+    Id INTEGER PRIMARY KEY REFERENCES IsOrder(Id) ON DELETE CASCADE,
+    article TEXT NOT NULL REFERENCES Articles(name) ON DELETE NO ACTION,
+    quantity INTEGER NOT NULL);
 
 CREATE TABLE IF NOT EXISTS
 OrderClient(
-    OrderId INTEGER NOT NULL REFERENCES OrderDetails(OrderId) ON DELETE CASCADE,
-    Client TEXT NOT NULL REFERENCES Clients(Name) ON DELETE NO ACTION,
-    PRIMARY KEY(OrderId, Client));
+    Id INTEGER PRIMARY KEY REFERENCES IsOrder(Id) ON DELETE CASCADE,
+    client TEXT NOT NULL REFERENCES Clients(Name) ON DELETE NO ACTION);
+
+CREATE TABLE IF NOT EXISTS
+CashMoves(
+    Id INTEGER PRIMARY KEY REFERENCES Transactions(Id) ON DELETE CASCADE,
+    client TEXT REFERENCES Clients(Name) ON DELETE NO ACTION);
 
 CREATE TABLE IF NOT EXISTS
 Config(
     Field TEXT NOT NULL PRIMARY KEY,
     value TEXT);
 
-CREATE TABLE IF NOT EXISTS
-Prices(
-    Id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE);
-
 INSERT OR REPLACE INTO Functions VALUES('No Function', 0);
-INSERT OR IGNORE INTO Config VALUES("CurrentSession", "");
-INSERT OR IGNORE INTO Config VALUES("CurrentSessionOrderId", 0);
-INSERT OR IGNORE INTO Config VALUES("PinHash", ""); --TODO Edit for real default hash
-INSERT OR IGNORE INTO Config VALUES("FirstStart", 1);
-INSERT OR IGNORE INTO Config VALUES("ManagerHash", ""); --TODO Edit for real default hash
-INSERT OR IGNORE INTO Config VALUES("TreasurerHash", ""); --TODO Edit for real default hash
-INSERT OR REPLACE INTO Prices(name) VALUES("normal");
-INSERT OR REPLACE INTO Prices(name) VALUES("reduced");
-INSERT OR REPLACE INTO Prices(name) VALUES("free");
+INSERT OR IGNORE INTO Config VALUES('CurrentSession', '');
+INSERT OR IGNORE INTO Config VALUES('CurrentSessionOrderId', 0);
+INSERT OR IGNORE INTO Config VALUES('PinHash', ''); --TODO Edit for real default hash
+INSERT OR IGNORE INTO Config VALUES('FirstStart', 1);
+INSERT OR IGNORE INTO Config VALUES('ManagerHash', ''); --TODO Edit for real default hash
+INSERT OR IGNORE INTO Config VALUES('TreasurerHash', ''); --TODO Edit for real default hash
+
+--These statements have to be hardcoded because our parser is shitty
+--CREATE TRIGGER order_check
+--BEFORE INSERT ON IsOrder
+--WHEN NEW.Id IN (SELECT Id FROM CashMoves)
+--BEGIN
+--    SELECT Raise(FAIL, 'Line number is already a cash move (withdraw/deposit)');
+--END;
+
+--CREATE TRIGGER cashMove_check
+--BEFORE INSERT ON CashMoves
+--WHEN NEW.Id IN (SELECT Id FROM IsOrder)
+--BEGIN
+--    SELECT Raise(FAIL, 'Line number is already an order.');
+--END;
 
 -- For the maybe to come history database
 --CREATE TABLE IF NOT EXISTS
