@@ -78,7 +78,7 @@ void Order::setPrice(Order::Price price){
     }
 }
 
-Order::Price Order::getPrice(){
+Order::Price Order::getPrice() const{
     return this->price;
 }
 

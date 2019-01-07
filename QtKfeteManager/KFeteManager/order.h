@@ -22,7 +22,7 @@ public:
     void deleteArticle(Article &a);
     qreal getTotal() const;
     void setPrice(Price price);
-    Price getPrice();
+    Price getPrice() const;
     Order &operator=(const Order &o);
 //TODO
     //bool process(); //to process the order on the client account
