@@ -1,3 +1,5 @@
+#include <QMap>
+
 #include "order.h"
 #include "clientlist.h"
 
@@ -5,6 +7,19 @@ Order::Order(Client *client)
 {
     content = new QMap<Article, QPair<uint, qreal>>;
     this->client = client;
+}
+
+Order::Order(const Order &o){
+    if(o.getClient() == nullptr){
+        this->client = nullptr;
+    }else{
+        this->client = new Client(o.getClient()->getName());
+    }
+
+    this->content = new QMap<Article, QPair<uint, qreal>>(*(o.getContent()));
+
+    this->total = o.total;
+    this->setPrice(o.getPrice());
 }
 
 Order::~Order(){

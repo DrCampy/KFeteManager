@@ -13,6 +13,7 @@ public:
     typedef QMap<Article, QPair<uint, qreal>> content_t;
     enum Price{normal, reduced, free};
     Order(Client *client = nullptr);
+    Order(const Order &o);
     ~Order();
     const content_t *getContent() const;
     Client *getClient() const;
