@@ -63,3 +63,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     scripts.qrc
+
+DISTFILES += \
+    Notes.txt

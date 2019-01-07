@@ -1,0 +1,10 @@
+1) Could we have several open sessions ?
+2) What happens if we delete a session from salesessions but it is still in config as current session ? -> Trigger "Cannot delete current session."
+
+3) Buffer some requests ?
+
+4) Have only some basic commands in Database and have all the specifications (client, articles, ...) in the corresponding classes.
+   We could have (in database or so) an enum for the fields of such classes
+5) Date d'ouverture de la session dans la barre en bas.
+
+RGPD, do not display client's infos unless password entered ?
