@@ -9,8 +9,14 @@
 #include <QSqlError>
 #include <QCoreApplication>
 #include <QFile>
+#include <QDateTime>
+#include <QSqlDatabase>
+#include <QSqlDriver>
+#include <QDateTime>
 
 #include "databasemanager.h"
+#include "order.h"
+#include "clientlist.h"
 
 QStringList DatabaseManager::tables =
         QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
@@ -29,14 +35,15 @@ QStringList DatabaseManager::clientsFields =
                       << "negLimit" << "isJobist" << "balance";
 
 QStringList DatabaseManager::saleSessionsFields =
-        QStringList() << "OpeningTime" << "closingTime" << "openAmount"
-                      << "closeAmount" << "soldAmount";
+        QStringList() << "OpeningTime" << "closingTime" << "state"
+                      << "openAmount"  << "closeAmount" << "cashSoldAmount";
 
 QStringList DatabaseManager::heldSessionFields =
         QStringList() << "Name" << "SessionTime";
 
 QStringList DatabaseManager::TransactionsFields =
-        QStringList() << "Id" << "sessionTime" << "lineNumber" << "total";
+        QStringList() << "Id" << "sessionTime" << "lineNumber"
+                      << "processTime" << "total";
 
 QStringList DatabaseManager::IsOrderFields =
         QStringList() << "Id" << "price";
@@ -137,7 +144,7 @@ void DatabaseManager::createDatabase(){
     executeScript(":/create-script.sql", querry);
 
     //Create triggers
-    QSqlQuery query;
+    /*QSqlQuery query;
     bool ret = query.exec("CREATE TRIGGER order_check "
                           "BEFORE INSERT ON IsOrder "
                           "WHEN NEW.Id IN (SELECT Id FROM CashMoves) "
@@ -158,7 +165,7 @@ void DatabaseManager::createDatabase(){
     if(!ret){
         qDebug() << "Error adding second trigger: ";
         qDebug() << query.lastError().text();
-    }
+    }*/
 
 }
 
@@ -169,13 +176,15 @@ bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
     QString script = file.readAll();
     file.close();
 
-    QVector<QStringRef> statements = script.splitRef(";", QString::SkipEmptyParts);
+    //Each statement begins with '--Statement'
+    QVector<QStringRef> statements = script.splitRef("--Statement", QString::SkipEmptyParts);
 
     //for each statement
     for(auto it = statements.begin(); it < statements.end(); it++){
         QString finalStatement;
+        //breaks down the statement into lines
         QVector<QStringRef> lines = (*it).split('\n', QString::SkipEmptyParts);
-        //for each line split comments
+        //for each line, split comments
         for(auto it2 = lines.begin(); it2 < lines.end(); it2++){
 
             //If we are a line that starts with a comment, skip it
@@ -187,20 +196,20 @@ bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
             //The instruction part is at index 0. The rest is only comments.
             finalStatement.append(linePart.at(0));
             finalStatement.append(' ');
-
         }
         finalStatement = finalStatement.trimmed();
-        if(finalStatement.isEmpty() || finalStatement == " " || finalStatement == "\n"){
+        if(finalStatement.isEmpty() || finalStatement == ";"){
             continue;
         }
 
         //Appends final ';'
-        finalStatement.append(';');
+        //finalStatement.append(';');
 
         //Executes statement
         int ret = query.exec(finalStatement);
         if(!ret){
             qDebug() << "Error processing statement number " << it-statements.begin()+1 << " from file " << filename <<".";
+            qDebug() << finalStatement;
             qDebug() << "Details: " << query.lastError().text();
             return false;
         }
@@ -212,9 +221,7 @@ void DatabaseManager::closeDatabase(){
     if(QSqlDatabase::contains()){
         QSqlDatabase::database().close();
     }
-
 }
-
 
 //Articles management
 //GENERAL PURPOSE FUNCTIONS
@@ -222,7 +229,7 @@ bool        DatabaseManager::hasArticle(const Article &a){
     QSqlQuery query;
     query.prepare("SELECT Name FROM Articles WHERE Name=:name;");
     query.bindValue(":name", a.getName());
-    bool ret = query.exec();//QString("SELECT Name FROM Articles WHERE Name='").append(a).append("';"));
+    bool ret = query.exec();
     if(!ret){
         qDebug() << "Finding article " << a << " failed.";
         qDebug() << query.lastError().text();
@@ -609,7 +616,7 @@ uint        DatabaseManager::addFunction            (QString name){
     return 0;
 }
 
-uint DatabaseManager::hasFunction(QString name){
+uint        DatabaseManager::hasFunction            (QString name){
     name = name.trimmed();
     QSqlQuery query;
     query.prepare("SELECT Id FROM Functions WHERE name=:name;");
@@ -628,7 +635,7 @@ uint DatabaseManager::hasFunction(QString name){
     return 0;
 }
 
-QList<QString> DatabaseManager::getFunctions(){
+QList<QString> DatabaseManager::getFunctions        (){
     QSqlQuery query;
     int ret = query.exec("SELECT name FROM Functions;");
     if(!ret){
@@ -643,7 +650,7 @@ QList<QString> DatabaseManager::getFunctions(){
     return list;
 }
 
-void DatabaseManager::delFunction(QString name){
+void        DatabaseManager::delFunction            (QString name){
     QSqlQuery query;
     query.prepare("DELETE FROM Functions WHERE name=?;");
     query.addBindValue(name);
@@ -652,4 +659,172 @@ void DatabaseManager::delFunction(QString name){
         qDebug() << "Deleting function failed.";
         qDebug() << query.lastError().text();
     }
+}
+
+/*
+ * Managing Orders
+ */
+
+bool        DatabaseManager::addOrder               (const Order &o, Client c){
+    QSqlQuery query;
+
+    //Fetch the session time.
+    QVariant sessionTime = getCurrentSession();
+    if(sessionTime.isNull()){
+        qDebug() << "No open session.";
+        return false;
+    }
+
+    bool success = true;
+    QSqlDatabase::database().transaction(); //starts a transaction
+
+    //Fetch the next order line
+    success &= query.exec("SELECT value FROM Config WHERE Field='CurrentSessionOrderId';");
+    query.next();
+    unsigned int orderNumber = query.value(0).toUInt();
+
+    //Adds the order as transaction (not to be confused with sql transaction...)
+    QDateTime time = QDateTime::currentDateTime();
+    query.prepare("INSERT INTO Transactions(sessionTime, lineNumber, processTime, total) "
+                  "VALUES(:session, :line, :time, :total);");
+    query.bindValue(":session", sessionTime.toULongLong());
+    query.bindValue(":line", orderNumber);
+    query.bindValue(":time", time.toSecsSinceEpoch());
+    query.bindValue(":total", o.getTotal());
+    success &= query.exec();
+
+    unsigned long long int orderID = query.lastInsertId().toULongLong();
+
+    //Adds the order as order
+    query.prepare("INSERT INTO IsOrder(Id, price) VALUES(:id, :price);");
+    query.bindValue(":id", orderID);
+    switch(o.getPrice()){
+    case Order::normal :
+        query.bindValue(":price", "normal");
+        break;
+    case Order::reduced :
+        query.bindValue(":price", "reduced");
+        break;
+    case Order::free :
+        query.bindValue(":price", "free");
+        break;
+    }
+    success &= query.exec();
+
+    //Adds order content
+    for(auto it:o.getContent()->keys()){
+        query.prepare("INSERT INTO OrderContent(Id, article, quantity)"
+                      "VALUES (:id, :article, :quantity);");
+        query.bindValue(":id", orderID);
+        query.bindValue(":article", it.getName());
+        query.bindValue(":quantity", o.getContent()->value(it).first);
+        success &= query.exec();
+    }
+
+    //Adds the order client
+    if(!c.isNull()){
+        query.prepare("INSERT INTO OrderClient(Id, client) VALUES(:id, :client);");
+        query.bindValue(":id", orderID);
+        query.bindValue(":client", c.getName());
+        success &= query.exec();
+    }
+
+    //Increments the next order line
+    query.prepare("UPDATE Config SET value=:line WHERE Field='CurrentSessionOrderId';");
+    query.bindValue(":line", orderNumber+1);
+    success &= query.exec();
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+
+    return success;
+}
+
+//Miscelaneous
+QVariant    DatabaseManager::getCurrentSession      (){
+    QSqlQuery query;
+
+    //Fetch the session time.
+    query.exec("SELECT value FROM Config WHERE Field='CurrentSession';");
+    if(!query.next()){
+        qDebug() << "Could not fetch current session time.";
+        return QVariant(QString()); //Return null value
+    }
+    return query.value(0);
+}
+
+bool        DatabaseManager::closeSession                (QVariant closeAmount){
+    //Get current session
+    QVariant currentSession = getCurrentSession();
+
+    //If there is no open session
+    if(currentSession.isNull()){
+        //If we had no closeAmount we are done
+        //Otherwise return false because we could not set the closeAmount.
+        return closeAmount.isNull();
+    }
+
+    //The session we have is an existing session because of the foreign key.
+
+    //Current time
+    qint64 now = QDateTime::currentDateTime().toSecsSinceEpoch();
+
+    //Updates the session and close it.
+    QSqlQuery query;
+    bool success;
+    QSqlDatabase::database().transaction();
+    success = query.exec("UPDATE Config SET value = NULL WHERE Field='CurrentSession'"); //Remove the current session from Config
+
+    query.prepare("UPDATE SaleSessions SET state='closed', closeAmount = :amount, "
+                  "closingTime=:closeTime WHERE (OpeningTime = :session AND state='opened');"); //Close the session
+    query.bindValue(":amount", closeAmount);
+    query.bindValue(":closeTime", now);
+    query.bindValue(":session", currentSession.toLongLong());
+    success &= query.exec();
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+    return success;
+}
+
+bool        DatabaseManager::newSession                  (QVariant openAmount, QList<Client> holdingSession){
+    QDateTime now = QDateTime::currentDateTime();
+
+    QSqlQuery query;
+    bool success = true;
+    QSqlDatabase::database().transaction();
+
+    //Creates the new session
+    query.prepare("INSERT INTO SaleSessions(openingTime, openAmount) VALUES(:time, :amount);");
+    query.bindValue(":time", now.toSecsSinceEpoch());
+    query.bindValue(":amount", openAmount);
+    success &= query.exec();
+
+    //Sets the created session as current session in the program.
+    query.prepare("UPDATE Config SET Value=:time WHERE field='CurrentSession';");
+    query.bindValue(":time", now.toSecsSinceEpoch());
+    success &= query.exec();
+    qDebug() << query.lastError();
+    //Sets the next (first) order number to be 1.
+    success &= query.exec("UPDATE Config SET Value=1 WHERE field='CurrentSessionOrderId';");
+
+    //Adds the jobists holding the session
+    query.prepare("INSERT INTO heldSession(Name, SessionTime) VALUES(:jobist, :session);");
+    query.bindValue(":session", now.toSecsSinceEpoch(), QSql::In);
+    for(auto it : holdingSession){
+        query.bindValue(":jobist", it.getName(), QSql::In);
+        success &= query.exec();
+    }
+
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+
+    return success;
 }

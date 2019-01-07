@@ -7,7 +7,6 @@
 #include "catalog.h"
 #include "clientlist.h"
 
-
 /*   tables: Articles, Functions, Clients, SaleSessions, HeldSession, FunctionBenefits
 
      Articles: (Name, sellPrice, jShare, bPrice, reducedPrice, function)
@@ -41,6 +40,7 @@
  * Further calls to the client would get from the cache.
  * changes on the client would get imediately repercuted on db and entry updated/deleted from cache.
  */
+class Order;
 
 class DatabaseManager
 {
@@ -55,17 +55,23 @@ private:
     static QList<QStringList> allNames;
 
 public:
-    static bool checkDatabase();
-    static void openDatabase();
-    static void closeDatabase();
-    static void createDatabase();
-    static bool executeScript(QString filename, QSqlQuery &query);
+    static bool             checkDatabase               ();
+    static void             openDatabase                ();
+    static void             closeDatabase               ();
+    static void             createDatabase              ();
+    static bool             executeScript               (QString filename, QSqlQuery &query);
 
     //TODO find where they should go. Class Function in catalog.h ?
-    static uint addFunction(QString name);
-    static uint hasFunction(QString name);
-    static QList<QString> getFunctions();
-    static void delFunction(QString name);
+    static uint             addFunction                 (QString name);
+    static uint             hasFunction                 (QString name);
+    static QList<QString>   getFunctions                ();
+    static void             delFunction                 (QString name);
+    static bool             addOrder                    (const Order &o, Client c);
+
+    //Miscelaneous
+    static QVariant         getCurrentSession           ();
+    static bool             closeSession                (QVariant closeAmount);
+    static bool             newSession                  (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
 
 protected:
     //Managing articles
