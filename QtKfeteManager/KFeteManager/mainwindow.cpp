@@ -7,6 +7,7 @@
 #include <QStackedWidget>
 #include <QMenuBar>
 #include <QMenu>
+#include <QMessageBox>
 
 #include "mainwindow.h"
 #include "loginview.h"
@@ -48,11 +49,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
     managementMenu->addAction(tr("Statistiques financières"));
     connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
-
     //TODO button about
 
-    updateClock();
-    updateAccountLabel("");
+    //Check that we have an open session
+    QVariant openSession = DatabaseManager::getCurrentSession();
+
+    //if openSession is null we have no open session. Asks if we have to open one.
+    if(openSession.isNull()){
+        QMessageBox messageBox;
+        messageBox.setText(tr("Aucune session n'est actuellement ouverte."));
+        messageBox.setInformativeText(tr("Voulez-vous ouvrir une nouvelle session de vente ?"));
+        messageBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        messageBox.setDefaultButton(QMessageBox::Yes);
+        int ret = messageBox.exec();
+        if(ret == QMessageBox::Yes){
+            DatabaseManager::newSession(QVariant());
+        }
+    }
 
     statusBar()->addWidget(clockLabel);
     statusBar()->addPermanentWidget(accountLabel);
@@ -62,6 +75,12 @@ MainWindow::MainWindow(QWidget *parent) :
     center->addWidget(new CarteManager(salesView->getCarteModel(), center));
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
+
+
+
+    updateClock();
+    updateAccountLabel("");
+
     //TODO fixme
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
