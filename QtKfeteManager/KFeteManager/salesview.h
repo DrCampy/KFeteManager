@@ -23,6 +23,12 @@ class TopBar : public QWidget
     Q_OBJECT
 public:
     explicit TopBar(QWidget *parent = nullptr);
+
+signals:
+    void validate();
+
+
+
 };
 
 class MiddleBar : public QWidget
@@ -74,11 +80,13 @@ private:
     TopBar      *topBar;
     QLabel      *totalLabel;
     MiddleBar   *middleBar;
+    Client      selectedClient = Client("");
 
     QTableView *currentOrderView;
     CurrentOrderModel *currentOrderModel;
-    void currentOrderViewResize();
 
+    void currentOrderViewResize();
+    bool processOrder(const Order &o, Client c);
 
 signals:
     void performAction();
@@ -86,10 +94,11 @@ signals:
     void addArticle(QString);
 
 public slots:
-    void updateTotalLabel();
+    void modelUpdated();
     void actionPerformed();
     void priceUpdated();
     void articleAdded(QString);
+    void validateOrder();
 
 };
 

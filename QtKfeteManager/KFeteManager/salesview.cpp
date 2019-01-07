@@ -27,14 +27,10 @@
 #include "cartemodel.h"
 #include "carteview.h"
 
-//TODO see QCompleter and QDataWidgetMapper (seen at http://doc.qt.io/qt-5/modelview.html)
-
 const QStringList CarteView::PAGES_NAMES = (QStringList() << tr("Bières") << tr("Snacks") << tr("Softs") << tr("Divers"));
 
 SalesView::SalesView(QWidget *parent) : QWidget(parent)
-{
-    //setAttribute(Qt::WA_DeleteOnClose); // deletes the widget when closed
-    
+{    
     QHBoxLayout *hBox = new QHBoxLayout();
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
@@ -95,7 +91,7 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
 
     //Connects all the signals
     //From model to this
-    connect(currentOrderModel, SIGNAL(updated()), this, SLOT(updateTotalLabel()));
+    connect(currentOrderModel, SIGNAL(updated()), this, SLOT(modelUpdated()));
     //From middleBar to this
     connect(middleBar, SIGNAL(actionPerformed()), this, SLOT(actionPerformed()));
     //From middleBar to currentOrderModel
@@ -105,8 +101,10 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     //Connect carteModel to currentOrderModel
     connect(carteModel, SIGNAL(articleClicked(QString)), this, SLOT(articleAdded(QString)));
     connect(this, SIGNAL(addArticle(QString)), currentOrderModel, SLOT(addArticle(QString)));
+    //Connect the validate button
+    connect(topBar, SIGNAL(validate()), this, SLOT(validateOrder()));
 
-    updateTotalLabel();
+    modelUpdated();
 
     //Test datas
     QColor red(255, 0, 0);
@@ -137,10 +135,11 @@ void SalesView::priceUpdated(){
     currentOrderViewResize();
 }
 
-void SalesView::updateTotalLabel(){
+void SalesView::modelUpdated(){
     QString text = QString::number(currentOrderModel->getTotal(), 'f', 2);
     text.append(tr(" €"));
     this->totalLabel->setText(text);
+    this->currentOrderView->setStyleSheet("");
 }
 
 /*
@@ -156,6 +155,57 @@ void SalesView::actionPerformed(){
 
 CarteModel *SalesView::getCarteModel(){
     return carteModel;
+}
+
+bool SalesView::processOrder(const Order &o, Client c){
+    bool process = false;
+    //If the order is on a client's account, checks that the clients have enough funds.
+    if(!c.isNull()){
+        if(c.isJobist()){
+            //Client does not have enough funds, check for it's limit
+            if(c.getBalance() < o.getTotal()){
+                //limit allow user to buy
+                if(c.getBalance()-c.getLimit() < o.getTotal()){
+                    //Displays warning
+                }else{
+                    process = false;
+                }
+            }else{
+                process = true;
+            }
+        }else{
+            if(c.getBalance() < o.getTotal()){
+                //Displays error
+                process = false;
+            }else{
+                process = true;
+            }
+        }
+    }else{
+        process = true;
+    }
+
+    if(!process){
+        return false;
+    }
+    if(!c.isNull()){
+        //removes money from account
+        if(!c.exists()){
+            return false;
+        }
+        if(process){
+            c.deposit(-o.getTotal());
+        }
+    }
+    return DatabaseManager::addOrder(o, c);
+}
+
+void SalesView::validateOrder(){
+    if(this->processOrder(this->currentOrderModel->getOrder(), selectedClient)){
+        this->middleBar->resetPrice();
+        this->currentOrderView->setStyleSheet("color : red;");
+        this->currentOrderModel->clear();
+    }
 }
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent)
@@ -175,6 +225,8 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent)
         hBox->addWidget(tmp);
         bGroup->addButton(tmp, (it-buttonsNames.begin()));
     }
+
+    connect(bGroup->button(6), SIGNAL(clicked()), this, SIGNAL(validate()));
     
     hBox->setSpacing(0);
 }
@@ -234,9 +286,9 @@ MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
     connect(minusButton, SIGNAL(clicked()), this, SLOT(minusSlot()));
     connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteSlot()));
     connect(priceButtonsGroup, SIGNAL(buttonPressed(int)), this, SLOT(priceSlot(int)));
-    
-
 }
+
+
 
 void MiddleBar::plusSlot(){
     lastPerformedAction = CurrentOrderModel::plusItem;
