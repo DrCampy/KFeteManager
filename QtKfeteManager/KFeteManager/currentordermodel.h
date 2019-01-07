@@ -35,12 +35,13 @@ public:
     void setActiveSelection(QItemSelectionModel *selection);
     void setActionToPerform(Action action);
     qreal getTotal();
+    Order getOrder();
+    void clear();
 
 public slots:
     void applyAction();
     void addArticle(QString articleName);
     void updatePrice();
-    void clear();
 
 signals:
     void updated();

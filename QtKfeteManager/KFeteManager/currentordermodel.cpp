@@ -22,8 +22,6 @@ CurrentOrderModel::CurrentOrderModel(int rows, QObject *parent)
 
 CurrentOrderModel::~CurrentOrderModel(){
     delete order;
-    //delete itemsCount;
-    //delete items;
 }
 
 void CurrentOrderModel::updateModel(){
@@ -104,10 +102,15 @@ void CurrentOrderModel::updatePrice(){
     updateModel();
 }
 
+//Does not update the whole model
+//to allow the text to stay in red until next action
 void CurrentOrderModel::clear(){
     delete order;
     order = new Order();
-    updateModel();
+}
+
+Order CurrentOrderModel::getOrder(){
+    return *order;
 }
 
 
