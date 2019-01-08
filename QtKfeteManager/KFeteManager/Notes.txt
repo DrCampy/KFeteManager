@@ -7,4 +7,18 @@
    We could have (in database or so) an enum for the fields of such classes
 5) Date d'ouverture de la session dans la barre en bas.
 
+Edit carte : disable "Validate" if no article selected
+
 RGPD, do not display client's infos unless password entered ?
+
+Make 2 executables. Gui and (cli ?) config.
+Config executable : Only by sudo/admin
+Asks for pin
+allow changes of pin and other passes
+Select money and number of different notes and coins and their value
+
+
+Currency    Notes                       Coins
+€(EUR)      500 200 100 50 20 10 5      2.0 1.0 0.50 0.20 0.10 0.05 0.02 0.01
+$(USD)      100 50  20  10 5  2  1      1.0 0.5 0.25 0.10 0.05 0.01
+£(GBP)      50  20  10  5               2.0 1.0 0.50 0.25 0.20 0.10 0.05 0.02 0.01
