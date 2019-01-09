@@ -14,6 +14,7 @@
 #include "salesview.h"
 #include "catalogmanager.h"
 #include "cartemanager.h"
+#include "clientmanager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -43,6 +44,9 @@ MainWindow::MainWindow(QWidget *parent) :
     action = editMenu->addAction(tr("Editer le c&atalogue"));
     connect(action, SIGNAL(triggered()), this, SLOT(editCatalog()));
 
+    action = editMenu->addAction(tr("Editer les C&lients"));
+    connect(action, SIGNAL(triggered()), this, SLOT(editClient()));
+
     QMenu *managementMenu = menuBar()->addMenu(tr("&Gestion"));
     action = managementMenu->addAction(tr("Effectuer les &paiements"));
     connect(action, SIGNAL(triggered()), this, SLOT(payJobists()));
@@ -54,6 +58,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //Check that we have an open session
     QVariant openSession = DatabaseManager::getCurrentSession();
 
+
+    //TODO do not ask but open the view to count cash.
+    //Set the current session only after cash register counted.
+    //Display a message to ask if the last session is older than 12 hours.
     //if openSession is null we have no open session. Asks if we have to open one.
     if(openSession.isNull()){
         QMessageBox messageBox;
@@ -73,10 +81,10 @@ MainWindow::MainWindow(QWidget *parent) :
     center->addWidget(salesView);
     center->addWidget(new CatalogManager(center));
     center->addWidget(new CarteManager(salesView->getCarteModel(), center));
+    center->addWidget(new ClientManager(center));
+
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
-
-
 
     updateClock();
     updateAccountLabel("");
@@ -85,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
+    connect(center->widget(3), SIGNAL(finished()), this, SLOT(backToSales()));
 }
 
 MainWindow::~MainWindow()
@@ -120,7 +129,7 @@ PushLabel::PushLabel(QWidget *parent) : QLabel(parent){}
 
 void PushLabel::mouseReleaseEvent(QMouseEvent *eve){
     QPoint posMouse = eve->pos();
-    if( (eve->button() == Qt::LeftButton) && this->rect().contains(posMouse)){
+    if((eve->button() == Qt::LeftButton) && this->rect().contains(posMouse)){
         emit clearAccountSelection();
     }
 }
@@ -133,14 +142,18 @@ void MainWindow::manageDB(){
     emit receiveRandomEvent();
 }
 
-void MainWindow::editCarte(){
-    center->setCurrentIndex(2);
+void MainWindow::backToSales(){
+    center->setCurrentIndex(0);
 }
 
 void MainWindow::editCatalog(){
     center->setCurrentIndex(1);
 }
 
-void MainWindow::backToSales(){
-    center->setCurrentIndex(0);
+void MainWindow::editCarte(){
+    center->setCurrentIndex(2);
+}
+
+void MainWindow::editClient(){
+    center->setCurrentIndex(3);
 }

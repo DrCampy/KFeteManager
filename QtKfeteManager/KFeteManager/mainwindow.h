@@ -8,7 +8,6 @@
 #include <QStackedWidget>
 
 #include "salesview.h"
-#include "accountmanagementview.h"
 #include "loginview.h"
 
 namespace Ui {
@@ -51,6 +50,7 @@ public slots:
     void manageDB();
     void editCarte();
     void editCatalog();
+    void editClient();
     //void payJobists();
     //void statistics();
 
