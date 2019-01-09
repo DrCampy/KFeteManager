@@ -12,7 +12,7 @@ Edit carte : disable "Validate" if no article selected
 RGPD, do not display client's infos unless password entered ?
 
 Make 2 executables. Gui and (cli ?) config.
-Config executable : Only by sudo/admin
+Config executable : Only by sudo/admin or ask for pin ?
 Asks for pin
 allow changes of pin and other passes
 Select money and number of different notes and coins and their value
