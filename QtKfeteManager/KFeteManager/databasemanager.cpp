@@ -17,6 +17,7 @@
 #include "databasemanager.h"
 #include "order.h"
 #include "clientlist.h"
+#include "catalog.h"
 
 QStringList DatabaseManager::tables =
         QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
@@ -88,6 +89,16 @@ void DatabaseManager::openDatabase(){
         qDebug()<<"Error seting PRAGMA foreign_keys=ON";
     }
     query.exec(QString("REPLACE INTO Functions(Id, name) VALUES(0,'").append(QObject::tr("Pas de fonction")).append("');"));
+
+    //Creates a new temporary database to allow for translation in string of the boolean value.
+    query.exec("CREATE TEMP TABLE BooleanYesNo( BoolValue INT PRIMARY KEY, string TEXT NOT NULL);");
+    query.prepare("INSERT INTO BooleanYesNo VALUES(:value, :string)");
+    query.bindValue(":value", 0);
+    query.bindValue(":string", QObject::tr("Non"));
+    query.exec();
+    query.bindValue(":value", 1);
+    query.bindValue(":string", QObject::tr("Oui"));
+    query.exec();
 }
 
 bool DatabaseManager::checkDatabase(){
@@ -143,30 +154,12 @@ void DatabaseManager::createDatabase(){
     QSqlQuery querry;
     executeScript(":/create-script.sql", querry);
 
-    //Create triggers
-    /*QSqlQuery query;
-    bool ret = query.exec("CREATE TRIGGER order_check "
-                          "BEFORE INSERT ON IsOrder "
-                          "WHEN NEW.Id IN (SELECT Id FROM CashMoves) "
-                          "BEGIN "
-                          "    SELECT Raise(FAIL, 'Line number is already a cash move (withdraw/deposit)'); "
-                          "END;");
-    if(!ret){
-        qDebug() << "Error adding first trigger: ";
-        qDebug() << query.lastError().text();
-    }
-
-    ret = query.exec("CREATE TRIGGER cashMove_check "
-                     "BEFORE INSERT ON CashMoves "
-                     "WHEN NEW.Id IN (SELECT Id FROM IsOrder) "
-                     "BEGIN "
-                     "    SELECT Raise(FAIL, 'Line number is already an order.'); "
-                     "END;");
-    if(!ret){
-        qDebug() << "Error adding second trigger: ";
-        qDebug() << query.lastError().text();
-    }*/
-
+    //TODO remove
+    //Insert notes and coins
+    QSqlQuery query;
+    query.exec("INSERT INTO Config(value) VALUES('€') WHERE Field='currency';");
+    query.exec("INSERT INTO Config(value) VALUES(500;200;100;50;20;10;5) WHERE Field='notes';");
+    query.exec("INSERT INTO Config(calue) VALUES(2;1;0.5;0.2;0.1;0.05;0.02;0.01) WHERE Field='coins';");
 }
 
 bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
@@ -827,4 +820,31 @@ bool        DatabaseManager::newSession                  (QVariant openAmount, Q
     }
 
     return success;
+}
+
+QStringList DatabaseManager::getNotes                    (){
+    QSqlQuery query;
+    if(!query.exec("SELECT value FROM Config WHERE Field='notes';") && query.next()){
+        return QStringList();
+    }else{
+        return query.value(0).toString().split(";", QString::SkipEmptyParts);
+    }
+}
+
+QStringList DatabaseManager::getCoins                    (){
+    QSqlQuery query;
+    if(!query.exec("SELECT value FROM Config WHERE Field='coins';") && query.next()){
+        return QStringList();
+    }else{
+        return query.value(0).toString().split(";", QString::SkipEmptyParts);
+    }
+}
+
+QString     DatabaseManager::getCurrency                 (){
+    QSqlQuery query;
+    if(!query.exec("SELECT value FROM Config WHERE Field='currency';") && query.next()){
+        return QString();
+    }else{
+        return query.value(0).toString();
+    }
 }

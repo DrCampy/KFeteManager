@@ -4,8 +4,7 @@
 #include <QStringList>
 #include <QSqlQuery>
 
-#include "catalog.h"
-#include "clientlist.h"
+#include <clientlist.h>
 
 /*   tables: Articles, Functions, Clients, SaleSessions, HeldSession, FunctionBenefits
 
@@ -26,7 +25,7 @@
      OrderClient: (OrderId, Client)
 
      Config: (Field, value)
-      */
+*/
 
 /*
  * Here we decide to do one database request for each data we need.
@@ -40,13 +39,15 @@
  * Further calls to the client would get from the cache.
  * changes on the client would get imediately repercuted on db and entry updated/deleted from cache.
  */
+
+class Client;
+class Article;
 class Order;
 
 class DatabaseManager
 {
 private:
     static QStringList tables;
-
 
     static QStringList articlesFields, functionsFields, clientsFields,
     saleSessionsFields, heldSessionFields, TransactionsFields, IsOrderFields,
@@ -55,29 +56,32 @@ private:
     static QList<QStringList> allNames;
 
 public:
-    static bool             checkDatabase               ();
-    static void             openDatabase                ();
-    static void             closeDatabase               ();
-    static void             createDatabase              ();
-    static bool             executeScript               (QString filename, QSqlQuery &query);
+
+    //Database Management
+    static bool             checkDatabase           ();
+    static void             openDatabase            ();
+    static void             closeDatabase           ();
+    static void             createDatabase          ();
 
     //TODO find where they should go. Class Function in catalog.h ?
-    static uint             addFunction                 (QString name);
-    static uint             hasFunction                 (QString name);
-    static QList<QString>   getFunctions                ();
-    static void             delFunction                 (QString name);
-    static bool             addOrder                    (const Order &o, Client c);
+    static uint             addFunction             (QString name);
+    static uint             hasFunction             (QString name);
+    static QList<QString>   getFunctions            ();
+    static void             delFunction             (QString name);
+    static bool             addOrder                (const Order &o, Client c);
 
     //Miscelaneous
-    static QVariant         getCurrentSession           ();
-    static bool             closeSession                (QVariant closeAmount);
-    static bool             newSession                  (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
+    static QVariant         getCurrentSession       ();
+    static bool             closeSession            (QVariant closeAmount);
+    static bool             newSession              (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
+    static QStringList      getNotes                ();
+    static QStringList      getCoins                ();
+    static QString          getCurrency             ();
 
-protected:
-    //Managing articles
+    /*
+     * Managing articles
+     */
     //General purpose
-    static bool         hasArticle                  (const Article &a);
-    static bool         addArticle                  (const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function);
     static bool         updateArticleField          (const Article &a, QString field, QVariant value);
     static QVariant     getArticleField             (const Article &a, QString field);
     static void         delArticle                  (const Article &a);
@@ -102,8 +106,6 @@ protected:
      * Managing clients
      */
     //general purpose
-    static bool         updateClientField           (const Client &c, QString field, QVariant value);
-    static QVariant     getClientField              (const Client &c, QString field);
     static bool         hasClient                   (const Client &c);
     static bool         addClient                   (const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist, qreal balance = 0);
     static void         delClient                   (const Client &c);
@@ -124,10 +126,14 @@ protected:
     static bool         updateIsClientJobist        (const Client &c, bool value);
     static bool         updateClientBalance         (const Client &c, qreal value);
 
+    static bool         hasArticle                  (const Article &a);
+    static bool         addArticle                  (const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function);
 
-    //Declaring friends classes
-    friend Article;
-    friend Client;
+private:
+    static bool         executeScript               (QString filename, QSqlQuery &query);
+
+    static bool         updateClientField           (const Client &c, QString field, QVariant value);
+    static QVariant     getClientField              (const Client &c, QString field);
 };
 
 #endif // DATABASEMANAGER_H
