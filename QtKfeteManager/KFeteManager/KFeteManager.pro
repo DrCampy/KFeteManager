@@ -31,14 +31,15 @@ SOURCES += \
     salesview.cpp \
     cartemodel.cpp \
     catalog.cpp \
-    accountmanagementview.cpp \
     currentordermodel.cpp \
     carteview.cpp \
     databasemanager.cpp \
     clientlist.cpp \
     order.cpp \
     catalogmanager.cpp \
-    cartemanager.cpp
+    cartemanager.cpp \
+    countmoney.cpp \
+    clientmanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -46,14 +47,15 @@ HEADERS += \
     salesview.h \
     cartemodel.h \
     catalog.h \
-    accountmanagementview.h \
     currentordermodel.h \
     carteview.h \
     databasemanager.h \
     clientlist.h \
     order.h \
     catalogmanager.h \
-    cartemanager.h
+    cartemanager.h \
+    countmoney.h \
+    clientmanager.h
 
 
 # Default rules for deployment.
