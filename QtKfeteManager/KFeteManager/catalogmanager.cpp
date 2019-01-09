@@ -26,22 +26,23 @@
 
 
 #include "catalogmanager.h"
+#include "catalog.h"
 #include "databasemanager.h"
 
 CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 {
     //Init all private members
-    price           = new QDoubleSpinBox(this);
-    bPrice          = new QDoubleSpinBox(this);
-    jShare          = new QDoubleSpinBox(this);
-    rPrice          = new QDoubleSpinBox(this);
-    function        = new QComboBox(this);
-    mapper          = new QDataWidgetMapper(this);
-    validate        = new QPushButton(tr("Valider"), this);
-    deleteArticleButton   = new QPushButton(tr("Supprimer"), this);
-    sqlModel        = new QSqlRelationalTableModel(this);
-    articlesView    = new QListView(this);
-    formTitle       = new QLabel(tr("Article sélectionné : Aucun"), this);
+    price                       = new QDoubleSpinBox(this);
+    bPrice                      = new QDoubleSpinBox(this);
+    jShare                      = new QDoubleSpinBox(this);
+    rPrice                      = new QDoubleSpinBox(this);
+    function                    = new QComboBox(this);
+    mapper                      = new QDataWidgetMapper(this);
+    validate                    = new QPushButton(tr("Valider"), this);
+    deleteArticleButton         = new QPushButton(tr("Supprimer"), this);
+    sqlModel                    = new QSqlRelationalTableModel(this);
+    articlesView                = new QListView(this);
+    formTitle                   = new QLabel(tr("Article sélectionné : Aucun"), this);
 
     QVBoxLayout *rightSidebar   = new QVBoxLayout();
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
@@ -80,6 +81,7 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     articlesView->setModel(sqlModel);
     articlesView->setModelColumn(nameIndex); //Sets the column to the name
     articlesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    articlesView->setWrapping(true);
     sqlModel->sort(nameIndex, Qt::AscendingOrder);
     function->setModel(sqlModel->relationModel(functionIndex));
     function->setModelColumn(functionNameIndex);
