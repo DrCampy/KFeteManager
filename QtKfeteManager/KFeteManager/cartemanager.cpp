@@ -59,6 +59,7 @@ CarteManager::CarteManager(CarteModel *carteModel, QWidget *parent) : QWidget(pa
     articlesView->setModel(articlesModel);
     articlesView->setModelColumn(nameIndex);
     articlesView->setEditTriggers(QListView::NoEditTriggers);
+    articlesView->setWrapping(true);
     previewButton->setSizePolicy(qsp);
     previewButton->setMaximumSize(150, 150);
 
