@@ -8,7 +8,8 @@
 #include <QStyledItemDelegate>
 #include <QComboBox>
 #include <QPushButton>
-#include <QListWidget>
+#include <QListView>
+#include <QStringListModel>
 
 #include "clientlist.h"
 
@@ -44,8 +45,8 @@ public:
 
 private:
     QComboBox *selectionCombo;
-    QListWidget *jobistsList;
-    QList<JobistTag> *jobistsModel;
+    QListView *jobistsList;
+    QStringListModel *jobistsModel;
     QPushButton *add;
 
 
@@ -54,7 +55,7 @@ signals:
 
 private slots:
     void addJobist();
-    void removeJobist(QString name);
+    void removeJobist(const QModelIndex &);
 };
 
 
@@ -88,34 +89,5 @@ private:
     QVector<qreal> *notesValues;
     QVector<qreal> *coinsValues;
 };
-
-//Item delegate to paint the names of the jobists in the list and also
-//Add a button that user have to click to remove the jobist.
-class JobistDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
-
-public:
-    explicit JobistDelegate(QWidget *parent = nullptr);
-
-    void paint(QPainter *painter, const QStyleOptionViewItem &option,
-               const QModelIndex &index) const;
-    //QSize sizeHint(const QStyleOptionViewItem &option,
-    //               const QModelIndex &index) const;
-};
-
-class JobistTag
-{
-
-private:
-    QString name;
-
-public:
-    explicit JobistTag(QString name = "");
-    void setName(QString name);
-    void paint(QPainter *painter, const QStyleOptionViewItem &option);
-    bool operator==(const JobistTag &tag) const;
-};
-Q_DECLARE_METATYPE(JobistTag)
 
 #endif // COUNTMONEY_H

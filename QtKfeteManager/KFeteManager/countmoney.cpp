@@ -3,8 +3,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QSpinBox>
-#include <QListWidget>
-#include <QListWidgetItem>
+#include <QListView>
+#include <QStringListModel>
 #include <QPainter>
 #include <QComboBox>
 #include <QSqlQueryModel>
@@ -29,8 +29,11 @@ CountMoneyBefore::CountMoneyBefore(QWidget *parent) : CountMoney(parent){
     buttonsLayout->addWidget(cancel);
     //Selecting jobists
     //Display
-    jobistsList = new QListWidget(this);
-    jobistsList->setItemDelegate(new JobistDelegate(jobistsList));
+    jobistsList = new QListView(this);
+    jobistsModel = new QStringListModel(this);
+    jobistsModel->sort(0, Qt::AscendingOrder);
+    jobistsList->setModel(jobistsModel);
+    jobistsList->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     //Selection
     selectionCombo  = new QComboBox;
@@ -50,19 +53,22 @@ CountMoneyBefore::CountMoneyBefore(QWidget *parent) : CountMoney(parent){
 
     connect(cancel, SIGNAL(clicked()), this, SIGNAL(cancelled()));
     connect(add, SIGNAL(clicked()), this, SLOT(addJobist()));
+    connect(jobistsList, SIGNAL(clicked(const QModelIndex &)), this, SLOT(removeJobist(const QModelIndex &)));
 }
 
 void CountMoneyBefore::addJobist(){
     QString name = this->selectionCombo->currentText();
-    QListWidgetItem *item = new QListWidgetItem;
-    item->setData(Qt::DisplayRole, QVariant::fromValue(JobistTag(name)));
-    jobistsList->addItem(item);
+    QStringList list = jobistsModel->stringList();
+    list << name;
+    list.removeDuplicates();
+    jobistsModel->setStringList(list); //appends the added name.
+    jobistsModel->sort(0, Qt::AscendingOrder);
 }
 
-void CountMoneyBefore::removeJobist(QString name){
-    QListWidgetItem *item = new QListWidgetItem;
-    item->setData(Qt::DisplayRole, QVariant::fromValue(JobistTag(name)));
-    jobistsList->removeItemWidget(item);
+void CountMoneyBefore::removeJobist(const QModelIndex &index){
+    QStringList list = jobistsModel->stringList();
+    list.removeAll(index.data().toString());
+    jobistsModel->setStringList(list);
 }
 
 CountMoneyAfter::CountMoneyAfter(QWidget *parent) : CountMoney(parent){
@@ -71,6 +77,7 @@ CountMoneyAfter::CountMoneyAfter(QWidget *parent) : CountMoney(parent){
 
 MoneyForm::MoneyForm(QWidget *parent) : QWidget (parent)
 {
+    //TODO use QLocale to manage euro symbol. Maybe a way to store it in another way in the DB.
     QLabel *notesTitleLabel = new QLabel(tr("Billets :"), this);
     QLabel *coinsTitleLabel = new QLabel(tr("Pièces :"), this);
 
@@ -156,65 +163,4 @@ qreal MoneyForm::getCount(){
     }
 
     return total;
-}
-
-JobistDelegate::JobistDelegate(QWidget *parent) : QStyledItemDelegate (parent){}
-
-void JobistDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const{
-    if(index.data().canConvert<JobistTag>()){
-        JobistTag jTag = qvariant_cast<JobistTag>(index.data());
-
-        if(option.state & QStyle::State_Selected){
-            painter->fillRect(option.rect, option.palette.highlight());
-        }
-
-        jTag.paint(painter, option);
-    }else{
-        QStyledItemDelegate::paint(painter, option, index);
-    }
-}
-
-JobistTag::JobistTag(QString name){
-    this->name = name;
-
-}
-
-void JobistTag::setName(QString name){
-    this->name = name;
-}
-
-void JobistTag::paint(QPainter *painter, const QStyleOptionViewItem &option) {
-
-    //Creates a painter and configure it
-    painter->save();
-
-    const int crossW = option.rect.height();
-    const int crossX = option.rect.right() - crossW;
-    const int crossY = option.rect.y();
-
-    if(option.state & QStyle::State_Selected){
-        painter->fillRect(option.rect, option.palette.highlight());
-    }
-    painter->setRenderHint(QPainter::Antialiasing, true);
-    //Sets color and styles. See Qt doc.
-    painter->setPen(QPen(Qt::red, 2, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
-
-    painter->setBrush(option.palette.foreground());
-
-    //Paint the cross
-    QLineF line1 = QLineF(1.464, 1.464, 8.535, 8.535);
-    QLineF line2 = QLineF(1.464, 8.535, 8.535, 1.464);
-
-    painter->scale(10/crossW, 10/crossW);
-    painter->translate(crossX, crossY);
-
-    painter->drawLine(line1);
-    painter->drawLine(line2);
-    painter->drawText(option.rect.left()+1, option.rect.bottom()+1, name);
-
-    painter->restore();
-}
-
-bool JobistTag::operator==(const JobistTag &tag) const{
-    return this->name == tag.name;
 }
