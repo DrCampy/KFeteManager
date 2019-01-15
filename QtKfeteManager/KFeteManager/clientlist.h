@@ -13,7 +13,7 @@ class DuplicateClientException;
 class Client
 {
 public:
-    explicit Client(QString name);
+    explicit Client(QString name = "");
 
     void create(QString phone = "", QString address = "", QString email = "", qreal limit = 0, bool isJobist = false, qreal balance = 0);
     bool exists() const;
