@@ -82,7 +82,7 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     articlesView->setModelColumn(nameIndex); //Sets the column to the name
     articlesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     articlesView->setWrapping(true);
-    sqlModel->sort(nameIndex, Qt::AscendingOrder);
+    sqlModel->setSort(nameIndex, Qt::AscendingOrder);
     function->setModel(sqlModel->relationModel(functionIndex));
     function->setModelColumn(functionNameIndex);
 
@@ -236,15 +236,22 @@ void CatalogManager::addFunction(){
 
 void CatalogManager::delFunction(){
     //ask for confirmation
+    bool *ok = new bool();
     QString input = QInputDialog::getText(this, tr("Veuillez confirmer la suppression"),
                                           tr("Pour confirmer la suppression de la fonction, "
-                                             "veuillez entrer son nom :").append(selectedFctCombo->currentText()), QLineEdit::Normal);
+                                             "veuillez entrer son nom : ") + selectedFctCombo->currentText(),
+                                          QLineEdit::Normal, QString(), ok);
+    if(*ok == false){
+        delete ok;
+        return;
+    }
     if(input == selectedFctCombo->currentText()){
         DatabaseManager::delFunction(input);
     }else{
         QMessageBox::warning(this, tr("Erreur"), tr("Le nom entré est incorrect. La fonction n'est pas supprimée."));
     }
     refreshFctModel();
+    delete ok;
 }
 
 void CatalogManager::refreshFctModel(){
@@ -279,10 +286,15 @@ void CatalogManager::createArticle(){
 }
 
 void CatalogManager::deleteArticle(){
+    bool *ok = new bool();
     QString input = QInputDialog::getText(this, tr("Veuillez confirmer la suppression"),
                                           tr("Pour confirmer la suppression de l'article, "
-                                          "veuillez entrer son nom :").append(articlesView->currentIndex().data().toString()),
-                                          QLineEdit::Normal);
+                                          "veuillez entrer son nom :") + articlesView->currentIndex().data().toString(),
+                                          QLineEdit::Normal, QString(), ok);
+    if(*ok == false){
+        delete ok;
+        return;
+    }
 
     if(input == articlesView->currentIndex().data().toString()){
         sqlModel->removeRow(articlesView->currentIndex().row());
@@ -290,5 +302,5 @@ void CatalogManager::deleteArticle(){
         QMessageBox::warning(this, tr("Erreur"), tr("Le nom entré est incorrect. L'article n'est pas supprimé."));
     }
     sqlModel->select();
-
+    delete ok;
 }
