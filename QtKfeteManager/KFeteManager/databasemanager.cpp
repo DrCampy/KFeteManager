@@ -74,7 +74,7 @@ QList<QStringList> DatabaseManager::allNames = {DatabaseManager::articlesFields,
                                                 DatabaseManager::configFields
                                                };
 
-void DatabaseManager::openDatabase(){
+void        DatabaseManager::openDatabase               (){
     //Creates default sql database connection
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("./data/KFeteManagerDB.sqlite");
@@ -101,7 +101,7 @@ void DatabaseManager::openDatabase(){
     query.exec();
 }
 
-bool DatabaseManager::checkDatabase(){
+bool        DatabaseManager::checkDatabase              (){
     /*
      Checks if the scheme of the database is correct
 
@@ -150,19 +150,19 @@ bool DatabaseManager::checkDatabase(){
     return true;
 }
 
-void DatabaseManager::createDatabase(){
+void        DatabaseManager::createDatabase             (){
     QSqlQuery querry;
     executeScript(":/create-script.sql", querry);
 
     //TODO remove
     //Insert notes and coins
     QSqlQuery query;
-    query.exec("INSERT INTO Config(value) VALUES('€') WHERE Field='currency';");
-    query.exec("INSERT INTO Config(value) VALUES(500;200;100;50;20;10;5) WHERE Field='notes';");
-    query.exec("INSERT INTO Config(calue) VALUES(2;1;0.5;0.2;0.1;0.05;0.02;0.01) WHERE Field='coins';");
+    query.exec("INSERT INTO Config(field, value) VALUES('currency', '€') WHERE Field='currency';");
+    query.exec("INSERT INTO Config(field, value) VALUES('notes', '500;200;100;50;20;10;5');");
+    query.exec("INSERT INTO Config(field, value) VALUES('coins', '2;1;0.5;0.2;0.1;0.05;0.02;0.01');");
 }
 
-bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
+bool        DatabaseManager::executeScript              (QString filename, QSqlQuery &query){
     //opens file
     QFile file(filename);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -210,7 +210,7 @@ bool DatabaseManager::executeScript(QString filename, QSqlQuery &query){
     return true;
 }
 
-void DatabaseManager::closeDatabase(){
+void        DatabaseManager::closeDatabase              (){
     if(QSqlDatabase::contains()){
         QSqlDatabase::database().close();
     }
@@ -218,7 +218,7 @@ void DatabaseManager::closeDatabase(){
 
 //Articles management
 //GENERAL PURPOSE FUNCTIONS
-bool        DatabaseManager::hasArticle(const Article &a){
+bool        DatabaseManager::hasArticle                 (const Article &a){
     QSqlQuery query;
     query.prepare("SELECT Name FROM Articles WHERE Name=:name;");
     query.bindValue(":name", a.getName());
@@ -258,11 +258,11 @@ bool        DatabaseManager::addArticle                 (const Article &a, qreal
 
 bool        DatabaseManager::updateArticleField         (const Article &a, QString field, QVariant value){
     QSqlQuery query;
-    query.prepare(QString("UPDATE Articles SET ").append(field).append("=:value WHERE Name=:name;"));
+    query.prepare("UPDATE Articles SET " + field + "=:value WHERE Name=:name;");
 
     //Manages the particular case of the fields function
     if(field == "function"){
-        query.bindValue(":value", QString("(SELECT Id FROM Functions WHERE name='").append(value.toString()).append("')"));
+        query.bindValue(":value", "(SELECT Id FROM Functions WHERE name='" + value.toString() + "')");
     }else{
         query.bindValue(":value", value);
     }
@@ -286,7 +286,7 @@ QVariant    DatabaseManager::getArticleField            (const Article &a, QStri
                       "INNER JOIN Functions ON Articles.function=Functions.Id);");
 
     }else{
-        query.prepare(QString("SELECT ").append(field).append(" FROM Articles WHERE Name=:name;"));
+        query.prepare("SELECT " + field + " FROM Articles WHERE Name=:name;");
     }
 
     query.bindValue(":name", a.getName());
@@ -428,10 +428,9 @@ bool        DatabaseManager::updateArticleFunction       (const Article &a, QStr
 //Client management
 bool        DatabaseManager::updateClientField          (const Client &c, QString field, QVariant value){
     QSqlQuery query;
-    query.prepare("UPDATE Clients SET ?=? WHERE Name=?;");
-    query.addBindValue(field);
-    query.addBindValue(value);
-    query.addBindValue(c.getName());
+    query.prepare("UPDATE Clients SET " + field + "=:value WHERE Name=:name;");
+    query.bindValue(":value", value);
+    query.bindValue(":name", c.getName());
     bool ret = query.exec();
     if(!ret){
         qDebug() << "Error updating field " << field << " with value " << value << " for client " << c;
@@ -443,7 +442,7 @@ bool        DatabaseManager::updateClientField          (const Client &c, QStrin
 QVariant    DatabaseManager::getClientField             (const Client &c, QString field){
     QSqlQuery query;
 
-    query.prepare(QString("SELECT ").append(field).append(" FROM Clients WHERE Name=:name;"));
+    query.prepare("SELECT " + field + " FROM Clients WHERE Name=:name;");
     query.bindValue(":name", c.getName());
 
     bool ret = query.exec();
@@ -584,7 +583,7 @@ bool        DatabaseManager::updateClientBalance        (const Client &c, qreal 
  * then the functions return the ID already allocated to that function.
  * Comparison of functions is NOT CasE SeNsiTIvE
  */
-uint        DatabaseManager::addFunction            (QString name){
+uint        DatabaseManager::addFunction                (QString name){
     name = name.trimmed();
     QSqlQuery query;
     query.prepare("INSERT OR IGNORE INTO Functions(name) VALUES(?);");
@@ -609,7 +608,7 @@ uint        DatabaseManager::addFunction            (QString name){
     return 0;
 }
 
-uint        DatabaseManager::hasFunction            (QString name){
+uint        DatabaseManager::hasFunction                (QString name){
     name = name.trimmed();
     QSqlQuery query;
     query.prepare("SELECT Id FROM Functions WHERE name=:name;");
@@ -628,7 +627,7 @@ uint        DatabaseManager::hasFunction            (QString name){
     return 0;
 }
 
-QList<QString> DatabaseManager::getFunctions        (){
+QList<QString> DatabaseManager::getFunctions            (){
     QSqlQuery query;
     int ret = query.exec("SELECT name FROM Functions;");
     if(!ret){
@@ -643,7 +642,7 @@ QList<QString> DatabaseManager::getFunctions        (){
     return list;
 }
 
-void        DatabaseManager::delFunction            (QString name){
+void        DatabaseManager::delFunction                (QString name){
     QSqlQuery query;
     query.prepare("DELETE FROM Functions WHERE name=?;");
     query.addBindValue(name);
@@ -658,7 +657,7 @@ void        DatabaseManager::delFunction            (QString name){
  * Managing Orders
  */
 
-bool        DatabaseManager::addOrder               (const Order &o, Client c){
+bool        DatabaseManager::addOrder                   (const Order &o, Client c){
     QSqlQuery query;
 
     //Fetch the session time.
@@ -736,7 +735,7 @@ bool        DatabaseManager::addOrder               (const Order &o, Client c){
 }
 
 //Miscelaneous
-QVariant    DatabaseManager::getCurrentSession      (){
+QVariant    DatabaseManager::getCurrentSession          (){
     QSqlQuery query;
 
     //Fetch the session time.
@@ -748,7 +747,7 @@ QVariant    DatabaseManager::getCurrentSession      (){
     return query.value(0);
 }
 
-bool        DatabaseManager::closeSession                (QVariant closeAmount){
+bool        DatabaseManager::closeSession               (QVariant closeAmount){
     //Get current session
     QVariant currentSession = getCurrentSession();
 
@@ -784,7 +783,7 @@ bool        DatabaseManager::closeSession                (QVariant closeAmount){
     return success;
 }
 
-bool        DatabaseManager::newSession                  (QVariant openAmount, QList<Client> holdingSession){
+bool        DatabaseManager::newSession                 (QVariant openAmount, QList<Client> holdingSession){
     QDateTime now = QDateTime::currentDateTime();
 
     QSqlQuery query;
@@ -802,6 +801,7 @@ bool        DatabaseManager::newSession                  (QVariant openAmount, Q
     query.bindValue(":time", now.toSecsSinceEpoch());
     success &= query.exec();
     qDebug() << query.lastError();
+
     //Sets the next (first) order number to be 1.
     success &= query.exec("UPDATE Config SET Value=1 WHERE field='CurrentSessionOrderId';");
 
@@ -822,29 +822,142 @@ bool        DatabaseManager::newSession                  (QVariant openAmount, Q
     return success;
 }
 
-QStringList DatabaseManager::getNotes                    (){
+bool        DatabaseManager::setCurrentSessionOpenAmount(qreal count){
     QSqlQuery query;
-    if(!query.exec("SELECT value FROM Config WHERE Field='notes';") && query.next()){
+
+    //Fetch the session time.
+    QVariant sessionTime = getCurrentSession();
+    if(sessionTime.isNull()){
+        qDebug() << "No open session.";
+        return false;
+    }
+
+    //Sets openAmount
+    query.prepare("UPDATE SaleSession SET openAmount=:amount WHERE OpeningTime = :time;");
+    query.bindValue(":amount", count);
+    query.bindValue(":time", sessionTime);
+    bool success = query.exec();
+
+    return success;
+}
+
+bool        DatabaseManager::setCurrentSessionjobists   (QList<Client> jobists){
+    QSqlQuery query;
+    bool success = true;
+
+    QSqlDatabase::database().transaction();
+    //Fetch the session time.
+    QVariant sessionTime = getCurrentSession();
+    if(sessionTime.isNull()){
+        qDebug() << "No open session.";
+        return false;
+    }
+    query.prepare("DELETE FROM heldSession WHERE SessionTime = :session;");
+    query.bindValue(":session", sessionTime);
+    success &= query.exec();
+
+    //Adds the jobists holding the session
+    query.prepare("INSERT INTO heldSession(name, SessionTime) VALUES(:jobist, :session);");
+    query.bindValue(":session", sessionTime, QSql::In);
+    for(auto it : jobists){
+        query.bindValue(":jobist", it.getName(), QSql::In);
+        success &= query.exec();
+    }
+
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+
+    return success;
+}
+
+QStringList DatabaseManager::getNotes                   (){
+    QSqlQuery query;
+    if(!query.exec("SELECT value FROM Config WHERE Field='notes';") || !query.next()){
         return QStringList();
     }else{
         return query.value(0).toString().split(";", QString::SkipEmptyParts);
     }
 }
 
-QStringList DatabaseManager::getCoins                    (){
+QStringList DatabaseManager::getCoins                   (){
     QSqlQuery query;
-    if(!query.exec("SELECT value FROM Config WHERE Field='coins';") && query.next()){
+    if(!query.exec("SELECT value FROM Config WHERE Field='coins';") || !query.next()){
         return QStringList();
     }else{
         return query.value(0).toString().split(";", QString::SkipEmptyParts);
     }
 }
 
-QString     DatabaseManager::getCurrency                 (){
+QString     DatabaseManager::getCurrency                (){
     QSqlQuery query;
-    if(!query.exec("SELECT value FROM Config WHERE Field='currency';") && query.next()){
+    if(!query.exec("SELECT value FROM Config WHERE Field='currency';") || !query.next()){
         return QString();
     }else{
         return query.value(0).toString();
     }
+}
+
+bool        DatabaseManager::deposit                    (qreal amount, Client c){
+    QSqlQuery query;
+
+    if( (!c.isNull() && !c.exists()) || (amount <= 0.01) ){
+        return false;
+    }
+
+    //Fetch the session time.
+    QVariant sessionTime = getCurrentSession();
+    if(sessionTime.isNull()){
+        qDebug() << "No open session.";
+        return false;
+    }
+
+    bool success = true;
+    QSqlDatabase::database().transaction(); //starts a transaction
+
+    //Fetch the next order line
+    success &= query.exec("SELECT value FROM Config WHERE Field='CurrentSessionOrderId';");
+    query.next();
+    unsigned int orderNumber = query.value(0).toUInt();
+
+    //Adds the order as transaction (not to be confused with sql transaction...)
+    QDateTime time = QDateTime::currentDateTime();
+    query.prepare("INSERT INTO Transactions(sessionTime, lineNumber, processTime, total) "
+                  "VALUES(:session, :line, :time, :total);");
+    query.bindValue(":session", sessionTime.toULongLong());
+    query.bindValue(":line", orderNumber);
+    query.bindValue(":time", time.toSecsSinceEpoch());
+    query.bindValue(":total", amount);
+    success &= query.exec();
+
+    unsigned long long int orderID = query.lastInsertId().toULongLong();
+
+    //Adds the order as order
+    query.prepare("INSERT INTO CashMoves(Id, client) VALUES(:id, :client);");
+    query.bindValue(":id", orderID);
+    query.bindValue(":client", c.getName());
+    success &= query.exec();
+
+    //Increments the next order line
+    query.prepare("UPDATE Config SET value=:line WHERE Field='CurrentSessionOrderId';");
+    query.bindValue(":line", orderNumber+1);
+    success &= query.exec();
+
+    if(!c.isNull()){
+        query.prepare("UPDATE Clients SET balance = balance + :amount WHERE Name = :name;");
+        query.bindValue(":amount", amount);
+        query.bindValue(":name", c.getName());
+        success &= query.exec();
+    }
+    qDebug() << query.lastError().text();
+
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+
+    return success;
 }

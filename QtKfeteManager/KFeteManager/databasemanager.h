@@ -69,14 +69,18 @@ public:
     static QList<QString>   getFunctions            ();
     static void             delFunction             (QString name);
     static bool             addOrder                (const Order &o, Client c);
+    static bool             deposit                 (qreal amount, Client c = Client());
 
     //Miscelaneous
-    static QVariant         getCurrentSession       ();
-    static bool             closeSession            (QVariant closeAmount);
-    static bool             newSession              (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
-    static QStringList      getNotes                ();
-    static QStringList      getCoins                ();
-    static QString          getCurrency             ();
+    static QVariant         getCurrentSession           ();
+    static bool             closeSession                (QVariant closeAmount);
+    static bool             newSession                  (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
+    static bool             setCurrentSessionOpenAmount (qreal count);
+    static bool             setCurrentSessionjobists    (QList<Client> jobists);
+
+    static QStringList      getNotes                    ();
+    static QStringList      getCoins                    ();
+    static QString          getCurrency                 ();
 
     /*
      * Managing articles
