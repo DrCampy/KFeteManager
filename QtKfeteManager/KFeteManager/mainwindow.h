@@ -51,6 +51,12 @@ public slots:
     void editCarte();
     void editCatalog();
     void editClient();
+    void countBefore();
+    void countAfter();
+    void countBeforeFinished(qreal count, QList<Client> jobists);
+    void countAfterFinished(qreal count);
+    void newSessionCreated(qreal count, QList<Client> jobists);
+    void createNewSession();
     //void payJobists();
     //void statistics();
 

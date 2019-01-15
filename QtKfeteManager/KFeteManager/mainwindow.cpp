@@ -15,6 +15,7 @@
 #include "catalogmanager.h"
 #include "cartemanager.h"
 #include "clientmanager.h"
+#include "countmoney.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -32,32 +33,21 @@ MainWindow::MainWindow(QWidget *parent) :
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
 
     QAction *action = fileMenu->addAction(tr("&Fermer la session de vente"));
-    connect(action, SIGNAL(triggered()), this, SLOT(closeSession()));
-
     action = fileMenu->addAction(tr("Gérer la base de données"), this, "SLOT(manageDB())");
-    connect(action, SIGNAL(triggered()), this, SLOT(manageDB()));
 
     QMenu *editMenu = menuBar()->addMenu(tr("&Editer"));
     action = editMenu->addAction(tr("Editer la &carte"));
-    connect(action, SIGNAL(triggered()), this, SLOT(editCarte()));
-
     action = editMenu->addAction(tr("Editer le c&atalogue"));
-    connect(action, SIGNAL(triggered()), this, SLOT(editCatalog()));
-
     action = editMenu->addAction(tr("Editer les C&lients"));
-    connect(action, SIGNAL(triggered()), this, SLOT(editClient()));
 
     QMenu *managementMenu = menuBar()->addMenu(tr("&Gestion"));
     action = managementMenu->addAction(tr("Effectuer les &paiements"));
-    connect(action, SIGNAL(triggered()), this, SLOT(payJobists()));
-
     managementMenu->addAction(tr("Statistiques financières"));
-    connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
+
     //TODO button about
 
     //Check that we have an open session
     QVariant openSession = DatabaseManager::getCurrentSession();
-
 
     //TODO do not ask but open the view to count cash.
     //Set the current session only after cash register counted.
@@ -82,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
     center->addWidget(new CatalogManager(center));
     center->addWidget(new CarteManager(salesView->getCarteModel(), center));
     center->addWidget(new ClientManager(center));
+    center->addWidget(new CountMoneyBefore(center));
+    center->addWidget(new CountMoneyAfter(center));
 
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
@@ -94,6 +86,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(3), SIGNAL(finished()), this, SLOT(backToSales()));
+    connect(action, SIGNAL(triggered()), this, SLOT(closeSession()));
+    connect(action, SIGNAL(triggered()), this, SLOT(manageDB()));
+    connect(action, SIGNAL(triggered()), this, SLOT(editCarte()));
+    connect(action, SIGNAL(triggered()), this, SLOT(editCatalog()));
+    connect(action, SIGNAL(triggered()), this, SLOT(editClient()));
+    connect(action, SIGNAL(triggered()), this, SLOT(payJobists()));
+    connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
+    connect(center->widget(0), SIGNAL(countBefore()), this, SLOT(countBefore()));
+    connect(center->widget(0), SIGNAL(countAfter()), this, SLOT(countAfter()));
 }
 
 MainWindow::~MainWindow()
@@ -156,4 +157,38 @@ void MainWindow::editCarte(){
 
 void MainWindow::editClient(){
     center->setCurrentIndex(3);
+}
+
+void MainWindow::countBefore(){
+    disconnect(center->widget(4), SIGNAL(validated(qreal, QList<Client>)), this, SLOT(newSessionCreated(qreal, QList<Client>)));
+    center->setCurrentIndex(4);
+    connect(center->widget(4), SIGNAL(validated(qreal, QList<Client>)), this, SLOT(countBeforeFinished(qreal, QList<Client>)));
+}
+
+void MainWindow::countAfter(){
+    center->setCurrentIndex(5);
+    connect(center->widget(5), SIGNAL(validated(qreal)), this, SLOT(countAfterFinished(qreal)));
+
+}
+
+void MainWindow::createNewSession(){
+    disconnect(center->widget(4), SIGNAL(validated(qreal, QList<Client>)), this, SLOT(countBeforeFinished(qreal, QList<Client>)));
+    center->setCurrentIndex(4);
+    connect(center->widget(4), SIGNAL(validated(qreal, QList<Client>)), this, SLOT(newSessionCreated(qreal, QList<Client>)));
+}
+
+void MainWindow::countBeforeFinished(qreal count, QList<Client> jobists){
+    center->setCurrentIndex(0);
+    DatabaseManager::setCurrentSessionjobists(jobists);
+    DatabaseManager::setCurrentSessionOpenAmount(count);
+}
+
+void MainWindow::countAfterFinished(qreal count){
+    center->setCurrentIndex(0);
+    DatabaseManager::closeSession(count);
+}
+
+void MainWindow::newSessionCreated(qreal count, QList<Client> jobists){
+    center->setCurrentIndex(0);
+    DatabaseManager::newSession(count, jobists);
 }
