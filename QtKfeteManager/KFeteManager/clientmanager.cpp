@@ -13,7 +13,7 @@
 #include <QDataWidgetMapper>
 #include <QSqlRecord>
 #include <QInputDialog>
-
+#include <QMessageBox>
 
 #include <QDebug>
 #include <QSqlError>
@@ -21,32 +21,37 @@
 
 #include "clientlist.h"
 #include "clientmanager.h"
+#include "databasemanager.h"
 
 ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
 {
-    clientModel     = new QSqlRelationalTableModel(this);
-    clientList      = new QListView(this);
+    clientModel         = new QSqlRelationalTableModel(this);
+    clientList          = new QListView(this);
+    validateButton      = new QPushButton(tr("Sauver"), this);
+    //form widgets
+    clientName          = new QLabel(this);
+    balance             = new QLabel(this);
+    address             = new QLineEdit(this);
+    email               = new QLineEdit(this);
+    phone               = new QLineEdit(this);
+    limit               = new QDoubleSpinBox(this);
+    isJobist            = new QComboBox(this);
+    mapper              = new QDataWidgetMapper(this);
 
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
     QVBoxLayout *rightLayout    = new QVBoxLayout();
     QFormLayout *formLayout     = new QFormLayout();
     QLabel *formTitle           = new QLabel(tr("Article sélectionné :"), this);
-    QDataWidgetMapper *mapper   = new QDataWidgetMapper(this);
-    QPushButton *validateButton = new QPushButton(tr("Sauver"), this);
     QPushButton *deleteButton   = new QPushButton(tr("Supprimer client"), this);
     QPushButton *createButton   = new QPushButton(tr("Nouveau client"), this);
     QPushButton *quitButton     = new QPushButton(tr("Quitter"), this);
 
-    //form widgets
-    QLabel *clientName          = new QLabel(this);
-    QLabel *balance             = new QLabel(this);
-    QLineEdit *address          = new QLineEdit(this);
-    QLineEdit *email            = new QLineEdit(this);
-    QLineEdit *phone            = new QLineEdit(this);
-    QDoubleSpinBox *limit       = new QDoubleSpinBox(this);
-    QComboBox *isJobist         = new QComboBox(this);
 
-    //validateButton->setEnabled(false);
+
+    limit->setObjectName("limit-spinbox");
+    isJobist->setObjectName("isJobist-combobox");
+
+    validateButton->setEnabled(false);
     clientModel->setTable("Clients");
     limit->setMinimum(-10);
     limit->setMaximum(0);
@@ -62,13 +67,13 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     clientModel->setEditStrategy(QSqlTableModel::OnRowChange);
     clientModel->setSort(nameIndex, Qt::AscendingOrder);
     clientModel->setRelation(isJobistIndex, QSqlRelation("BooleanYesNo", "BoolValue", "string"));
-    clientModel->select();
+    bool select = clientModel->select();
+
+    qDebug() << "Select returned : " << (select?QString("true"):QString("false"));
 
     clientList->setModel(clientModel);
     clientList->setModelColumn(nameIndex);
     clientList->setEditTriggers(QListView::NoEditTriggers);
-    //isJobist->insertItem(0, tr("Non"));
-    //isJobist->insertItem(1, tr("Oui"));
     isJobist->setModel(clientModel->relationModel(isJobistIndex));
     isJobist->setModelColumn(1);
 
@@ -102,9 +107,17 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     mainLayout->addLayout(rightLayout);
 
     connect(quitButton, SIGNAL(clicked()), this, SIGNAL(finished()));
-    connect(validateButton, SIGNAL(clicked()), mapper, SLOT(submit()));
+    connect(validateButton, SIGNAL(clicked()), this, SLOT(validatePressed()));
     connect(clientList, SIGNAL(clicked(const QModelIndex)), mapper, SLOT(setCurrentModelIndex(const QModelIndex)));
+    connect(clientList, SIGNAL(clicked(const QModelIndex)), this, SLOT(selectionChanged()));
     connect(createButton, SIGNAL(clicked()), this, SLOT(createClient()));
+    connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteClient()));
+
+    connect(address, SIGNAL(editingFinished()), this, SLOT(dataChanged()));
+    connect(email, SIGNAL(editingFinished()), this, SLOT(dataChanged()));
+    connect(phone, SIGNAL(editingFinished()), this, SLOT(dataChanged()));
+    connect(limit, SIGNAL(valueChanged(double)), this, SLOT(dataChanged()));
+    connect(isJobist, SIGNAL(currentIndexChanged(int)), this, SLOT(dataChanged()));
 }
 
 void ClientManager::createClient(){
@@ -119,9 +132,47 @@ void ClientManager::createClient(){
     record.setValue("balance", 0);
     record.setValue("address", "");
     record.setValue("phone", "");
-    record.setValue("isJobist", false);
+    record.setValue("isJobist", tr("Non"));
     clientModel->insertRecord(-1, record);
-
+    qDebug() << record;
     clientModel->select();
 }
 
+void ClientManager::deleteClient(){
+    //ask for confirmation
+    auto index = clientList->currentIndex();
+    bool *ok = new bool();
+    QString input = QInputDialog::getText(this, tr("Veuillez confirmer la suppression"),
+                                          tr("Pour confirmer la suppression du compte client, "
+                                             "veuillez entrer son nom : ").append(index.data().toString()),
+                                          QLineEdit::Normal, QString(), ok);
+    if(*ok == false){
+        delete ok;
+        return;
+    }
+    if(input == index.data()){
+        DatabaseManager::delClient(Client(index.data().toString()));
+        clientModel->select();
+    }else{
+        QMessageBox::warning(this, tr("Erreur"), tr("Le nom entré est incorrect. La fonction n'est pas supprimée."));
+    }
+    delete ok;
+}
+
+void ClientManager::selectionChanged(){
+    validateButton->setEnabled(false);
+}
+
+void ClientManager::dataChanged(){
+    validateButton->setEnabled(true);
+}
+
+void ClientManager::validatePressed(){
+    bool jobist = ((isJobist->currentIndex() == 0)?false:true);
+    qreal limitValue = limit->value();
+    if(!jobist && limitValue < 0){
+        limit->setValue(0);
+    }
+    this->validateButton->setEnabled(false);
+    mapper->submit();
+}
