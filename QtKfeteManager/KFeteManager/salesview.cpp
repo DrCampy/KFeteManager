@@ -21,6 +21,14 @@
 #include <QLabel>
 #include <QHeaderView>
 #include <QDebug>
+#include <QToolButton>
+#include <QListView>
+#include <QSqlTableModel>
+#include <QSqlRecord>
+#include <QCompleter>
+#include <QMessageBox>
+#include <QSqlQueryModel>
+#include <QDoubleSpinBox>
 
 #include "catalog.h"
 #include "salesview.h"
@@ -31,6 +39,7 @@ const QStringList CarteView::PAGES_NAMES = (QStringList() << tr("Bières") << tr
 
 SalesView::SalesView(QWidget *parent) : QWidget(parent)
 {    
+    QHBoxLayout *topBar = new QHBoxLayout();
     QHBoxLayout *hBox = new QHBoxLayout();
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
@@ -55,7 +64,6 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
 
     }
 
-    topBar              = new TopBar(this);
     totalLabel          = new QLabel(this);
     middleBar           = new MiddleBar(this);
     currentOrderModel   = new CurrentOrderModel(0, this);
@@ -76,7 +84,7 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     hBox->addWidget(carteView, 7);
     
     //mainVBox contains the top bar then the rest of the window
-    mainVBox->addWidget(topBar, 1);
+    mainVBox->addLayout(topBar);
     mainVBox->addLayout(hBox, 6);
     
     //Configure table view. Selectable by row and hide vertical header
@@ -88,6 +96,58 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     currentOrderView->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     currentOrderView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     currentOrderViewResize();
+
+    //TopBar
+    QToolButton *deposit    = new QToolButton(this);
+    QToolButton *withdraw   = new QToolButton(this);
+    //QPushButton *openDrawer = new QPushButton(tr("Ouvrir la caisse"), this);
+    QToolButton *count      = new QToolButton(this);
+    QToolButton *accounts   = new QToolButton(this);
+    QPushButton *orders     = new QPushButton(tr("Commandes"), this);
+    QPushButton *validate   = new QPushButton(tr("Valider"), this);
+
+    //Configures toolButtons
+
+    //accounts
+    accounts->setText(tr("Comptes"));
+    accounts->setPopupMode(QToolButton::InstantPopup);
+    accounts->setArrowType(Qt::NoArrow);
+    AccountSelector *accountSelector = new AccountSelector(this);
+    accounts->addAction(accountSelector);
+
+    //Deposit
+    deposit->addAction(new QAction(tr("Sur un compte"), deposit));
+    deposit->addAction(new QAction(tr("En caisse"), deposit));
+    deposit->setText(tr("Dépôt"));
+    deposit->setPopupMode(QToolButton::InstantPopup);
+    deposit->setArrowType(Qt::NoArrow);
+    connect(deposit->actions().at(0), SIGNAL(triggered()), this, SLOT(clientDeposit()));
+    connect(deposit->actions().at(1), SIGNAL(triggered()), this, SLOT(cashDeposit()));
+
+    //Withdraw
+    withdraw->addAction(new QAction(tr("Sur un compte"), withdraw));
+    withdraw->addAction(new QAction(tr("En caisse"), withdraw));
+    withdraw->setText(tr("Retrait"));
+    withdraw->setPopupMode(QToolButton::InstantPopup);
+    withdraw->setArrowType(Qt::NoArrow);
+    connect(withdraw->actions().at(0), SIGNAL(triggered()), this, SLOT(clientWithdraw()));
+    connect(withdraw->actions().at(1), SIGNAL(triggered()), this, SLOT(cashWithdraw()));
+
+    //count = count content of cash register
+    count->addAction(new QAction(tr("Avant l'exercice"), count));
+    count->addAction(new QAction(tr("Après l'exercice"), count));
+    count->setText(tr("Compter la caisse"));
+    count->setPopupMode(QToolButton::InstantPopup);
+    count->setArrowType(Qt::NoArrow);
+    connect(count->actions().at(0), SIGNAL(triggered()), this, SIGNAL(countBefore()));
+    connect(count->actions().at(1), SIGNAL(triggered()), this, SIGNAL(countAfter()));
+
+    topBar->addWidget(deposit, 1);
+    topBar->addWidget(withdraw, 1);
+    topBar->addWidget(count, 1);
+    topBar->addWidget(accounts, 1);
+    topBar->addWidget(orders, 1);
+    topBar->addWidget(validate, 1);
 
     //Connects all the signals
     //From model to this
@@ -102,7 +162,9 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     connect(carteModel, SIGNAL(articleClicked(QString)), this, SLOT(articleAdded(QString)));
     connect(this, SIGNAL(addArticle(QString)), currentOrderModel, SLOT(addArticle(QString)));
     //Connect the validate button
-    connect(topBar, SIGNAL(validate()), this, SLOT(validateOrder()));
+    connect(validate, SIGNAL(clicked()), this, SLOT(validateOrder()));
+    //connects accountSelector
+    connect(accountSelector, SIGNAL(clientSelected(Client)), this, SLOT(selectClient(Client)));
 
     modelUpdated();
 
@@ -153,6 +215,10 @@ void SalesView::actionPerformed(){
     currentOrderViewResize();
 }
 
+void SalesView::selectClient(Client c){
+    this->selectedClient = c;
+}
+
 CarteModel *SalesView::getCarteModel(){
     return carteModel;
 }
@@ -165,9 +231,17 @@ bool SalesView::processOrder(const Order &o, Client c){
             //Client does not have enough funds, check for it's limit
             if(c.getBalance() < o.getTotal()){
                 //limit allow user to buy
-                if(c.getBalance()-c.getLimit() < o.getTotal()){
-                    //Displays warning
+                if(c.getBalance()-c.getLimit() > o.getTotal()){
+                    QMessageBox messageBox;
+                    messageBox.setText(tr("Solde bas"));
+                    messageBox.setInformativeText(tr("Le solde du compte sélectionné est négatif. \n"
+                                                     "Voulez-vous poursuivre quand même ?"));
+                    messageBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                    messageBox.setDefaultButton(QMessageBox::No);
+                    int ret = messageBox.exec();
+                    process = (ret == QMessageBox::Yes);
                 }else{
+                    QMessageBox::warning(this, tr("Solde insuffisant"), tr("Le solde du compte sélectionné n'est pas assez élevé."));
                     process = false;
                 }
             }else{
@@ -176,6 +250,7 @@ bool SalesView::processOrder(const Order &o, Client c){
         }else{
             if(c.getBalance() < o.getTotal()){
                 //Displays error
+                QMessageBox::warning(this, tr("Solde insuffisant"), tr("Le solde du compte sélectionné n'est pas assez élevé."));
                 process = false;
             }else{
                 process = true;
@@ -208,29 +283,64 @@ void SalesView::validateOrder(){
     }
 }
 
-TopBar::TopBar(QWidget *parent) : QWidget(parent)
-{
-    QHBoxLayout *hBox = new QHBoxLayout(this);
-    QWidget *bar = new QWidget(this);
-    QButtonGroup *bGroup = new QButtonGroup(this);
-    
-    QStringList buttonsNames;
-    buttonsNames << tr("Dépôt") << tr("Retrait") << tr("Ouvrir la Caisse") << tr("Compter la Caisse")
-                 << tr("Comptes") << tr("Commandes") << tr("Valider");
-    
-    QPushButton *tmp;
-    for(auto it = buttonsNames.begin(); it != buttonsNames.end(); it++){
-        tmp = new QPushButton(*it, bar);
-        tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        hBox->addWidget(tmp);
-        bGroup->addButton(tmp, (it-buttonsNames.begin()));
-    }
+void SalesView::cashDeposit(){
+    CustomSelectorPopup *popup =
+            new CustomSelectorPopup(nullptr, CustomSelectorPopup::Amount);
 
-    connect(bGroup->button(6), SIGNAL(clicked()), this, SIGNAL(validate()));
-    
-    hBox->setSpacing(0);
+    popup->setTitle(tr("Effectuer un dépôt en caisse"));
+
+    QVariant *amount = new QVariant();
+
+    if(popup->ask(amount)){
+        qDebug() << "Deposit " << *amount << " in cash register.";
+        DatabaseManager::deposit(amount->toDouble());
+    }
 }
 
+void SalesView::clientDeposit(){
+    CustomSelectorPopup *popup =
+            new CustomSelectorPopup(nullptr,
+                                    CustomSelectorPopup::Amount |
+                                    CustomSelectorPopup::Client);
+
+    popup->setTitle(tr("Effectuer un dépôt sur un compte"));
+
+    QVariant *amount = new QVariant();
+    QVariant *client = new QVariant();
+    if(popup->ask(amount, client)){
+        qDebug() << "Deposit " << *amount << "For client " << *client;
+        DatabaseManager::deposit(amount->toDouble(), Client(client->toString()));
+    }
+}
+
+void SalesView::cashWithdraw(){
+    CustomSelectorPopup *popup =
+            new CustomSelectorPopup(nullptr, CustomSelectorPopup::Amount);
+
+    popup->setTitle(tr("Effectuer un retrait en caisse"));
+
+    QVariant *amount = new QVariant();
+    if(popup->ask(amount)){
+        qDebug() << "Withdrawing " << *amount << " in cash register.";
+        DatabaseManager::deposit(-amount->toDouble());
+    }
+}
+
+void SalesView::clientWithdraw(){
+    CustomSelectorPopup *popup =
+            new CustomSelectorPopup(nullptr,
+                                    CustomSelectorPopup::Amount |
+                                    CustomSelectorPopup::Client);
+
+    popup->setTitle(tr("Effectuer un retrait sur un compte"));
+
+    QVariant *amount = new QVariant();
+    QVariant *client = new QVariant();
+    if(popup->ask(amount, client)){
+        qDebug() << "Withdrawing " << *amount << " for client " << *client;
+        DatabaseManager::deposit(-amount->toDouble(), Client(client->toString()));
+    }
+}
 
 MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
 {
@@ -278,6 +388,7 @@ MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
     reducedPriceButton->setSizePolicy(qsp);
     freePriceButton->setAutoFillBackground(true);
     freePriceButton->setSizePolicy(qsp);
+
     //Configures internal state
     lastPerformedAction = CurrentOrderModel::plusItem;
     resetPrice();
@@ -287,8 +398,6 @@ MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
     connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteSlot()));
     connect(priceButtonsGroup, SIGNAL(buttonPressed(int)), this, SLOT(priceSlot(int)));
 }
-
-
 
 void MiddleBar::plusSlot(){
     lastPerformedAction = CurrentOrderModel::plusItem;
@@ -328,4 +437,157 @@ Order::Price MiddleBar::getSelectedPrice() const{
     return selectedPrice;
 }
 
+//Constructor
+AccountSelector::AccountSelector(QWidget *parent) : QWidgetAction(parent){
+    //Initializes the model from the SQL database
+    clientsModel = new QSqlQueryModel(this);
+};
+
+QWidget *AccountSelector::createWidget(QWidget *parent){
+    QWidget *mainWidget = new QWidget(parent);
+    QVBoxLayout *mainLayout = new QVBoxLayout(mainWidget);
+    balance = new QLabel(tr("Solde : "), mainWidget);
+    clientsModel->setQuery("SELECT Name, balance FROM Clients ORDER BY Name ASC;");
+    //Creates searchbar and configure it
+    searchBar = new QLineEdit(mainWidget);
+    searchBar->setPlaceholderText(tr("Rechercher"));
+    searchBar->setFocus(); //So that when users have clicked the button he can imediately type
+
+    //Creates listview and configure it
+    listView = new QListView(mainWidget);
+    listView->setModel(clientsModel);
+    listView->setModelColumn(0);
+    listView->setEditTriggers(QAbstractItemView::NoEditTriggers); //Listview cannot be edited
+
+    mainLayout->addWidget(searchBar);
+    mainLayout->addWidget(listView);
+    mainLayout->addWidget(balance);
+
+    lastCreatedWidget = mainWidget;
+
+    connect(searchBar, SIGNAL(textChanged(QString)), this, SLOT(searchBarUpdated(QString )));
+    connect(searchBar, SIGNAL(returnPressed()), this, SLOT(searchBarReturnPressed()));
+    connect(listView, SIGNAL(activated(const QModelIndex &)), this, SLOT(listViewItemActivated(const QModelIndex &)));
+    connect(listView->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(clientHighlighted(const QModelIndex &)));
+
+    return mainWidget;
+}
+
+void AccountSelector::searchBarUpdated(QString text){
+    //Finds the best match
+    auto match = clientsModel->match(clientsModel->index(0, 0), Qt::DisplayRole, QVariant(text), 1, Qt::MatchContains | Qt::MatchWrap);
+
+    //If we have a match, select it
+    if(!match.isEmpty()){
+        listView->selectionModel()->select(match.at(0), QItemSelectionModel::ClearAndSelect);
+        listView->scrollTo(match.at(0), QAbstractItemView::PositionAtTop); //Scrolls so that the match is on top of the list
+    }
+
+    //Todo check if it cannot be automated
+    //Manually calls for clientHighlighted to update label.
+    clientHighlighted(match.at(0));
+}
+
+void AccountSelector::searchBarReturnPressed(){
+    //When user press enter on the searchbar, we are done.
+    auto selection = listView->selectionModel()->selectedIndexes();
+    if(!selection.isEmpty()){
+        emit(clientSelected(Client(selection.first().data().toString())));
+    }
+    lastCreatedWidget->parentWidget()->hide();
+}
+
+void AccountSelector::listViewItemActivated(const QModelIndex &index){
+    //If user clicks on a client in the list, emit the corresponding signal
+    emit clientSelected(Client(index.data().toString()));
+    lastCreatedWidget->parentWidget()->hide();
+}
+
+void AccountSelector::clientHighlighted(const QModelIndex &index){
+    //Updates the label indicating the balance of the highlighted client
+    this->balance->setText(tr("Solde : ") + clientsModel->data(clientsModel->index(index.row(), 1)).toString());
+}
+
+ClientComboBox::ClientComboBox(QWidget *parent) : QComboBox (parent)
+{
+    //this->setEditable(true);
+    QSqlQueryModel *model = new QSqlQueryModel(this);
+    model->setQuery("SELECT name FROM Clients;");
+    this->setModel(model);
+    model->setHeaderData(0, Qt::Horizontal, tr("Nom"));
+    this->setCurrentIndex(-1);
+    connect(this, SIGNAL(editTextChanged(const QString &)), this, SLOT(refresh()));
+}
+
+void ClientComboBox::refresh(){
+    this->setCurrentIndex(findText(currentText()));
+    auto selection = this->view()->selectionModel()->selectedIndexes();
+    if(!selection.isEmpty()){
+        this->view()->scrollTo(selection.first(), QAbstractItemView::PositionAtTop);
+    }
+}
+
+CustomSelectorPopup::CustomSelectorPopup(QWidget *parent, SelectionFlags flags) :
+    QDialog (parent, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint)
+{
+    this->flags = flags;
+    setMinimumSize(400, 130);
+    setMaximumSize(400, 130);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
+
+    //If we have to ask for a client
+    if(flags & Client){
+        accountLabel = new QLabel(tr("Compte :"), this);
+        clientCombo = new ClientComboBox(this);
+        mainLayout->addWidget(accountLabel, 0, Qt::AlignBottom);
+        mainLayout->addWidget(clientCombo, 0, Qt::AlignTop);
+    }
+
+    //If we have to ask both, insert space
+    if(flags & (Amount|Client) ){
+        mainLayout->addSpacing(15);
+    }
+
+    //If we have to ask for an amount
+    if(flags & Amount){
+        amountLabel = new QLabel(tr("Montant :"), this);
+        amount = new QDoubleSpinBox(this);
+        mainLayout->addWidget(amountLabel, 0, Qt::AlignBottom);
+        mainLayout->addWidget(amount, 0, Qt::AlignTop);
+    }
+
+    //Adds buttons
+    QHBoxLayout *buttonsLayout  = new QHBoxLayout();
+    QPushButton *validate       = new QPushButton(tr("Valider"), this);
+    QPushButton *cancel         = new QPushButton(tr("Annuler"), this);
+    buttonsLayout->addStretch(0);
+    buttonsLayout->addWidget(validate, 1, Qt::AlignRight);
+    buttonsLayout->addWidget(cancel, 1, Qt::AlignLeft);
+    mainLayout->addLayout(buttonsLayout);
+
+    connect(validate, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+}
+
+void CustomSelectorPopup::setTitle(QString title){
+    setWindowTitle(title);
+}
+
+bool CustomSelectorPopup::ask(QVariant *amount, QVariant *client){
+    this->exec();
+
+    if(this->result() == QDialog::Accepted){
+        if(flags & Amount && amount){
+            amount->setValue(this->amount->value());
+        }
+        if(flags & Client && client){
+            client->setValue(this->clientCombo->currentText());
+        }
+        this->deleteLater();
+        return true;
+    }
+    this->deleteLater();
+    return false;
+}
 

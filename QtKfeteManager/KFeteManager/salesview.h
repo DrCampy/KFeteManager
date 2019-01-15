@@ -8,28 +8,22 @@
 #include <QTableView>
 #include <QStandardItemModel>
 #include <QLabel>
+#include <QAbstractListModel>
+#include <QSqlTableModel>
+#include <QListView>
+#include <QComboBox>
+#include <QDialog>
+#include <QDoubleSpinBox>
+
 
 #include "catalog.h"
 #include "currentordermodel.h"
 #include "carteview.h"
 #include "cartemodel.h"
 
-class TopBar;
 class SalesView;
 class MiddleBar;
 
-class TopBar : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit TopBar(QWidget *parent = nullptr);
-
-signals:
-    void validate();
-
-
-
-};
 
 class MiddleBar : public QWidget
 {
@@ -70,14 +64,14 @@ class SalesView : public QWidget
 {
     Q_OBJECT
 public:
-    explicit SalesView(QWidget *parent = nullptr );
+    explicit SalesView(QWidget *parent = nullptr);
     CarteModel *getCarteModel();
+
 
 private:
 
     CarteModel  *carteModel;
     CarteView   *carteView;
-    TopBar      *topBar;
     QLabel      *totalLabel;
     MiddleBar   *middleBar;
     Client      selectedClient = Client("");
@@ -92,6 +86,8 @@ signals:
     void performAction();
     void updatePrice();
     void addArticle(QString);
+    void countBefore();
+    void countAfter();
 
 public slots:
     void modelUpdated();
@@ -99,10 +95,79 @@ public slots:
     void priceUpdated();
     void articleAdded(QString);
     void validateOrder();
+    void selectClient(Client c);
+
+private slots:
+    void cashDeposit();
+    void clientDeposit();
+    void cashWithdraw();
+    void clientWithdraw();
 
 };
 
-//TODO when validate is pressed, we have to select normal price button again.
+//QAction used in the topbar to select a client account
+class AccountSelector : public QWidgetAction
+{
+    Q_OBJECT
+public:
+    explicit AccountSelector(QWidget *parent = nullptr);
+    QWidget *createWidget(QWidget *parent);
+
+private:
+    void refreshList();
+    QSqlQueryModel *clientsModel;
+    QLineEdit *searchBar;
+    QListView *listView;
+    QWidget *lastCreatedWidget;
+    QLabel *balance;
+
+public slots:
+    void searchBarUpdated(QString text);
+    void searchBarReturnPressed();
+    void listViewItemActivated(const QModelIndex &index);
+    void clientHighlighted(const QModelIndex &index);
+
+signals:
+    void clientSelected(Client);
+
+};
+
+class ClientComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    explicit ClientComboBox(QWidget *parent = nullptr);
+
+private slots:
+    void refresh();
+
+};
+
+class CustomSelectorPopup : protected QDialog
+{
+    Q_OBJECT
+public:
+    enum SelectionFlag{
+        Amount = 0x1,
+        Client = 0x2
+    };
+    Q_DECLARE_FLAGS(SelectionFlags, SelectionFlag) //Declare the flags as flags for Qt
+
+    explicit CustomSelectorPopup(QWidget *parent = nullptr, SelectionFlags flags = Amount);
+    bool ask(QVariant *amount, QVariant *client = nullptr);
+    void setTitle(QString title = QString());
+
+private:
+    QLabel *accountLabel = nullptr;
+    ClientComboBox *clientCombo = nullptr;
+    QLabel *amountLabel = nullptr;
+    QDoubleSpinBox *amount = nullptr;
+    SelectionFlags flags;
+
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(CustomSelectorPopup::SelectionFlags) //Allows flags to be OR'ed.
 
 #endif // SALESVIEW_H
 
