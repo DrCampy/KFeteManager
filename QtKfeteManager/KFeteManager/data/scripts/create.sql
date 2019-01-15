@@ -30,11 +30,11 @@ Functions(
 CREATE TABLE IF NOT EXISTS
 Clients(
     Name TEXT NOT NULL PRIMARY KEY,
-    phone TEXT,
-    address TEXT,
-    email TEXT,
-    negLimit NUMERIC CHECK(negLimit >= -10),
-    isJobist INTEGER,
+    phone TEXT DEFAULT '',
+    address TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    negLimit NUMERIC DEFAULT 0 CHECK(negLimit >= -10),
+    isJobist INTEGER DEFAULT 0,
     balance NUMERIC NOT NULL DEFAULT 0);
 
 --Statement
