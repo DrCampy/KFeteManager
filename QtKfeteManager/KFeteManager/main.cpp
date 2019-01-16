@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
     if(!QDir("./data").exists()){
         QDir().mkdir("./data");
     }
@@ -32,15 +32,17 @@ int main(int argc, char *argv[])
             qDebug() << "Unable to create Database";
             return EXIT_FAILURE;
         }
-
     }
+
+    app.setOrganizationName("Morgan Diepart");
+    app.setApplicationName("KFeteManager");
 
     //runs application
     MainWindow w;
     w.show();
 
     //Executes application
-    int ret = a.exec();
+    int ret = app.exec();
 
     //Closes Database
     DatabaseManager::closeDatabase();
