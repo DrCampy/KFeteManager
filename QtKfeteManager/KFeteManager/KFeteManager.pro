@@ -39,7 +39,8 @@ SOURCES += \
     catalogmanager.cpp \
     cartemanager.cpp \
     countmoney.cpp \
-    clientmanager.cpp
+    clientmanager.cpp \
+    ordermanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -55,7 +56,8 @@ HEADERS += \
     catalogmanager.h \
     cartemanager.h \
     countmoney.h \
-    clientmanager.h
+    clientmanager.h \
+    ordermanager.h
 
 
 # Default rules for deployment.
