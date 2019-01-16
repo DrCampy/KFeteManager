@@ -105,8 +105,16 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QToolButton *accounts   = new QToolButton(this);
     QPushButton *orders     = new QPushButton(tr("Commandes"), this);
     QPushButton *validate   = new QPushButton(tr("Valider"), this);
-
-    //Configures toolButtons
+    auto qsp = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    deposit->setSizePolicy(qsp);
+    withdraw->setSizePolicy(qsp);
+    count->setSizePolicy(qsp);
+    accounts->setSizePolicy(qsp);
+    auto minSize = validate->minimumSize();
+    deposit->setMinimumSize(minSize);
+    withdraw->setMinimumSize(minSize);
+    count->setMinimumSize(minSize);
+    accounts->setMinimumSize(minSize);
 
     //accounts
     accounts->setText(tr("Comptes"));
