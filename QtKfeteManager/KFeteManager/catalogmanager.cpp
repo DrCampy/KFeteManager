@@ -207,7 +207,6 @@ void CatalogManager::entryValidated(){
     }else{
         qDebug() << "Validate returned false";
     }
-    qDebug() << sqlModel->lastError().text();
     validate->setEnabled(false);
 
 }

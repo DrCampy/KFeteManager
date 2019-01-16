@@ -67,9 +67,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     clientModel->setEditStrategy(QSqlTableModel::OnRowChange);
     clientModel->setSort(nameIndex, Qt::AscendingOrder);
     clientModel->setRelation(isJobistIndex, QSqlRelation("BooleanYesNo", "BoolValue", "string"));
-    bool select = clientModel->select();
-
-    qDebug() << "Select returned : " << (select?QString("true"):QString("false"));
+    clientModel->select();
 
     clientList->setModel(clientModel);
     clientList->setModelColumn(nameIndex);
@@ -134,7 +132,6 @@ void ClientManager::createClient(){
     record.setValue("phone", "");
     record.setValue("isJobist", tr("Non"));
     clientModel->insertRecord(-1, record);
-    qDebug() << record;
     clientModel->select();
 }
 

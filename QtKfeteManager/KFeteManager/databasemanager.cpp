@@ -800,7 +800,6 @@ bool        DatabaseManager::newSession                 (QVariant openAmount, QL
     query.prepare("UPDATE Config SET Value=:time WHERE field='CurrentSession';");
     query.bindValue(":time", now.toSecsSinceEpoch());
     success &= query.exec();
-    qDebug() << query.lastError();
 
     //Sets the next (first) order number to be 1.
     success &= query.exec("UPDATE Config SET Value=1 WHERE field='CurrentSessionOrderId';");
@@ -951,7 +950,6 @@ bool        DatabaseManager::deposit                    (qreal amount, Client c)
         query.bindValue(":name", c.getName());
         success &= query.exec();
     }
-    qDebug() << query.lastError().text();
 
     if(success){
         QSqlDatabase::database().commit();
