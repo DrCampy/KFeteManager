@@ -10,26 +10,60 @@
 #include <QPushButton>
 #include <QListView>
 #include <QStringListModel>
+#include <QSqlQueryModel>
 
 #include "clientlist.h"
 
+class CountMoney;
+class CountMoneyBefore;
+class CountMoneyAfter;
 class JobistTag;
 class JobistDelegate;
 struct MoneyForm;
+
+struct MoneyForm : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit MoneyForm(QWidget *parent = nullptr);
+    ~MoneyForm();
+    qreal getTotal();
+    void setCount(const QList<uint> &notes, const QList<uint> &coins);
+    void getCount(QList<uint> &notes, QList<uint> &coins);
+
+private:
+    QList<QLabel *> *notesLabels;
+    QList<QSpinBox *> *notesSpinBoxes;
+
+    QList<QLabel *> *coinsLabels;
+    QList<QSpinBox *> *coinsSpinBoxes;
+
+    QVector<qreal> *notesValues;
+    QVector<qreal> *coinsValues;
+
+    QLocale *locale;
+
+    friend CountMoney;
+};
 
 class CountMoney : public QWidget
 {
     Q_OBJECT
 public:
     explicit CountMoney(QWidget *parent = nullptr);
+    void load(QString settingsName);
+    void save(QString settingsName);
+    qreal getTotal(){return moneyForm->getTotal();}
 
 protected:
-    MoneyForm *moneyForm;
     QPushButton *validate;
     QPushButton *cancel;
+    MoneyForm *moneyForm;
 
 signals:
     void cancelled();
+    void validated();
 
 };
 
@@ -42,19 +76,20 @@ class CountMoneyBefore : public CountMoney
     Q_OBJECT
 public:
     explicit CountMoneyBefore(QWidget *parent = nullptr);
+    QList<Client> getJobists();
+    void setJobists(QList<Client> clients);
+    void refresh();
 
 private:
     QComboBox *selectionCombo;
     QListView *jobistsList;
     QStringListModel *jobistsModel;
     QPushButton *add;
-
-
-signals:
-    void validated(qreal, QList<Client>);
+    QSqlQueryModel *clientsModel;
 
 private slots:
     void addJobist();
+    void addJobists(QStringList jobists);
     void removeJobist(const QModelIndex &);
 };
 
@@ -68,26 +103,6 @@ public:
 signals:
 
 public slots:
-};
-
-struct MoneyForm : public QWidget
-{
-    Q_OBJECT
-
-public:
-    explicit MoneyForm(QWidget *parent = nullptr);
-    ~MoneyForm();
-    qreal getCount();
-
-private:
-    QList<QLabel *> *notesLabels;
-    QList<QSpinBox *> *notesSpinBoxes;
-
-    QList<QLabel *> *coinsLabels;
-    QList<QSpinBox *> *coinsSpinBoxes;
-
-    QVector<qreal> *notesValues;
-    QVector<qreal> *coinsValues;
 };
 
 #endif // COUNTMONEY_H
