@@ -25,6 +25,10 @@ When counting cash before the session only display crosses next to names only if
 
  Q_DECLARE_METATYPE() qRegisterMetaType<T>() to simplify connects between carte and orderModel
 
+!!no null name for anything + max name length.
+
+maybe throw custom QSqlException in case of error ?
+
 Currency    Notes                       Coins
 €(EUR)      500 200 100 50 20 10 5      2.0 1.0 0.50 0.20 0.10 0.05 0.02 0.01
 $(USD)      100 50  20  10 5  2  1      1.0 0.5 0.25 0.10 0.05 0.01
