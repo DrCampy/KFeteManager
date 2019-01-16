@@ -73,10 +73,12 @@ public:
 
     //Miscelaneous
     static QVariant         getCurrentSession           ();
-    static bool             closeSession                (QVariant closeAmount);
+    static bool             closeSession                (QVariant closeAmount = QVariant());
     static bool             newSession                  (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
     static bool             setCurrentSessionOpenAmount (qreal count);
     static bool             setCurrentSessionjobists    (QList<Client> jobists);
+    static bool             setCurrentSessionCloseAmount (qreal count);
+
 
     static QStringList      getNotes                    ();
     static QStringList      getCoins                    ();

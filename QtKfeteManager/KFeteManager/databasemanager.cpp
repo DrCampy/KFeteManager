@@ -13,6 +13,7 @@
 #include <QSqlDatabase>
 #include <QSqlDriver>
 #include <QDateTime>
+#include <QSettings>
 
 #include "databasemanager.h"
 #include "order.h"
@@ -37,7 +38,7 @@ QStringList DatabaseManager::clientsFields =
 
 QStringList DatabaseManager::saleSessionsFields =
         QStringList() << "OpeningTime" << "closingTime" << "state"
-                      << "openAmount"  << "closeAmount" << "cashSoldAmount";
+                      << "openAmount"  << "closeAmount";
 
 QStringList DatabaseManager::heldSessionFields =
         QStringList() << "Name" << "SessionTime";
@@ -769,14 +770,30 @@ bool        DatabaseManager::closeSession               (QVariant closeAmount){
     QSqlDatabase::database().transaction();
     success = query.exec("UPDATE Config SET value = NULL WHERE Field='CurrentSession'"); //Remove the current session from Config
 
-    query.prepare("UPDATE SaleSessions SET state='closed', closeAmount = :amount, "
-                  "closingTime=:closeTime WHERE (OpeningTime = :session AND state='opened');"); //Close the session
-    query.bindValue(":amount", closeAmount);
-    query.bindValue(":closeTime", now);
-    query.bindValue(":session", currentSession.toLongLong());
-    success &= query.exec();
+    //Closes the session by setting the correct values
+    if(closeAmount.isNull()){
+        //If we have no closeAmount we still want to keep the closeAmount already in the database.
+        query.prepare("UPDATE SaleSessions SET state='closed', "
+                      "closingTime=:closeTime WHERE (OpeningTime = :session AND state='opened');"); //Close the session
+        query.bindValue(":closeTime", now);
+        query.bindValue(":session", currentSession.toLongLong());
+        success &= query.exec();
+    }else{
+        query.prepare("UPDATE SaleSessions SET state='closed', closeAmount = :amount, "
+                      "closingTime=:closeTime WHERE (OpeningTime = :session AND state='opened');"); //Close the session
+        query.bindValue(":amount", closeAmount);
+        query.bindValue(":closeTime", now);
+        query.bindValue(":session", currentSession.toLongLong());
+        success &= query.exec();
+    }
+
     if(success){
         QSqlDatabase::database().commit();
+        QSettings settings;
+        settings.setValue("count/after/notes", "");
+        settings.setValue("count/after/coins", "");
+        settings.setValue("count/before/notes", "");
+        settings.setValue("count/before/coins", "");
     }else{
         QSqlDatabase::database().rollback();
     }
@@ -872,6 +889,25 @@ bool        DatabaseManager::setCurrentSessionjobists   (QList<Client> jobists){
     return success;
 }
 
+bool        DatabaseManager::setCurrentSessionCloseAmount(qreal count){
+    QSqlQuery query;
+
+    //Fetch the session time.
+    QVariant sessionTime = getCurrentSession();
+    if(sessionTime.isNull()){
+        qDebug() << "No open session.";
+        return false;
+    }
+
+    //Sets closeAmount
+    query.prepare("UPDATE SaleSession SET closeAmount=:amount WHERE OpeningTime = :time;");
+    query.bindValue(":amount", count);
+    query.bindValue(":time", sessionTime);
+    bool success = query.exec();
+
+    return success;
+}
+
 QStringList DatabaseManager::getNotes                   (){
     QSqlQuery query;
     if(!query.exec("SELECT value FROM Config WHERE Field='notes';") || !query.next()){
@@ -947,7 +983,11 @@ bool        DatabaseManager::deposit                    (qreal amount, Client c)
     if(!c.isNull()){
         query.prepare("UPDATE Clients SET balance = balance + :amount WHERE Name = :name;");
         query.bindValue(":amount", amount);
-        query.bindValue(":name", c.getName());
+        if(!c.isNull()){
+            query.bindValue(":name", c.getName());
+        }else{
+            query.bindValue(":name", QVariant());
+        }
         success &= query.exec();
     }
 
