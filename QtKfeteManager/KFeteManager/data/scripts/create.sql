@@ -46,9 +46,7 @@ SaleSessions(
     state TEXT NOT NULL DEFAULT 'opened' CHECK(state IN('opened', 'closed')),
     openAmount NUMERIC,
     closeAmount NUMERIC,
-    cashSoldAmount NUMERIC DEFAULT 0,
-    CHECK (((closingTime IS NULL) AND state = 'opened') OR ((closingTime > OpeningTime) AND state = 'closed')),
-    CHECK (((closeAmount IS NULL) AND state = 'opened') OR ((closeAmount IS NOT NULL) AND state = 'closed'))); --To be stored in case prices changed after the sale
+    CHECK (((closingTime IS NULL) AND state = 'opened') OR ((closingTime > OpeningTime) AND state = 'closed')));
 
 --Statement
 --6
@@ -98,7 +96,7 @@ OrderClient(
 CREATE TABLE IF NOT EXISTS
 CashMoves(
     Id INTEGER PRIMARY KEY REFERENCES Transactions(Id) ON DELETE CASCADE,
-    client TEXT REFERENCES Clients(Name) ON DELETE NO ACTION);
+    client TEXT);
 
 --Statement
 --12
@@ -161,7 +159,16 @@ BEGIN
 SELECT Raise(Fail, 'Current Session Order Id must be a positive Integer.');
 END;
 
---19 to 25
+--Statement
+--19
+CREATE TRIGGER CashMove_has_valid_client
+BEFORE UPDATE ON CashMoves
+WHEN (NEW.client NOT NULL AND NEW.client NOT IN (SELECT name FROM Clients))
+BEGIN
+SELECT Raise(Fail, 'Current Session Order Id must be a positive Integer.');
+END;
+
+--20 to 26
 --Statement
 INSERT OR REPLACE INTO Functions VALUES('No Function', 0);
 
