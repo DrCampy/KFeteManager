@@ -37,6 +37,9 @@ private:
     QDateTime date;
     QLabel *clockLabel;
     PushLabel *accountLabel;
+    void writeSettings();
+    void readSettings();
+    void closeEvent(QCloseEvent *event);
 
 public slots:
     void updateClock();
@@ -53,9 +56,9 @@ public slots:
     void editClient();
     void countBefore();
     void countAfter();
-    void countBeforeFinished(qreal count, QList<Client> jobists);
-    void countAfterFinished(qreal count);
-    void newSessionCreated(qreal count, QList<Client> jobists);
+    void countBeforeFinished();
+    void countAfterFinished();
+    void newSessionCreated();
     void createNewSession();
     //void payJobists();
     //void statistics();
