@@ -44,26 +44,6 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
     QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
-    //Test datas
-    if(DatabaseManager::hasFunction("Bar") == 0){
-        DatabaseManager::addFunction("Bar");
-        qDebug() << "Inserted function Bar";
-    }
-
-    Article jup("Jupiler");
-    if(!jup.exists()){
-        jup.create(0.9, 0.3, 0.5, 0.6, "Bar");
-        qDebug() << "Inserted article Jupiler";
-
-    }
-
-    Article kasteel("Kasteel Rouge");
-    if(!kasteel.exists()){
-        kasteel.create(1.8, 0.3, 1.5, 1.6, "Bar");
-        qDebug() << "Inserted article Kasteel";
-
-    }
-
     totalLabel          = new QLabel(this);
     middleBar           = new MiddleBar(this);
     currentOrderModel   = new CurrentOrderModel(0, this);
@@ -100,11 +80,12 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     //TopBar
     QToolButton *deposit    = new QToolButton(this);
     QToolButton *withdraw   = new QToolButton(this);
-    //QPushButton *openDrawer = new QPushButton(tr("Ouvrir la caisse"), this);
     QToolButton *count      = new QToolButton(this);
     QToolButton *accounts   = new QToolButton(this);
     QPushButton *orders     = new QPushButton(tr("Commandes"), this);
     QPushButton *validate   = new QPushButton(tr("Valider"), this);
+
+    //Configures the size of the tool buttons
     auto qsp = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     deposit->setSizePolicy(qsp);
     withdraw->setSizePolicy(qsp);
@@ -176,17 +157,6 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     connect(orders, SIGNAL(clicked()), this, SIGNAL(manageOrders()));
 
     modelUpdated();
-
-    //Test datas
-    QColor red(255, 0, 0);
-    QColor black(0, 0, 0);
-    QColor white(255, 255, 255);
-    QColor darkRed(127, 0, 0);
-    ButtonDataWrapper bJup(jup.getName(), "#FF0000", "#FFFFFF");
-    ButtonDataWrapper bKast(kasteel.getName(), "#AF00FE", "#000000");
-    //carteModel->addEntry(1, bJup);
-    //carteModel->addEntry(55, bKast);
-
 }
 
 void SalesView::currentOrderViewResize(){
