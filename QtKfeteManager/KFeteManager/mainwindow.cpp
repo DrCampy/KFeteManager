@@ -18,6 +18,7 @@
 #include "cartemanager.h"
 #include "clientmanager.h"
 #include "countmoney.h"
+#include "ordermanager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -82,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     center->addWidget(new ClientManager(center));
     center->addWidget(new CountMoneyBefore(center));
     center->addWidget(new CountMoneyAfter(center));
+    center->addWidget(new OrderManager(this));
 
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
@@ -94,6 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(3), SIGNAL(finished()), this, SLOT(backToSales()));
+    connect(center->widget(6), SIGNAL(finished()), this, SLOT(backToSales()));
 
     connect(center->widget(4), SIGNAL(cancelled()), this, SLOT(backToSales()));
     connect(center->widget(5), SIGNAL(cancelled()), this, SLOT(backToSales()));
@@ -102,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(center->widget(0), SIGNAL(countBefore()), this, SLOT(countBefore()));
     connect(center->widget(0), SIGNAL(countAfter()), this, SLOT(countAfter()));
+    connect(center->widget(0), SIGNAL(manageOrders()), this, SLOT(manageOrders()));
     readSettings();
 
     //If there is no open session or we closed it sooner, create a new one.
@@ -126,8 +130,7 @@ void MainWindow::updateAccountLabel(QString account){
         s.append("<i>");
         s.append(tr("Aucun"));
         s.append("</i>");
-    }
-    else{
+    }else{
         s.push_front("<font color=#dd2828>");
         s.append(account);
         s.append("</font>");
@@ -256,4 +259,8 @@ void MainWindow::newSessionCreated(){
     disconnect(center->widget(4), SIGNAL(validated()), this, SLOT(newSessionCreated()));
     connect(center->widget(4), SIGNAL(validated()), this, SLOT(countBeforeFinished()));
 
+}
+
+void MainWindow::manageOrders(){
+    center->setCurrentIndex(6);
 }

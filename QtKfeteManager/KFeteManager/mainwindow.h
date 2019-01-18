@@ -60,6 +60,7 @@ public slots:
     void countAfterFinished();
     void newSessionCreated();
     void createNewSession();
+    void manageOrders();
     //void payJobists();
     //void statistics();
 
