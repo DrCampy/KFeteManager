@@ -93,8 +93,8 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     currentOrderView->setSelectionBehavior(QAbstractItemView::SelectRows);
     currentOrderView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     currentOrderView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    currentOrderView->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    currentOrderView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    currentOrderView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
+    currentOrderView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     currentOrderViewResize();
 
     //TopBar
@@ -173,6 +173,7 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     connect(validate, SIGNAL(clicked()), this, SLOT(validateOrder()));
     //connects accountSelector
     connect(accountSelector, SIGNAL(clientSelected(Client)), this, SLOT(selectClient(Client)));
+    connect(orders, SIGNAL(clicked()), this, SIGNAL(manageOrders()));
 
     modelUpdated();
 
@@ -288,6 +289,7 @@ void SalesView::validateOrder(){
         this->middleBar->resetPrice();
         this->currentOrderView->setStyleSheet("color : red;");
         this->currentOrderModel->clear();
+        this->selectedClient = Client("");
     }
 }
 
@@ -300,8 +302,7 @@ void SalesView::cashDeposit(){
     QVariant *amount = new QVariant();
 
     if(popup->ask(amount)){
-        qDebug() << "Deposit " << *amount << " in cash register.";
-        DatabaseManager::deposit(amount->toDouble());
+        DatabaseManager::addDeposit(amount->toDouble());
     }
 }
 
@@ -316,8 +317,7 @@ void SalesView::clientDeposit(){
     QVariant *amount = new QVariant();
     QVariant *client = new QVariant();
     if(popup->ask(amount, client)){
-        qDebug() << "Deposit " << *amount << "For client " << *client;
-        DatabaseManager::deposit(amount->toDouble(), Client(client->toString()));
+        DatabaseManager::addDeposit(amount->toDouble(), Client(client->toString()));
     }
 }
 
@@ -329,8 +329,7 @@ void SalesView::cashWithdraw(){
 
     QVariant *amount = new QVariant();
     if(popup->ask(amount)){
-        qDebug() << "Withdrawing " << *amount << " in cash register.";
-        DatabaseManager::deposit(-amount->toDouble());
+        DatabaseManager::addDeposit(-amount->toDouble());
     }
 }
 
@@ -345,8 +344,7 @@ void SalesView::clientWithdraw(){
     QVariant *amount = new QVariant();
     QVariant *client = new QVariant();
     if(popup->ask(amount, client)){
-        qDebug() << "Withdrawing " << *amount << " for client " << *client;
-        DatabaseManager::deposit(-amount->toDouble(), Client(client->toString()));
+        DatabaseManager::addDeposit(-amount->toDouble(), Client(client->toString()));
     }
 }
 
@@ -513,7 +511,7 @@ void AccountSelector::listViewItemActivated(const QModelIndex &index){
 
 void AccountSelector::clientHighlighted(const QModelIndex &index){
     //Updates the label indicating the balance of the highlighted client
-    this->balance->setText(tr("Solde : ") + clientsModel->data(clientsModel->index(index.row(), 1)).toString());
+    this->balance->setText(tr("Solde : ") + QString::number(clientsModel->data(clientsModel->index(index.row(), 1)).toDouble(), 'f', 2));
 }
 
 ClientComboBox::ClientComboBox(QWidget *parent) : QComboBox (parent)

@@ -88,6 +88,7 @@ signals:
     void addArticle(QString);
     void countBefore();
     void countAfter();
+    void manageOrders();
 
 public slots:
     void modelUpdated();
