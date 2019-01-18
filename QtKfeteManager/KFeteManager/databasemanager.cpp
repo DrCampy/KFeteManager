@@ -546,7 +546,7 @@ bool        DatabaseManager::isClientJobist             (const Client &c){
 }
 
 qreal       DatabaseManager::getClientBalance           (const Client &c){
-    QVariant ret = getClientField(c, "phone");
+    QVariant ret = getClientField(c, "balance");
     if(ret.isNull()){
         return qQNaN();
     }
@@ -572,10 +572,6 @@ bool        DatabaseManager::updateClientLimit          (const Client &c, qreal 
 
 bool        DatabaseManager::updateIsClientJobist       (const Client &c, bool value){
     return updateClientField(c, "isJobist", value);
-}
-
-bool        DatabaseManager::updateClientBalance        (const Client &c, qreal value){
-    return updateClientField(c, "balance", value);
 }
 
 /*
@@ -735,14 +731,52 @@ bool        DatabaseManager::addOrder                   (const Order &o, Client 
     return success;
 }
 
+bool        DatabaseManager::cancelOrder                (qlonglong id){
+    QSqlQuery query;
+
+    bool success = true;
+
+    QSqlDatabase::database().transaction();
+
+    //Checks if we have to edit the balance of a client
+    query.prepare("SELECT client FROM (SELECT client FROM orderClient WHERE Id = :id UNION ALL SELECT client FROM CashMoves WHERE id = :id2);");
+    query.bindValue(":id", id);
+    query.bindValue(":id2", id);
+    success &= query.exec();
+    if(query.next()){
+        //If there is an associated client
+        Client c = Client(query.value(0).toString());
+        if(!c.isNull()){ //in case of deposit in cash register, client can be ""
+            //get the amount to correct
+            query.prepare("SELECT total FROM transactions WHERE Id = id;");
+            query.bindValue(":id", id);
+            success &= query.exec();
+            query.next();
+            qreal total = query.value(0).toDouble();
+
+            //Corrects
+            success &= c.deposit(total);
+        }
+    }
+
+    query.prepare("DELETE FROM Transactions WHERE id = :id;");
+    query.bindValue(":id", id);
+    success &= query.exec();
+    if(success){
+        QSqlDatabase::database().commit();
+    }else{
+        QSqlDatabase::database().rollback();
+    }
+    return success;
+}
+
 //Miscelaneous
 QVariant    DatabaseManager::getCurrentSession          (){
     QSqlQuery query;
 
     //Fetch the session time.
-    query.exec("SELECT value FROM Config WHERE Field='CurrentSession';");
+    query.exec("SELECT value FROM Config WHERE Field='CurrentSession' AND value IN (SELECT openingTime FROM Salesessions);");
     if(!query.next()){
-        qDebug() << "Could not fetch current session time.";
         return QVariant(QString()); //Return null value
     }
     return query.value(0);
@@ -935,10 +969,12 @@ QString     DatabaseManager::getCurrency                (){
     }
 }
 
-bool        DatabaseManager::deposit                    (qreal amount, Client c){
+//Add a process cashMove and DO NOT USE deposit() in processsOrder from salesView
+
+bool        DatabaseManager::addDeposit                    (qreal amount, Client c){
     QSqlQuery query;
 
-    if( (!c.isNull() && !c.exists()) || (amount <= 0.01) ){
+    if(!c.isNull() && !c.exists()){
         return false;
     }
 
@@ -998,4 +1034,22 @@ bool        DatabaseManager::deposit                    (qreal amount, Client c)
     }
 
     return success;
+}
+
+bool DatabaseManager::clientDeposit(qreal amount, Client c){
+    QSqlQuery query;
+
+    if(c.isNull() || !c.exists()){
+        return false;
+    }
+
+    query.prepare("UPDATE Clients SET balance = balance + :amount WHERE Name = :name;");
+    query.bindValue(":amount", amount);
+    if(!c.isNull()){
+        query.bindValue(":name", c.getName());
+    }else{
+        query.bindValue(":name", QVariant());
+    }
+
+    return query.exec();
 }
