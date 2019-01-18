@@ -26,8 +26,6 @@ public:
     void updateButton(unsigned int id);
 
 private :
-    static const unsigned int NB_MENU_PAGES = 4, GRID_W = 5, GRID_H = 8;
-    static const QStringList PAGES_NAMES;
     QButtonGroup *carteButtons;
     CarteModel *model;
     QToolButton *search;
@@ -38,7 +36,6 @@ public slots:
     void updateView();
 
 friend CarteManager;
-
 };
 
 class Searcher : public QWidgetAction

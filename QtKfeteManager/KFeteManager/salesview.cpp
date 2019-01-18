@@ -35,8 +35,6 @@
 #include "cartemodel.h"
 #include "carteview.h"
 
-const QStringList CarteView::PAGES_NAMES = (QStringList() << tr("Bières") << tr("Snacks") << tr("Softs") << tr("Divers"));
-
 SalesView::SalesView(QWidget *parent) : QWidget(parent)
 {    
     QHBoxLayout *topBar = new QHBoxLayout();

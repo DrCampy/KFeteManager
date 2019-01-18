@@ -12,6 +12,9 @@
 #include "catalog.h"
 #include "cartemodel.h"
 
+
+const QStringList CarteModel::PAGES_NAMES = (QStringList() << tr("Bières") << tr("Snacks") << tr("Softs") << tr("Divers"));
+
 CarteModel::CarteModel(QString filename, QObject *parent) : QObject(parent), filename(filename)
 {
     this->articles = new QStringList();
@@ -148,7 +151,7 @@ bool CarteModel::importCarte(){
                               backgroundColor = QColor(xml.attributes().value("background-color").toString());
                               if(xml.attributes().hasAttribute("text-color")){
                                   textColor = QColor(xml.attributes().value("text-color").toString());
-                                  if(Article(articleName).exists()){
+                                  if(Article(articleName).exists() && buttonID < GRID_W*GRID_H*NB_MENU_PAGES){
                                       table.insert(buttonID, ButtonDataWrapper(articleName, backgroundColor, textColor));
                                       unsigned int entriesCount = nbEntries.value(articleName, 0);
                                       nbEntries.insert(articleName, entriesCount+1);
@@ -161,7 +164,6 @@ bool CarteModel::importCarte(){
           }
       }
   }
-  //TODO check that ID is not out of bounds
   file->close();
   delete file;
   emit modelUpdated();

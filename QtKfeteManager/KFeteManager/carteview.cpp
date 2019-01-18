@@ -15,7 +15,7 @@
 CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
 {
     //Checks the number of pages
-    if(PAGES_NAMES.size() != NB_MENU_PAGES){
+    if(CarteModel::PAGES_NAMES.size() != CarteModel::NB_MENU_PAGES){
         throw std::out_of_range("From class Carte : NB_MENU_PAGES not less or equal PAGES_NAMES.size()");
     }
 
@@ -32,18 +32,18 @@ CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
     QSizePolicy qsp(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
 
     QPushButton *tmp;
-    for(int i = 0; i < static_cast<int>(NB_MENU_PAGES); i++){
+    for(int i = 0; i < static_cast<int>(CarteModel::NB_MENU_PAGES); i++){
         QWidget *page = new QWidget(this);
         QGridLayout *gridLayout = new QGridLayout(page);
         gridLayout->setSpacing(0);
         //Fills pages
-        for(int h = 0; h < static_cast<int>(GRID_H); h++){
-            for(int w = 0; w < static_cast<int>(GRID_W); w++){
+        for(int h = 0; h < static_cast<int>(CarteModel::GRID_H); h++){
+            for(int w = 0; w < static_cast<int>(CarteModel::GRID_W); w++){
                 //w+(h*GRID_W)+(GRID_H*GRID_W*i)
                 //Generating buttons for the carte
                 tmp = new QPushButton(page);
                 tmp->setSizePolicy(qsp);
-                carteButtons->addButton(tmp, w + (h*static_cast<int>(GRID_W)) + (static_cast<int>(GRID_H)*static_cast<int>(GRID_W)*i));
+                carteButtons->addButton(tmp, w + (h*static_cast<int>(CarteModel::GRID_W)) + (static_cast<int>(CarteModel::GRID_H)*static_cast<int>(CarteModel::GRID_W)*i));
                 gridLayout->addWidget(tmp, static_cast<int>(h), static_cast<int>(w));
             }
         }
@@ -52,7 +52,7 @@ CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
 
         //Generating tabs
         //Insert buttons in buttonGroup for tabs
-        tmp = new QPushButton(PAGES_NAMES.at(i), this);
+        tmp = new QPushButton(CarteModel::PAGES_NAMES.at(i), this);
         tmp->setMinimumHeight(25);
         tmp->setMaximumHeight(80);
         tmp->setSizePolicy(qsp);
@@ -109,7 +109,7 @@ void CarteView::updateButton(unsigned int id){
 }
 
 void CarteView::updateView(){
-    for(unsigned int i = 0; i < NB_MENU_PAGES*GRID_H*GRID_W; i++){
+    for(unsigned int i = 0; i < CarteModel::NB_MENU_PAGES*CarteModel::GRID_H*CarteModel::GRID_W; i++){
         updateButton(i);
     }
     if(inUse){

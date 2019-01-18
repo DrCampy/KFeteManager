@@ -102,7 +102,6 @@ void CarteManager::selectButton(int i){
     loadPreview();
 }
 
-//TODO unselect articlesList
 void CarteManager::loadPreview(){
     QString ss;
     ss.append("color: ");

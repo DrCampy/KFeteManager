@@ -15,6 +15,9 @@ class CarteModel : public QObject
 {
     Q_OBJECT
 public:
+    static const uint GRID_W = 5, GRID_H = 8, NB_MENU_PAGES = 4;
+    static const QStringList PAGES_NAMES;
+
     explicit CarteModel(QString filename, QObject *parent = nullptr);
     ~CarteModel();
     const ButtonDataWrapper *getButton(unsigned int id) const;
