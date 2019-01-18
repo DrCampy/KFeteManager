@@ -6,11 +6,11 @@
 #include <QListView>
 #include <QPushButton>
 #include <QLineEdit>
-#include <QDoubleSpinBox>
 #include <QComboBox>
 #include <QLabel>
 #include <QDataWidgetMapper>
 
+#include <customwidgets.h>
 class ClientManager : public QWidget
 {
     Q_OBJECT
@@ -18,17 +18,17 @@ public:
     explicit ClientManager(QWidget *parent = nullptr);
 
 private:
-    QSqlRelationalTableModel *clientModel;
-    QListView       *clientList;
-    QPushButton     *validateButton;
-    QLabel          *clientName;
-    QLabel          *balance;
-    QLineEdit       *address;
-    QLineEdit       *email;
-    QLineEdit       *phone;
-    QDoubleSpinBox  *limit;
-    QComboBox       *isJobist;
-    QDataWidgetMapper *mapper;
+    QSqlRelationalTableModel    *clientModel;
+    QListView                   *clientList;
+    QPushButton                 *validateButton;
+    QLabel                      *clientName;
+    QLabel                      *balance;
+    QLineEdit                   *address;
+    QLineEdit                   *email;
+    QLineEdit                   *phone;
+    CustomDoubleSpinBox         *limit;
+    QComboBox                   *isJobist;
+    QDataWidgetMapper           *mapper;
 
 
 signals:

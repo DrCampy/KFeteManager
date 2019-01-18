@@ -4,7 +4,6 @@
 #include <QListView>
 #include <QLabel>
 #include <QPushButton>
-#include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -22,6 +21,7 @@
 #include "clientlist.h"
 #include "clientmanager.h"
 #include "databasemanager.h"
+#include "customwidgets.h"
 
 ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
 {
@@ -34,7 +34,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     address             = new QLineEdit(this);
     email               = new QLineEdit(this);
     phone               = new QLineEdit(this);
-    limit               = new QDoubleSpinBox(this);
+    limit               = new CustomDoubleSpinBox(this);
     isJobist            = new QComboBox(this);
     mapper              = new QDataWidgetMapper(this);
 
@@ -55,6 +55,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     clientModel->setTable("Clients");
     limit->setMinimum(-10);
     limit->setMaximum(0);
+    limit->setSuffix(" €");
 
     int nameIndex               = clientModel->record().indexOf("Name");
     int phoneIndex              = clientModel->record().indexOf("phone");

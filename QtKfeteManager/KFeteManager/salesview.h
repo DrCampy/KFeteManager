@@ -13,7 +13,7 @@
 #include <QListView>
 #include <QComboBox>
 #include <QDialog>
-#include <QDoubleSpinBox>
+#include <customwidgets.h>
 
 
 #include "catalog.h"
@@ -163,7 +163,7 @@ private:
     QLabel *accountLabel = nullptr;
     ClientComboBox *clientCombo = nullptr;
     QLabel *amountLabel = nullptr;
-    QDoubleSpinBox *amount = nullptr;
+    CustomDoubleSpinBox *amount = nullptr;
     SelectionFlags flags;
 
 };

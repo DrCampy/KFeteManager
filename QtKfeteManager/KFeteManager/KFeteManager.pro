@@ -40,7 +40,8 @@ SOURCES += \
     cartemanager.cpp \
     countmoney.cpp \
     clientmanager.cpp \
-    ordermanager.cpp
+    ordermanager.cpp \
+    customwidgets.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -57,7 +58,8 @@ HEADERS += \
     cartemanager.h \
     countmoney.h \
     clientmanager.h \
-    ordermanager.h
+    ordermanager.h \
+    customwidgets.h
 
 
 # Default rules for deployment.

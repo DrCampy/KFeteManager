@@ -9,7 +9,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QComboBox>
-#include <QDoubleValidator>
 #include <QDataWidgetMapper>
 #include <QSqlTableModel>
 #include <QSqlRelationalTableModel>
@@ -18,7 +17,6 @@
 #include <QSqlRelationalDelegate>
 #include <QDebug>
 #include <QCompleter>
-#include <QDoubleSpinBox>
 #include <QSpacerItem>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -28,14 +26,15 @@
 #include "catalogmanager.h"
 #include "catalog.h"
 #include "databasemanager.h"
+#include "customwidgets.h"
 
 CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
 {
     //Init all private members
-    price                       = new QDoubleSpinBox(this);
-    bPrice                      = new QDoubleSpinBox(this);
-    jShare                      = new QDoubleSpinBox(this);
-    rPrice                      = new QDoubleSpinBox(this);
+    price                       = new CustomDoubleSpinBox(this);
+    bPrice                      = new CustomDoubleSpinBox(this);
+    jShare                      = new CustomDoubleSpinBox(this);
+    rPrice                      = new CustomDoubleSpinBox(this);
     function                    = new QComboBox(this);
     mapper                      = new QDataWidgetMapper(this);
     validate                    = new QPushButton(tr("Valider"), this);

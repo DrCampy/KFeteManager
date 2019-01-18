@@ -28,7 +28,7 @@
 #include <QCompleter>
 #include <QMessageBox>
 #include <QSqlQueryModel>
-#include <QDoubleSpinBox>
+#include <customwidgets.h>
 
 #include "catalog.h"
 #include "salesview.h"
@@ -558,7 +558,7 @@ CustomSelectorPopup::CustomSelectorPopup(QWidget *parent, SelectionFlags flags) 
     //If we have to ask for an amount
     if(flags & Amount){
         amountLabel = new QLabel(tr("Montant :"), this);
-        amount = new QDoubleSpinBox(this);
+        amount = new CustomDoubleSpinBox(this);
         mainLayout->addWidget(amountLabel, 0, Qt::AlignBottom);
         mainLayout->addWidget(amount, 0, Qt::AlignTop);
     }

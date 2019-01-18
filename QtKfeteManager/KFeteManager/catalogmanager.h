@@ -8,8 +8,9 @@
 #include <QPushButton>
 #include <QSqlRelationalTableModel>
 #include <QSqlRelationalDelegate>
-#include <QDoubleSpinBox>
 #include <QLabel>
+
+#include "customwidgets.h"
 
 class CatalogManager : public QWidget
 {
@@ -23,7 +24,7 @@ private:
     functionIndex, functionNameIndex;
     QListView *articlesView;
     //Form widgets
-    QDoubleSpinBox      *price, *bPrice, *jShare, *rPrice;
+    CustomDoubleSpinBox *price, *bPrice, *jShare, *rPrice;
     QComboBox           *function;
     QDataWidgetMapper   *mapper;
     QPushButton         *validate, *deleteArticleButton;
