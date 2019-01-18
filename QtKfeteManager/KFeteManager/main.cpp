@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     if(!QDir("./data").exists()){
         QDir().mkdir("./data");
     }
+
     //Opens database
     DatabaseManager::openDatabase();
 

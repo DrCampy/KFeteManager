@@ -147,7 +147,7 @@ CatalogManager::CatalogManager(QWidget *parent) : QWidget(parent)
     for(auto it: this->findChildren<QDoubleSpinBox *>()){
         it->setSingleStep(0.1);
         it->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        it->setSuffix(tr(" €"));
+        it->setSuffix(" " + locale().currencySymbol());
         it->setMinimum(-qInf());
         it->setMaximum(qInf());
     }

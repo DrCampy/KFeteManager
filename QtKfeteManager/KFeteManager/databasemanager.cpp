@@ -158,7 +158,6 @@ void        DatabaseManager::createDatabase             (){
     //TODO remove
     //Insert notes and coins
     QSqlQuery query;
-    query.exec("INSERT INTO Config(field, value) VALUES('currency', '€') WHERE Field='currency';");
     query.exec("INSERT INTO Config(field, value) VALUES('notes', '500;200;100;50;20;10;5');");
     query.exec("INSERT INTO Config(field, value) VALUES('coins', '2;1;0.5;0.2;0.1;0.05;0.02;0.01');");
 }

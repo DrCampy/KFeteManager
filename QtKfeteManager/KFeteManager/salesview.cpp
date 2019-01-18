@@ -175,9 +175,7 @@ void SalesView::priceUpdated(){
 }
 
 void SalesView::modelUpdated(){
-    QString text = QString::number(currentOrderModel->getTotal(), 'f', 2);
-    text.append(tr(" €"));
-    this->totalLabel->setText(text);
+    this->totalLabel->setText(locale().toCurrencyString(currentOrderModel->getTotal(), locale().currencySymbol(), 2));
     this->currentOrderView->setStyleSheet("");
 }
 

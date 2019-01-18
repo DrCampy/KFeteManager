@@ -55,7 +55,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     clientModel->setTable("Clients");
     limit->setMinimum(-10);
     limit->setMaximum(0);
-    limit->setSuffix(" €");
+    limit->setSuffix(" " + locale().currencySymbol());
 
     int nameIndex               = clientModel->record().indexOf("Name");
     int phoneIndex              = clientModel->record().indexOf("phone");

@@ -202,11 +202,11 @@ void MoneyForm::getCount(QList<uint> &notes, QList<uint> &coins){
 
 MoneyForm::MoneyForm(QWidget *parent) : QWidget (parent)
 {
-    //TODO use QLocale to manage euro symbol. Maybe a way to store it in another way in the DB.
+    //TODO could use formlayout
+    QLocale locale;
     QLabel *notesTitleLabel = new QLabel(tr("Billets :"), this);
     QLabel *coinsTitleLabel = new QLabel(tr("Pièces :"), this);
 
-    QString currency = DatabaseManager::getCurrency();
     QStringList notes = DatabaseManager::getNotes();
     QStringList coins = DatabaseManager::getCoins();
 
@@ -223,7 +223,8 @@ MoneyForm::MoneyForm(QWidget *parent) : QWidget (parent)
 
     //Creates the necessary labels and spinBoxes for the notes
     for(auto it : notes){
-        notesLabels->append(new QLabel(currency + it, this));
+        locale.toCurrencyString(it.toInt(), locale.currencySymbol());
+        notesLabels->append(new QLabel(locale.toCurrencyString(it.toInt(), locale.currencySymbol()), this));
         QSpinBox *spinBox = new QSpinBox(this);
         spinBox->setMaximum(INT_MAX);
         spinBox->setMinimum(0);
@@ -235,7 +236,7 @@ MoneyForm::MoneyForm(QWidget *parent) : QWidget (parent)
 
     //Creates the necessary labels and spinBoxes for the coins
     for(auto it : coins){
-        coinsLabels->append(new QLabel(currency + it, this));
+        coinsLabels->append(new QLabel(locale.toCurrencyString(it.toDouble(), locale.currencySymbol(), 2), this));
         QSpinBox *spinBox = new QSpinBox(this);
         spinBox->setMaximum(INT_MAX);
         spinBox->setMinimum(0);
