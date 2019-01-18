@@ -74,8 +74,8 @@ qreal Client::getLimit() const{
   return DatabaseManager::getClientLimit(*this);
 }
 
-void Client::deposit(qreal amount){
-    DatabaseManager::updateClientBalance(*this, this->getBalance()+amount);
+bool Client::deposit(qreal amount){
+    return DatabaseManager::clientDeposit(amount, *this);
 }
 
 qreal Client::getBalance() const{
@@ -100,21 +100,4 @@ bool Client::operator==(const Client &c) const{
 
 bool Client::operator<(const Client &c) const{
     return this->getName() < c.getName();
-}
-
-
-DuplicateClientException *DuplicateClientException::clone() const{
-    return new DuplicateClientException(*this);
-}
-
-void DuplicateClientException::raise() const{
-    throw *this;
-}
-
-NotJobistException *NotJobistException::clone() const{
-    return new NotJobistException(*this);
-}
-
-void NotJobistException::raise() const{
-    throw *this;
 }

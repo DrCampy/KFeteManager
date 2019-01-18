@@ -35,7 +35,7 @@ public:
     void setLimit(qreal limit);
     qreal getLimit() const;
 
-    void deposit(qreal amount);
+    bool deposit(qreal amount);
     qreal getBalance() const;
 
     bool isNull() const;
@@ -50,20 +50,6 @@ private:
     QString name;
     static constexpr qreal LIMIT_MIN = -10;
 
-};
-
-class DuplicateClientException : public QException
-{
-public:
-    void raise() const override;
-    DuplicateClientException *clone() const override;
-};
-
-class NotJobistException : public QException
-{
-public:
-    void raise() const override;
-    NotJobistException *clone() const override;
 };
 
 #endif // CLIENTLIST_H
