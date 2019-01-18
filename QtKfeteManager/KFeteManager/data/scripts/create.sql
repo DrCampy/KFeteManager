@@ -35,7 +35,7 @@ Clients(
     email TEXT DEFAULT '',
     negLimit NUMERIC DEFAULT 0 CHECK(negLimit >= -10),
     isJobist INTEGER DEFAULT 0,
-    balance NUMERIC NOT NULL DEFAULT 0);
+    balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance > negLimit));
 
 --Statement
 --5
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS
 OrderContent(
     Id INTEGER REFERENCES IsOrder(Id) ON DELETE CASCADE,
     article TEXT NOT NULL REFERENCES Articles(name) ON DELETE NO ACTION,
-    quantity INTEGER NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
     PRIMARY KEY(Id, article));
 
 --Statement
@@ -107,7 +107,7 @@ Config(
 
 --Statement
 --13
-CREATE TRIGGER order_check
+CREATE TRIGGER IF NOT EXISTS order_check
 BEFORE INSERT ON IsOrder
 WHEN NEW.Id IN (SELECT Id FROM CashMoves)
 BEGIN
@@ -116,7 +116,7 @@ END;
 
 --Statement
 --14
-CREATE TRIGGER cashMove_check
+CREATE TRIGGER IF NOT EXISTS cashMove_check
 BEFORE INSERT ON CashMoves
 WHEN NEW.Id IN (SELECT Id FROM IsOrder)
 BEGIN
@@ -125,7 +125,7 @@ END;
 
 --Statement
 --15
-CREATE TRIGGER transaction_time
+CREATE TRIGGER IF NOT EXISTS transaction_time
 BEFORE INSERT ON Transactions
 WHEN NEW.processTime < NEW.sessionTime
 BEGIN
@@ -134,7 +134,7 @@ END;
 
 --Statement
 --16
-CREATE TRIGGER transaction_session_state
+CREATE TRIGGER IF NOT EXISTS transaction_session_state
 BEFORE INSERT ON Transactions
 WHEN (SELECT state FROM SaleSessions WHERE SaleSessions.OpeningTime = NEW.sessionTime) = 'closed'
 BEGIN
@@ -143,7 +143,7 @@ END;
 
 --Statement
 --17
-CREATE TRIGGER CurrentSession_exists
+CREATE TRIGGER IF NOT EXISTS CurrentSession_exists
 BEFORE UPDATE OF value ON Config
 WHEN (NEW.Field='CurrentSession' AND ((NEW.value NOT IN (SELECT OpeningTime FROM SaleSessions)) AND (New.value NOT NULL)))
 BEGIN
@@ -152,7 +152,7 @@ END;
 
 --Statement
 --18
-CREATE TRIGGER CurrentSessionOrderId_valid
+CREATE TRIGGER IF NOT EXISTS CurrentSessionOrderId_valid
 BEFORE UPDATE OF value ON Config
 WHEN (NEW.Field='CurrentSessionOrderId' AND (NEW.value < 0 OR NEW.value IS NULL))
 BEGIN
@@ -161,7 +161,7 @@ END;
 
 --Statement
 --19
-CREATE TRIGGER CashMove_has_valid_client
+CREATE TRIGGER IF NOT EXISTS CashMove_has_valid_client
 BEFORE UPDATE ON CashMoves
 WHEN (NEW.client NOT NULL AND NEW.client NOT IN (SELECT name FROM Clients))
 BEGIN
