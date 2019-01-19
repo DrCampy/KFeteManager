@@ -14,6 +14,10 @@
 Article::Article(QString name) : name(name){
 }
 
+Article::Article(const Article &a){
+    this->name = a.getName();
+}
+
 void Article::create(qreal price, qreal jobistShare, qreal buyingPrice, qreal reducedPrice, QString function){
     DatabaseManager::addArticle(*this, price, jobistShare, buyingPrice, reducedPrice, function);
 }

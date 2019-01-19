@@ -11,7 +11,8 @@
 class Article
 {
 public:
-    explicit Article(QString name);
+    explicit Article(QString name = "");
+    Article(const Article &a);
 
     void create(qreal price = 0, qreal jobistShare = 0, qreal buyingPrice = 0, qreal reducedPrice = 0, QString function = QString());
     bool exists() const;
@@ -43,5 +44,7 @@ private:
     QString name;
 
 };
+
+Q_DECLARE_METATYPE(Article);
 
 #endif // CATALOG_H
