@@ -63,8 +63,6 @@ MainWindow::MainWindow(QWidget *parent) :
     action = aboutMenu->addAction(tr("À propos de Qt"));
     connect(action, SIGNAL(triggered()), this, SLOT(aboutQT()));
 
-
-
     //Check that we have an open session
     QVariant openSession = DatabaseManager::getCurrentSession();
     if(!openSession.isNull()){
@@ -275,7 +273,7 @@ void MainWindow::manageOrders(){
 
 void MainWindow::about(){
     QIcon icon;
-    const QString text = tr("<h1>À propos du logiciel KFeteManager</h1><br/>"
+    const QString text = tr("<h2>À propos du logiciel KFeteManager</h2><br/>"
                             "<i>Développé sous license libre par <a href='mailto:morgandiepart@gmail.com'> Morgan Diepart</a>.</i><br/>"
                             "Code source disponible sur le dépôt Github à l'adresse  <a href='https://github.com/DrCampy/KFeteManager'>https://github.com/DrCampy/KFeteManager</a><br/>"
                             "<small>Version 0.1.0</small>");
