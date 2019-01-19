@@ -24,8 +24,7 @@ public:
     void setPrice(Price price);
     Price getPrice() const;
     Order &operator=(const Order &o);
-//TODO
-    //bool process(); //to process the order on the client account
+
 private:
     void setClient(Client *client);
     content_t *content;
