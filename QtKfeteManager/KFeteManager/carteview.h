@@ -48,8 +48,9 @@ public:
     void refreshList(QStringList *list);
 
 private:
-    const QStringList *list; //todo rename. Name is ambiguous
+    const QStringList *entriesList;
     QLineEdit *lineEdit;
+    QWidget *lastCreatedWidget;
 
 public slots:
 void returnPressed();

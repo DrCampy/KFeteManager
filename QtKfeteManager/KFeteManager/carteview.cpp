@@ -130,28 +130,30 @@ void CarteView::setModel(CarteModel *model){
 }
 
 Searcher::Searcher(const QStringList *list, QWidget *parent) : QWidgetAction (parent){
-    this->list = list;
+    this->entriesList = list;
 }
 
 Searcher::~Searcher(){
-    delete list;
+    delete entriesList;
 }
 
 void Searcher::refreshList(QStringList *list){
-    delete this->list;
-    this->list = list;
+    delete this->entriesList;
+    this->entriesList = list;
 }
 
 QWidget *Searcher::createWidget(QWidget *parent){
-    QCompleter *completer = new QCompleter(*list, parent);
+    QCompleter *completer = new QCompleter(*entriesList, parent);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     lineEdit = new QLineEdit(parent);
     lineEdit->setCompleter(completer);
     lineEdit->setFocus(Qt::MenuBarFocusReason);
     connect(lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressed()));
+    lastCreatedWidget = parent;
     return lineEdit;
 }
 
 void Searcher::returnPressed(){
     emit articleSearched(lineEdit->text());
+    lastCreatedWidget->hide();
 }
