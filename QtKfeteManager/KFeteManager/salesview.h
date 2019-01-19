@@ -20,42 +20,9 @@
 #include "currentordermodel.h"
 #include "carteview.h"
 #include "cartemodel.h"
+#include "currentorderview.h"
 
 class SalesView;
-class MiddleBar;
-
-
-class MiddleBar : public QWidget
-{
-Q_OBJECT
-public:
-    explicit MiddleBar(QWidget *parent = nullptr);
-    CurrentOrderModel::Action getLastPerformedAction() const;
-    Order::Price getSelectedPrice() const;
-    void resetPrice();
-
-private:
-    QPushButton *plusButton;
-    QPushButton *minusButton;
-    QPushButton *deleteButton;
-    QButtonGroup *priceButtonsGroup;
-    QPushButton *normalPriceButton;
-    QPushButton *reducedPriceButton;
-    QPushButton *freePriceButton;
-
-    CurrentOrderModel::Action lastPerformedAction;
-    Order::Price selectedPrice;
-
-private slots:
-    void plusSlot();
-    void minusSlot();
-    void deleteSlot();
-    void priceSlot(int id);
-
-signals:
-    void actionPerformed();
-    void priceChanged();
-};
 
 /*
  * Interface principale avec la carte, les comptes,...
@@ -67,39 +34,30 @@ public:
     explicit SalesView(QWidget *parent = nullptr);
     CarteModel *getCarteModel();
 
-
 private:
 
-    CarteModel  *carteModel;
-    CarteView   *carteView;
-    QLabel      *totalLabel;
-    MiddleBar   *middleBar;
-    Client      selectedClient = Client("");
-    QTableView *currentOrderView;
-    CurrentOrderModel *currentOrderModel;
-    QToolButton *deposit;
-    QToolButton *withdraw;
-    QToolButton *count;
-    QToolButton *accounts;
-    QPushButton *orders;
-    QPushButton *validate;
+    CarteModel          *carteModel;
+    CarteView           *carteView;
+    QLabel              *totalLabel;
+    CurrentOrderView    *currentOrderView;
+    Client              selectedClient = Client("");
+    CurrentOrderModel   *currentOrderModel;
+    QToolButton         *deposit;
+    QToolButton         *withdraw;
+    QToolButton         *count;
+    QToolButton         *accounts;
+    QPushButton         *orders;
+    QPushButton         *validate;
 
     void currentOrderViewResize();
     bool processOrder(const Order &o, Client c);
 
 signals:
-    void performAction();
-    void updatePrice();
-    void addArticle(QString);
     void countBefore();
     void countAfter();
     void manageOrders();
 
 public slots:
-    void modelUpdated();
-    void actionPerformed();
-    void priceUpdated();
-    void articleAdded(QString);
     void validateOrder();
     void selectClient(Client c = Client());
 

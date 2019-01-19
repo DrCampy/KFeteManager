@@ -1,14 +1,10 @@
 #ifndef CURRENTORDERMODEL_H
 #define CURRENTORDERMODEL_H
 
-#include <QObject>
 #include <QStandardItemModel>
 #include <QString>
-#include <QStringList>
-#include <QMap>
 #include <QItemSelectionModel>
 
-#include "catalog.h"
 #include "order.h"
 
 class CurrentOrderModel : public QStandardItemModel
@@ -16,32 +12,26 @@ class CurrentOrderModel : public QStandardItemModel
     Q_OBJECT
 public:
     enum Action{plusItem, minusItem, deleteItem};
-
-private:
-    Order *order;
-    Action actionToPerform;
-    QItemSelectionModel *activeSelection;
-    void updateModel();
-
-public:
     explicit CurrentOrderModel(int rows, QObject *parent=nullptr);
     ~CurrentOrderModel();
-    void setPrice(Order::Price price);
-    void setActiveSelection(QItemSelectionModel *selection);
-    void setActionToPerform(Action action);
     qreal getTotal();
     Order getOrder();
     void clear();
 
+private:
+    Order *order;
+    QItemSelectionModel *activeSelection;
+    void updateModel();
+
 public slots:
-    void applyAction();
+    void setActiveSelection(QItemSelectionModel *selection);
     void addArticle(QString articleName);
-    void updatePrice();
+    void updatePrice(Order::Price price);
+    void applyAction(CurrentOrderModel::Action action);
 
 signals:
     void updated();
+
 };
-
-
 
 #endif // CURRENTORDERMODEL_H

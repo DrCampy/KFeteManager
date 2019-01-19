@@ -11,9 +11,6 @@ CurrentOrderModel::CurrentOrderModel(int rows, QObject *parent)
     : QStandardItemModel(rows, 3, parent)
 {
     order = new Order();
-    //itemsCount = new QMap<QString, unsigned int>();
-    //items = new QStringList();
-
     QStringList headers;
     headers << tr("Quantité") << tr("Article") << tr("Sous-total");
     this->setHorizontalHeaderLabels(headers);
@@ -49,42 +46,13 @@ void CurrentOrderModel::updateModel(){
     emit updated();
 }
 
-void CurrentOrderModel::setPrice(Order::Price price){
-    order->setPrice(price);
-}
 
 void CurrentOrderModel::setActiveSelection(QItemSelectionModel *selection){
     this->activeSelection = selection;
 }
 
-void CurrentOrderModel::setActionToPerform(Action action){
-    this->actionToPerform = action;
-}
-
 qreal CurrentOrderModel::getTotal(){
     return order->getTotal();
-}
-
-void CurrentOrderModel::applyAction(){
-
-    QModelIndexList selectedRows = activeSelection->selectedRows(1);
-
-    for(auto it = selectedRows.begin(); it < selectedRows.end(); it++){
-        QString selectedArticle = this->data(*it, Qt::DisplayRole).toString();
-        Article a(selectedArticle);
-        if(actionToPerform == plusItem){
-            //increments the quantity of that item in the order
-            order->addArticle(a);
-        }else if(actionToPerform == minusItem){
-            //Decrement the quantity of that item in the order
-            order->removeArticle(a);
-        }else if(actionToPerform == deleteItem){
-            //deletes the article from the order
-            order->deleteArticle(a);
-        }
-    }
-    updateModel();
-
 }
 
 void CurrentOrderModel::addArticle(QString articleName){
@@ -98,9 +66,6 @@ void CurrentOrderModel::addArticle(QString articleName){
     updateModel();
 }
 
-void CurrentOrderModel::updatePrice(){
-    updateModel();
-}
 
 //Does not update the whole model
 //to allow the text to stay in red until next action
@@ -113,4 +78,27 @@ Order CurrentOrderModel::getOrder(){
     return *order;
 }
 
+void CurrentOrderModel::updatePrice(Order::Price price){
+    order->setPrice(price);
+    updateModel();
+}
 
+void CurrentOrderModel::applyAction(Action action){
+    QModelIndexList selectedRows = activeSelection->selectedRows(1);
+
+    for(auto it = selectedRows.begin(); it < selectedRows.end(); it++){
+        QString selectedArticle = this->data(*it, Qt::DisplayRole).toString();
+        Article a(selectedArticle);
+        if(action == plusItem){
+            //increments the quantity of that item in the order
+            order->addArticle(a);
+        }else if(action == minusItem){
+            //Decrement the quantity of that item in the order
+            order->removeArticle(a);
+        }else if(action == deleteItem){
+            //deletes the article from the order
+            order->deleteArticle(a);
+        }
+    }
+    updateModel();
+}

@@ -41,7 +41,8 @@ SOURCES += \
     countmoney.cpp \
     clientmanager.cpp \
     ordermanager.cpp \
-    customwidgets.cpp
+    customwidgets.cpp \
+    currentorderview.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -59,7 +60,8 @@ HEADERS += \
     countmoney.h \
     clientmanager.h \
     ordermanager.h \
-    customwidgets.h
+    customwidgets.h \
+    currentorderview.h
 
 
 # Default rules for deployment.

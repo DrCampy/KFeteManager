@@ -1,36 +1,14 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QGridLayout>
 #include <QStackedLayout>
-#include <QButtonGroup>
 #include <QPushButton>
 #include <QString>
-#include <QTimer>
-#include <QCloseEvent>
-#include <QStringList>
 #include <QSizePolicy>
-#include <QMap>
-#include <QApplication>
-#include <QColorDialog>
-#include <QColor>
-#include <QTableView>
-#include <QMouseEvent>
-#include <QStyleOption>
-#include <QPainter>
-#include <QStandardItemModel>
 #include <QLabel>
-#include <QHeaderView>
-#include <QDebug>
 #include <QToolButton>
 #include <QListView>
-#include <QSqlTableModel>
-#include <QSqlRecord>
-#include <QCompleter>
 #include <QMessageBox>
-#include <QSqlQueryModel>
-#include <customwidgets.h>
 
-#include "catalog.h"
 #include "salesview.h"
 #include "cartemodel.h"
 #include "carteview.h"
@@ -40,25 +18,18 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     QHBoxLayout *topBar = new QHBoxLayout();
     QHBoxLayout *hBox = new QHBoxLayout();
     QVBoxLayout *mainVBox = new QVBoxLayout(this);
-    QVBoxLayout *currentOrderVBox = new QVBoxLayout();
 
-    totalLabel          = new QLabel(this);
-    middleBar           = new MiddleBar(this);
     currentOrderModel   = new CurrentOrderModel(0, this);
-    currentOrderView    = new QTableView(this);
+    currentOrderView    = new CurrentOrderView(this);
     carteModel          = new CarteModel("./data/carte.xml", this);
     carteView           = new CarteView(this);
 
     //Links the carte model and view
     carteView->setModel(carteModel);
-
-    //The currentOrderVBox contains the current order display on top and the total label bot.
-    currentOrderVBox->addWidget(currentOrderView, 10);
-    currentOrderVBox->addWidget(totalLabel, 1, Qt::AlignRight);
+    currentOrderView->setModel(currentOrderModel);
     
     //hBox contains the currentOrder display, the middle bar and the carte display
-    hBox->addLayout(currentOrderVBox, 5);
-    hBox->addWidget(middleBar, 1);
+    hBox->addWidget(currentOrderView, 6);
     hBox->addWidget(carteView, 7);
     
     //mainVBox contains the top bar then the rest of the window
@@ -66,14 +37,7 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     mainVBox->addLayout(hBox, 6);
     
     //Configure table view. Selectable by row and hide vertical header
-    currentOrderView->setModel(currentOrderModel);
-    currentOrderView->verticalHeader()->hide();
-    currentOrderView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    currentOrderView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    currentOrderView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    currentOrderView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
-    currentOrderView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
-    currentOrderViewResize();
+   //currentOrderViewResize();
 
     //TopBar
     deposit    = new QToolButton(this);
@@ -143,59 +107,13 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     topBar->addWidget(validate, 1);
 
     //Connects all the signals
-    //From model to this
-    connect(currentOrderModel, SIGNAL(updated()), this, SLOT(modelUpdated()));
-    //From middleBar to this
-    connect(middleBar, SIGNAL(actionPerformed()), this, SLOT(actionPerformed()));
-    //From middleBar to currentOrderModel
-    connect(middleBar, SIGNAL(priceChanged()), this, SLOT(priceUpdated()));
-    connect(this, SIGNAL(updatePrice()), currentOrderModel, SLOT(updatePrice()));
-    connect(this, SIGNAL(performAction()), currentOrderModel, SLOT(applyAction()));
     //Connect carteModel to currentOrderModel
-    connect(carteModel, SIGNAL(articleClicked(QString)), this, SLOT(articleAdded(QString)));
-    connect(this, SIGNAL(addArticle(QString)), currentOrderModel, SLOT(addArticle(QString)));
+    connect(carteModel, SIGNAL(articleClicked(QString)), currentOrderModel, SLOT(addArticle(QString)));
     //Connect the validate button
     connect(validate, SIGNAL(clicked()), this, SLOT(validateOrder()));
     //connects accountSelector
     connect(accountSelector, SIGNAL(clientSelected(Client)), this, SLOT(selectClient(Client)));
     connect(orders, SIGNAL(clicked()), this, SIGNAL(manageOrders()));
-
-    modelUpdated();
-}
-
-//Called on each action on current order view for it to keep its size
-//otherwise it goes berzerk and changes to be ugly.
-void SalesView::currentOrderViewResize(){
-    currentOrderView->horizontalHeader()->resizeSection(0, 55);
-    currentOrderView->horizontalHeader()->resizeSection(1, 90);
-    currentOrderView->setMinimumWidth(230);
-}
-
-void SalesView::articleAdded(QString s){
-    emit addArticle(s);
-    currentOrderViewResize();
-}
-
-void SalesView::priceUpdated(){
-    currentOrderModel->setPrice(middleBar->getSelectedPrice());
-    emit updatePrice();
-    currentOrderViewResize();
-}
-
-void SalesView::modelUpdated(){
-    this->totalLabel->setText(locale().toCurrencyString(currentOrderModel->getTotal(), locale().currencySymbol(), 2));
-    this->currentOrderView->setStyleSheet("");
-}
-
-/*
- *This function is used to relay the signal of actionperformed from the middle bar
- * to pass it to currentOrderModel along with the selection from the view.
- */
-void SalesView::actionPerformed(){
-    currentOrderModel->setActionToPerform(middleBar->getLastPerformedAction());
-    currentOrderModel->setActiveSelection(currentOrderView->selectionModel());
-    emit performAction();
-    currentOrderViewResize();
 }
 
 void SalesView::selectClient(Client c){
@@ -270,8 +188,7 @@ bool SalesView::processOrder(const Order &o, Client c){
 
 void SalesView::validateOrder(){
     if(this->processOrder(this->currentOrderModel->getOrder(), selectedClient)){
-        this->middleBar->resetPrice();
-        this->currentOrderView->setStyleSheet("color : red;");
+        this->currentOrderView->validated();
         this->currentOrderModel->clear();
         this->selectedClient = Client("");
     }
@@ -332,100 +249,6 @@ void SalesView::clientWithdraw(){
     }
 }
 
-MiddleBar::MiddleBar(QWidget *parent) : QWidget(parent)
-{
-    //Defines the way the button will expand
-    QSizePolicy qsp(QSizePolicy::Expanding, QSizePolicy::Expanding, QSizePolicy::PushButton);
-    QVBoxLayout *column = new QVBoxLayout(this);
-    column->setSpacing(0);
-
-    //Creates ad hoc buttons
-    plusButton         = new QPushButton("+", this);
-    minusButton        = new QPushButton("-", this);
-    deleteButton       = new QPushButton(tr("Supprimer"), this);
-    priceButtonsGroup  = new QButtonGroup(this);
-    normalPriceButton  = new QPushButton(tr("Tarif Normal"), this);
-    reducedPriceButton = new QPushButton(tr("Tarif Réduit"), this);
-    freePriceButton    = new QPushButton(tr("Gratuit"), this);
-    
-    column->addWidget(plusButton);
-    column->addWidget(minusButton);
-    column->addWidget(deleteButton);
-    column->addWidget(normalPriceButton);
-    column->addWidget(reducedPriceButton);
-    column->addWidget(freePriceButton);
-
-    //Adds the price buttons to group and config group
-    priceButtonsGroup->addButton(normalPriceButton, 0);
-    priceButtonsGroup->addButton(reducedPriceButton, 1);
-    priceButtonsGroup->addButton(freePriceButton, 2);
-    
-    normalPriceButton->setCheckable(true);
-    reducedPriceButton->setCheckable(true);
-    freePriceButton->setCheckable(true);
-    priceButtonsGroup->setExclusive(true);
-    
-    //Configures buttons to appear flat
-    plusButton->setAutoFillBackground(true);
-    plusButton->setSizePolicy(qsp);
-    minusButton->setAutoFillBackground(true);
-    minusButton->setSizePolicy(qsp);
-    deleteButton->setAutoFillBackground(true);
-    deleteButton->setSizePolicy(qsp);
-    normalPriceButton->setAutoFillBackground(true);
-    normalPriceButton->setSizePolicy(qsp);
-    reducedPriceButton->setAutoFillBackground(true);
-    reducedPriceButton->setSizePolicy(qsp);
-    freePriceButton->setAutoFillBackground(true);
-    freePriceButton->setSizePolicy(qsp);
-
-    //Configures internal state
-    lastPerformedAction = CurrentOrderModel::plusItem;
-    resetPrice();
-    
-    connect(plusButton, SIGNAL(clicked()), this, SLOT(plusSlot()));
-    connect(minusButton, SIGNAL(clicked()), this, SLOT(minusSlot()));
-    connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteSlot()));
-    connect(priceButtonsGroup, SIGNAL(buttonPressed(int)), this, SLOT(priceSlot(int)));
-}
-
-void MiddleBar::plusSlot(){
-    lastPerformedAction = CurrentOrderModel::plusItem;
-    emit(actionPerformed());
-}
-
-void MiddleBar::minusSlot(){
-    lastPerformedAction = CurrentOrderModel::minusItem;
-    emit(actionPerformed());
-}
-
-void MiddleBar::deleteSlot(){
-    lastPerformedAction = CurrentOrderModel::deleteItem;
-    emit(actionPerformed());
-}
-
-void MiddleBar::priceSlot(int id){
-    if(id == 0){
-        selectedPrice = Order::normal;
-    }else if(id == 1){
-        selectedPrice = Order::reduced;
-    }else if(id == 2){
-        selectedPrice = Order::free;
-    }
-    emit(priceChanged());
-}
-
-void MiddleBar::resetPrice(){
-    this->normalPriceButton->click();
-}
-
-CurrentOrderModel::Action MiddleBar::getLastPerformedAction() const{
-    return lastPerformedAction;
-}
-
-Order::Price MiddleBar::getSelectedPrice() const{
-    return selectedPrice;
-}
 
 //Constructor
 AccountSelector::AccountSelector(QWidget *parent) : QWidgetAction(parent){
