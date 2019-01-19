@@ -8,6 +8,10 @@
 
 Client::Client(QString name) : name(name){}
 
+Client::Client(const Client &c){
+    this->name = c.getName();
+}
+
 void Client::create(QString phone, QString address, QString email, qreal limit, bool isJobist, qreal balance){
 
     if(!isJobist && limit < 0){

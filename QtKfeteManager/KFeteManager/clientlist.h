@@ -14,6 +14,7 @@ class Client
 {
 public:
     explicit Client(QString name = "");
+    Client(const Client &c);
 
     void create(QString phone = "", QString address = "", QString email = "", qreal limit = 0, bool isJobist = false, qreal balance = 0);
     bool exists() const;
@@ -51,5 +52,7 @@ private:
     static constexpr qreal LIMIT_MIN = -10;
 
 };
+
+Q_DECLARE_METATYPE(Client)
 
 #endif // CLIENTLIST_H
