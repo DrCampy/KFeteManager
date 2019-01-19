@@ -26,8 +26,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     center = new QStackedWidget(this);
     clockLabel = new QLabel(this);
-    accountLabel = new PushLabel(this);
-    accountLabel->setToolTip(tr("Cliquez pour supprimer"));
     QTimer *clockTimer = new QTimer(this);
     clockTimer->start(5000);
     connect(clockTimer, SIGNAL(timeout()), this, SLOT(updateClock()));
@@ -81,7 +79,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     statusBar()->addWidget(clockLabel);
-    statusBar()->addPermanentWidget(accountLabel);
     SalesView *salesView = new SalesView(center);
     center->addWidget(salesView);
     center->addWidget(new CatalogManager(center));
@@ -95,10 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setCentralWidget(center);
 
     updateClock();
-    updateAccountLabel("");
 
-    //TODO fixme
-    connect(accountLabel, SIGNAL(clearAccountSelection()), this, SLOT(receiveRandomEvent()));
     connect(center->widget(1), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(3), SIGNAL(finished()), this, SLOT(backToSales()));
@@ -130,20 +124,6 @@ void MainWindow::updateClock(){
     clockLabel->setText(date.toString("ddd d/M/yyyy H:mm"));
 }
 
-void MainWindow::updateAccountLabel(QString account){
-    QString s("Compte sélectionné : ");
-    if(account.size() == 0){
-        s.append("<i>");
-        s.append(tr("Aucun"));
-        s.append("</i>");
-    }else{
-        s.push_front("<font color=#dd2828>");
-        s.append(account);
-        s.append("</font>");
-    }
-    accountLabel->setText(s);
-}
-
 void MainWindow::writeSettings(){
     QSettings settings;
     settings.beginGroup("MainWindow");
@@ -167,20 +147,6 @@ void MainWindow::readSettings(){
 void MainWindow::closeEvent(QCloseEvent *event){
     writeSettings();
     event->accept();
-}
-
-//TODO remove
-void MainWindow::receiveRandomEvent(){
-    statusBar()->showMessage("Event !", 1000);
-}
-
-PushLabel::PushLabel(QWidget *parent) : QLabel(parent){}
-
-void PushLabel::mouseReleaseEvent(QMouseEvent *eve){
-    QPoint posMouse = eve->pos();
-    if((eve->button() == Qt::LeftButton) && this->rect().contains(posMouse)){
-        emit clearAccountSelection();
-    }
 }
 
 void MainWindow::closeSession(){

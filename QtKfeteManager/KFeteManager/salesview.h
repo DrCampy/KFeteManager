@@ -75,9 +75,14 @@ private:
     QLabel      *totalLabel;
     MiddleBar   *middleBar;
     Client      selectedClient = Client("");
-
     QTableView *currentOrderView;
     CurrentOrderModel *currentOrderModel;
+    QToolButton *deposit;
+    QToolButton *withdraw;
+    QToolButton *count;
+    QToolButton *accounts;
+    QPushButton *orders;
+    QPushButton *validate;
 
     void currentOrderViewResize();
     bool processOrder(const Order &o, Client c);
@@ -96,7 +101,7 @@ public slots:
     void priceUpdated();
     void articleAdded(QString);
     void validateOrder();
-    void selectClient(Client c);
+    void selectClient(Client c = Client());
 
 private slots:
     void cashDeposit();

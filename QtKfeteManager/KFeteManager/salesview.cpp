@@ -76,12 +76,12 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     currentOrderViewResize();
 
     //TopBar
-    QToolButton *deposit    = new QToolButton(this);
-    QToolButton *withdraw   = new QToolButton(this);
-    QToolButton *count      = new QToolButton(this);
-    QToolButton *accounts   = new QToolButton(this);
-    QPushButton *orders     = new QPushButton(tr("Commandes"), this);
-    QPushButton *validate   = new QPushButton(tr("Valider"), this);
+    deposit    = new QToolButton(this);
+    withdraw   = new QToolButton(this);
+    count      = new QToolButton(this);
+    accounts   = new QToolButton(this);
+    orders     = new QPushButton(tr("Commandes"), this);
+    validate   = new QPushButton(tr("Valider"), this);
 
     //Configures the size of the tool buttons
     auto qsp = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -89,11 +89,17 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     withdraw->setSizePolicy(qsp);
     count->setSizePolicy(qsp);
     accounts->setSizePolicy(qsp);
+    orders->setSizePolicy(qsp);
+    validate->setSizePolicy(qsp);
+
     auto minSize = validate->minimumSize();
+    minSize.setHeight(static_cast<int>(1.75*validate->height()));
     deposit->setMinimumSize(minSize);
     withdraw->setMinimumSize(minSize);
     count->setMinimumSize(minSize);
     accounts->setMinimumSize(minSize);
+    orders->setMinimumSize(minSize);
+    validate->setMinimumSize(minSize);
 
     //accounts
     accounts->setText(tr("Comptes"));
@@ -194,6 +200,16 @@ void SalesView::actionPerformed(){
 
 void SalesView::selectClient(Client c){
     this->selectedClient = c;
+    QFont font = accounts->font();
+    if(!c.isNull()){
+        font.setItalic(true);
+        accounts->setFont(font);
+        accounts->setText(c.getName());
+    }else{
+        font.setItalic(false);
+        accounts->setFont(font);
+        accounts->setText(tr("Comptes"));
+    }
 }
 
 CarteModel *SalesView::getCarteModel(){
@@ -418,6 +434,7 @@ AccountSelector::AccountSelector(QWidget *parent) : QWidgetAction(parent){
 };
 
 QWidget *AccountSelector::createWidget(QWidget *parent){
+    emit clientSelected(Client(""));
     QWidget *mainWidget = new QWidget(parent);
     QVBoxLayout *mainLayout = new QVBoxLayout(mainWidget);
     balance = new QLabel(tr("Solde : "), mainWidget);

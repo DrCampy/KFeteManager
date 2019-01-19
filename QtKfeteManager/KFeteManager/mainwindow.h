@@ -14,16 +14,6 @@ namespace Ui {
 class MainWindow;
 }
 
-class PushLabel : public QLabel{
-    Q_OBJECT
-public:
-    PushLabel(QWidget *parent = Q_NULLPTR);
-protected:
-    void mouseReleaseEvent(QMouseEvent *eve);
-signals:
-    void clearAccountSelection();
-};
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -36,16 +26,13 @@ private:
     QStackedWidget *center;
     QDateTime date;
     QLabel *clockLabel;
-    PushLabel *accountLabel;
     void writeSettings();
     void readSettings();
     void closeEvent(QCloseEvent *event);
 
 public slots:
     void updateClock();
-    void updateAccountLabel(QString);
     //void enteredPassword(QString);
-    void receiveRandomEvent(); //TODO remove
     void backToSales();
 
     //From the menu
