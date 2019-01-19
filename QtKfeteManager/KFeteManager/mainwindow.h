@@ -61,6 +61,8 @@ public slots:
     void newSessionCreated();
     void createNewSession();
     void manageOrders();
+    void about();
+    void aboutQT();
     //void payJobists();
     //void statistics();
 
