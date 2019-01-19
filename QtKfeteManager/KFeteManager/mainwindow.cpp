@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QDateTime>
+#include <QSplashScreen>
 
 #include "mainwindow.h"
 #include "loginview.h"
@@ -55,7 +56,14 @@ MainWindow::MainWindow(QWidget *parent) :
     managementMenu->addAction(tr("Statistiques financières"));
     connect(action, SIGNAL(triggered()), this, SLOT(statistics()));
 
-    //TODO button about
+    QMenu *aboutMenu = menuBar()->addMenu(tr("À propos"));
+    action = aboutMenu->addAction(tr("À propos du logiciel"));
+    connect(action, SIGNAL(triggered()), this, SLOT(about()));
+
+    action = aboutMenu->addAction(tr("À propos de Qt"));
+    connect(action, SIGNAL(triggered()), this, SLOT(aboutQT()));
+
+
 
     //Check that we have an open session
     QVariant openSession = DatabaseManager::getCurrentSession();
@@ -263,4 +271,17 @@ void MainWindow::newSessionCreated(){
 
 void MainWindow::manageOrders(){
     center->setCurrentIndex(6);
+}
+
+void MainWindow::about(){
+    QIcon icon;
+    const QString text = tr("<h1>À propos du logiciel KFeteManager</h1><br/>"
+                            "<i>Développé sous license libre par <a href='mailto:morgandiepart@gmail.com'> Morgan Diepart</a>.</i><br/>"
+                            "Code source disponible sur le dépôt Github à l'adresse  <a href='https://github.com/DrCampy/KFeteManager'>https://github.com/DrCampy/KFeteManager</a><br/>"
+                            "<small>Version 0.1.0</small>");
+    QMessageBox::about(this, tr("À propos du logiciel"), text);
+}
+
+void MainWindow::aboutQT(){
+    QMessageBox::aboutQt(this, tr("À propos de Qt"));
 }
