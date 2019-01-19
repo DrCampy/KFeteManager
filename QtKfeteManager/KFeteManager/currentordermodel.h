@@ -11,7 +11,6 @@
 #include "catalog.h"
 #include "order.h"
 
-//TODO refer to Order in order.h
 class CurrentOrderModel : public QStandardItemModel
 {
     Q_OBJECT
@@ -20,10 +19,6 @@ public:
 
 private:
     Order *order;
-    //qreal total;
-    //QMap<QString, unsigned int> *itemsCount;
-    //QStringList *items;
-    //Order::Price price;
     Action actionToPerform;
     QItemSelectionModel *activeSelection;
     void updateModel();
