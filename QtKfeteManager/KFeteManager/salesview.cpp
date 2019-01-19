@@ -157,6 +157,8 @@ SalesView::SalesView(QWidget *parent) : QWidget(parent)
     modelUpdated();
 }
 
+//Called on each action on current order view for it to keep its size
+//otherwise it goes berzerk and changes to be ugly.
 void SalesView::currentOrderViewResize(){
     currentOrderView->horizontalHeader()->resizeSection(0, 55);
     currentOrderView->horizontalHeader()->resizeSection(1, 90);

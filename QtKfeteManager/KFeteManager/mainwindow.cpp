@@ -189,7 +189,6 @@ void MainWindow::closeSession(){
 }
 
 void MainWindow::manageDB(){
-    emit receiveRandomEvent();
 }
 
 void MainWindow::backToSales(){
