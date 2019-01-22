@@ -1,5 +1,7 @@
+#include <QDateTime>
+#include <QStyledItemDelegate>
+
 #include "customwidgets.h"
-#include <QDebug>
 
 CustomDoubleSpinBox::CustomDoubleSpinBox(QWidget *parent) : QDoubleSpinBox (parent){}
 
@@ -10,4 +12,12 @@ QValidator::State CustomDoubleSpinBox::validate(QString &input, int &pos) const{
     }
 
     return QDoubleSpinBox::validate(input, pos);
+}
+
+DateDelegate::DateDelegate(QObject *parent) : QStyledItemDelegate (parent){};
+
+QString DateDelegate::displayText(const QVariant &value, const QLocale &locale) const{
+    QDateTime time;
+    time.setSecsSinceEpoch(value.toLongLong());
+    return time.toString(locale.dateTimeFormat());
 }

@@ -10,6 +10,7 @@
 
 #include "ordermanager.h"
 #include "databasemanager.h"
+#include "customwidgets.h"
 
 OrderManager::OrderManager(QWidget *parent) : QWidget(parent)
 {
@@ -130,12 +131,4 @@ void OrderManager::writeOrderDetails(){
 void OrderManager::showEvent(QShowEvent *event){
     QWidget::showEvent(event);
     refreshList();
-}
-
-DateDelegate::DateDelegate(QObject *parent) : QStyledItemDelegate (parent){};
-
-QString DateDelegate::displayText(const QVariant &value, const QLocale &locale) const{
-    QDateTime time;
-    time.setSecsSinceEpoch(value.toLongLong());
-    return time.toString(locale.dateTimeFormat());
 }

@@ -30,12 +30,4 @@ public slots:
     void deleteOrder();
 };
 
-class DateDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
-public:
-    explicit DateDelegate(QObject *parent = nullptr);
-    QString displayText(const QVariant &value, const QLocale &locale) const;
-};
-
 #endif // ORDERMANAGER_H
