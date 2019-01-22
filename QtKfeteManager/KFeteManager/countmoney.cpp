@@ -116,6 +116,7 @@ CountMoneyBefore::CountMoneyBefore(QWidget *parent) : CountMoney(parent){
         }
         addJobists(jobistsList);
     }
+    jobistsList->setToolTip(tr("Cliquez sur un nom pour le retirer de la liste."));
 }
 
 void CountMoneyBefore::addJobists(QStringList jobists){
