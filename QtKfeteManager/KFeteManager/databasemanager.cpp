@@ -973,10 +973,25 @@ QString     DatabaseManager::getCurrency                (){
 
 //Add a process cashMove and DO NOT USE deposit() in processsOrder from salesView
 
-bool        DatabaseManager::addDeposit                    (qreal amount, Client c){
+bool        DatabaseManager::addDeposit                    (QVariant note, QVariant amount, QVariant client){
     QSqlQuery query;
 
-    if(!c.isNull() && !c.exists()){
+    //If the note is empty, set a null value in database
+    if(note.toString().isEmpty()){
+        note = QVariant();
+    }
+    //If client does not exists, abort. If client is null, insert null value in database
+    {
+        Client tmpClient = Client(client.toString());
+        if(tmpClient.isNull()){
+            client = QVariant();
+        }else if(!tmpClient.exists()){
+            return false;
+        }
+    }
+
+    //If amount is invalid, abort.
+    if(amount.isNull()){
         return false;
     }
 
@@ -1007,10 +1022,11 @@ bool        DatabaseManager::addDeposit                    (qreal amount, Client
 
     unsigned long long int orderID = query.lastInsertId().toULongLong();
 
-    //Adds the order as order
-    query.prepare("INSERT INTO CashMoves(Id, client) VALUES(:id, :client);");
+    //Adds the cash move as cash move
+    query.prepare("INSERT INTO CashMoves(Id, client, note) VALUES(:id, :client, :note);");
     query.bindValue(":id", orderID);
-    query.bindValue(":client", c.getName());
+    query.bindValue(":client", client);
+    query.bindValue(":note", note);
     success &= query.exec();
 
     //Increments the next order line
@@ -1018,14 +1034,10 @@ bool        DatabaseManager::addDeposit                    (qreal amount, Client
     query.bindValue(":line", orderNumber+1);
     success &= query.exec();
 
-    if(!c.isNull()){
+    if(!client.isNull()){
         query.prepare("UPDATE Clients SET balance = balance + :amount WHERE Name = :name;");
         query.bindValue(":amount", amount);
-        if(!c.isNull()){
-            query.bindValue(":name", c.getName());
-        }else{
-            query.bindValue(":name", QVariant());
-        }
+        query.bindValue(":name", client);
         success &= query.exec();
     }
 

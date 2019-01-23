@@ -196,14 +196,20 @@ void SalesView::validateOrder(){
 
 void SalesView::cashDeposit(){
     CustomSelectorPopup *popup =
-            new CustomSelectorPopup(nullptr, CustomSelectorPopup::Amount);
+            new CustomSelectorPopup(nullptr,
+                                    CustomSelectorPopup::Amount |
+                                    CustomSelectorPopup::Note);
 
     popup->setTitle(tr("Effectuer un dépôt en caisse"));
 
     QVariant *amount = new QVariant();
+    QVariant *note = new QVariant();
 
-    if(popup->ask(amount)){
-        DatabaseManager::addDeposit(amount->toDouble());
+    if(popup->ask(note, amount)){
+        if(amount->isValid() && (amount->toDouble() >= 0.01 || amount->toDouble() <= -0.01 ))
+            DatabaseManager::addDeposit(*note, *amount);
+        else
+            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le dépôt."));
     }
 }
 
@@ -211,26 +217,37 @@ void SalesView::clientDeposit(){
     CustomSelectorPopup *popup =
             new CustomSelectorPopup(nullptr,
                                     CustomSelectorPopup::Amount |
-                                    CustomSelectorPopup::Client);
+                                    CustomSelectorPopup::Client |
+                                    CustomSelectorPopup::Note);
 
     popup->setTitle(tr("Effectuer un dépôt sur un compte"));
 
     QVariant *amount = new QVariant();
     QVariant *client = new QVariant();
-    if(popup->ask(amount, client)){
-        DatabaseManager::addDeposit(amount->toDouble(), Client(client->toString()));
+    QVariant *note   = new QVariant();
+    if(popup->ask(note, amount, client)){
+        if(amount->isValid() && (amount->toDouble() >= 0.01 || amount->toDouble() <= -0.01 ))
+            DatabaseManager::addDeposit(*note, *amount, *client);
+        else
+            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le dépôt."));
     }
 }
 
 void SalesView::cashWithdraw(){
     CustomSelectorPopup *popup =
-            new CustomSelectorPopup(nullptr, CustomSelectorPopup::Amount);
+            new CustomSelectorPopup(nullptr,
+                                    CustomSelectorPopup::Amount |
+                                    CustomSelectorPopup::Note);
 
     popup->setTitle(tr("Effectuer un retrait en caisse"));
 
     QVariant *amount = new QVariant();
-    if(popup->ask(amount)){
-        DatabaseManager::addDeposit(-amount->toDouble());
+    QVariant *note   = new QVariant();
+    if(popup->ask(note, amount)){
+        if(amount->isValid() && (amount->toDouble() >= 0.01 || amount->toDouble() <= -0.01 ))
+            DatabaseManager::addDeposit(*note, QVariant(-amount->toDouble()));
+        else
+            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le retrait."));
     }
 }
 
@@ -238,15 +255,19 @@ void SalesView::clientWithdraw(){
     CustomSelectorPopup *popup =
             new CustomSelectorPopup(nullptr,
                                     CustomSelectorPopup::Amount |
-                                    CustomSelectorPopup::Client);
+                                    CustomSelectorPopup::Client |
+                                    CustomSelectorPopup::Note);
 
     popup->setTitle(tr("Effectuer un retrait sur un compte"));
 
     QVariant *amount = new QVariant();
     QVariant *client = new QVariant();
-    if(popup->ask(amount, client)){
-        DatabaseManager::addDeposit(-amount->toDouble(), Client(client->toString()));
-    }
+    QVariant *note   = new QVariant();
+    if(popup->ask(note, amount, client)){
+        if(amount->isValid() && (amount->toDouble() >= 0.01 || amount->toDouble() <= -0.01 ))
+            DatabaseManager::addDeposit(*note, QVariant(-amount->toDouble()), *client);
+        else
+            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le retrait."));    }
 }
 
 
@@ -345,8 +366,14 @@ CustomSelectorPopup::CustomSelectorPopup(QWidget *parent, SelectionFlags flags) 
     QDialog (parent, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint)
 {
     this->flags = flags;
-    setMinimumSize(400, 130);
-    setMaximumSize(400, 130);
+    if(flags != (Client|Amount|Note)){
+        setMinimumSize(400, 140);
+        setMaximumSize(400, 140);
+    }else{
+        setMinimumSize(400, 170);
+        setMaximumSize(400, 170);
+    }
+
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(0);
 
@@ -356,19 +383,28 @@ CustomSelectorPopup::CustomSelectorPopup(QWidget *parent, SelectionFlags flags) 
         clientCombo = new ClientComboBox(this);
         mainLayout->addWidget(accountLabel, 0, Qt::AlignBottom);
         mainLayout->addWidget(clientCombo, 0, Qt::AlignTop);
-    }
+        mainLayout->addSpacing(10);
 
-    //If we have to ask both, insert space
-    if(flags & (Amount|Client) ){
-        mainLayout->addSpacing(15);
     }
 
     //If we have to ask for an amount
     if(flags & Amount){
         amountLabel = new QLabel(tr("Montant :"), this);
         amount = new CustomDoubleSpinBox(this);
+        amount->setSuffix(" " + locale().currencySymbol());
         mainLayout->addWidget(amountLabel, 0, Qt::AlignBottom);
         mainLayout->addWidget(amount, 0, Qt::AlignTop);
+        mainLayout->addSpacing(10);
+    }
+
+    if(flags & Note){
+        noteLabel = new QLabel(tr("Note :"), this);
+        note = new QLineEdit(this);
+        note->setPlaceholderText(tr("Insérez une note"));
+        note->setMaxLength(64);
+        mainLayout->addWidget(noteLabel, 0, Qt::AlignBottom);
+        mainLayout->addWidget(note, 0, Qt::AlignTop);
+        mainLayout->addSpacing(10);
     }
 
     //Adds buttons
@@ -388,7 +424,7 @@ void CustomSelectorPopup::setTitle(QString title){
     setWindowTitle(title);
 }
 
-bool CustomSelectorPopup::ask(QVariant *amount, QVariant *client){
+bool CustomSelectorPopup::ask(QVariant *note, QVariant *amount, QVariant *client){
     this->exec();
 
     if(this->result() == QDialog::Accepted){
@@ -398,9 +434,13 @@ bool CustomSelectorPopup::ask(QVariant *amount, QVariant *client){
         if(flags & Client && client){
             client->setValue(this->clientCombo->currentText());
         }
+        if(flags & Note && note){
+            note->setValue(this->note->text());
+        }
         this->deleteLater();
         return true;
     }
+
     this->deleteLater();
     return false;
 }

@@ -71,7 +71,7 @@ void OrderManager::refreshList(){
     orderModel->sort(1, Qt::AscendingOrder);
 }
 
-void OrderManager::writeOrderDetails(){
+void OrderManager::writeOrderDetails(){ //TODO Use HTML for nicer text
     QString text;
     QSqlQuery query;
     qlonglong id = orderView->selectionModel()->selectedRows().at(0).data().toLongLong();
@@ -107,7 +107,7 @@ void OrderManager::writeOrderDetails(){
         text.append("\n" + tr("Total : ") + QString::number(total, 'f', 2));
     }else{
         //It is a deposit
-        query.prepare("SELECT client FROM CashMoves WHERE Id = :id;");
+        query.prepare("SELECT client, note FROM CashMoves WHERE Id = :id;");
         query.bindValue(":id", id);
         query.exec();
         query.next();
@@ -124,6 +124,10 @@ void OrderManager::writeOrderDetails(){
             text.append(tr("Client : ") + client.toString() + "\n");
         }
         text.append(tr("Montant : ") + QString::number(qAbs(total)) + "\n");
+        if(!query.value(1).isNull()){
+            text += tr("Note :") + query.value(1).toString();
+        }
+
     }
     textEdit->setPlainText(text);
 }

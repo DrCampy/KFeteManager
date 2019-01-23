@@ -114,20 +114,26 @@ class CustomSelectorPopup : protected QDialog
 public:
     enum SelectionFlag{
         Amount = 0x1,
-        Client = 0x2
+        Client = 0x2,
+        Note   = 0x4,
     };
     Q_DECLARE_FLAGS(SelectionFlags, SelectionFlag) //Declare the flags as flags for Qt
 
     explicit CustomSelectorPopup(QWidget *parent = nullptr, SelectionFlags flags = Amount);
-    bool ask(QVariant *amount, QVariant *client = nullptr);
+    bool ask(QVariant *note, QVariant *amount = nullptr, QVariant *client = nullptr);
     void setTitle(QString title = QString());
 
 private:
-    QLabel *accountLabel = nullptr;
-    ClientComboBox *clientCombo = nullptr;
-    QLabel *amountLabel = nullptr;
-    CustomDoubleSpinBox *amount = nullptr;
-    SelectionFlags flags;
+    QLabel              *accountLabel   = nullptr;
+    ClientComboBox      *clientCombo    = nullptr;
+
+    QLabel              *amountLabel    = nullptr;
+    CustomDoubleSpinBox *amount         = nullptr;
+
+    QLabel              *noteLabel      = nullptr;
+    QLineEdit           *note           = nullptr;
+
+    SelectionFlags      flags;
 
 };
 
