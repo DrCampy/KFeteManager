@@ -69,7 +69,7 @@ public:
     static QList<QString>   getFunctions            ();
     static void             delFunction             (QString name);
     static bool             addOrder                (const Order &o, Client c);
-    static bool             addDeposit              (qreal amount, Client c = Client());
+    static bool             addDeposit              (QVariant note, QVariant amount, QVariant client = QVariant());
     static bool             clientDeposit           (qreal amount, Client c);
     static bool             cancelOrder             (qlonglong id);
 

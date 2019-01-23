@@ -96,7 +96,8 @@ OrderClient(
 CREATE TABLE IF NOT EXISTS
 CashMoves(
     Id INTEGER PRIMARY KEY REFERENCES Transactions(Id) ON DELETE CASCADE,
-    client TEXT);
+    client TEXT,
+    note TEXT);
 
 --Statement
 --12
