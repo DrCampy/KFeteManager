@@ -50,7 +50,7 @@ public slots:
     void manageOrders();
     void about();
     void aboutQT();
-    //void payJobists();
+    void payJobists();
     //void statistics();
 
 };

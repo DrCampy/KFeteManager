@@ -20,6 +20,7 @@
 #include "clientmanager.h"
 #include "countmoney.h"
 #include "ordermanager.h"
+#include "sessionsmanager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -80,13 +81,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     statusBar()->addWidget(clockLabel);
     SalesView *salesView = new SalesView(center);
-    center->addWidget(salesView);
-    center->addWidget(new CatalogManager(center));
-    center->addWidget(new CarteManager(salesView->getCarteModel(), center));
-    center->addWidget(new ClientManager(center));
-    center->addWidget(new CountMoneyBefore(center));
-    center->addWidget(new CountMoneyAfter(center));
-    center->addWidget(new OrderManager(this));
+    /*00*/center->addWidget(salesView);
+    /*01*/center->addWidget(new CatalogManager(center));
+    /*02*/center->addWidget(new CarteManager(salesView->getCarteModel(), center));
+    /*03*/center->addWidget(new ClientManager(center));
+    /*04*/center->addWidget(new CountMoneyBefore(center));
+    /*05*/center->addWidget(new CountMoneyAfter(center));
+    /*06*/center->addWidget(new OrderManager(this));
+    /*07*/center->addWidget(new SessionsManager(this));
 
     center->setCurrentIndex(0);
     this->setCentralWidget(center);
@@ -97,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(center->widget(2), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(3), SIGNAL(finished()), this, SLOT(backToSales()));
     connect(center->widget(6), SIGNAL(finished()), this, SLOT(backToSales()));
+    connect(center->widget(7), SIGNAL(finished()), this, SLOT(backToSales()));
 
     connect(center->widget(4), SIGNAL(cancelled()), this, SLOT(backToSales()));
     connect(center->widget(5), SIGNAL(cancelled()), this, SLOT(backToSales()));
@@ -155,6 +158,10 @@ void MainWindow::closeSession(){
 }
 
 void MainWindow::manageDB(){
+}
+
+void MainWindow::payJobists(){
+    center->setCurrentIndex(7);
 }
 
 void MainWindow::backToSales(){

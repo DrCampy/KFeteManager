@@ -42,7 +42,8 @@ SOURCES += \
     clientmanager.cpp \
     ordermanager.cpp \
     customwidgets.cpp \
-    currentorderview.cpp
+    currentorderview.cpp \
+    sessionsmanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -61,7 +62,8 @@ HEADERS += \
     clientmanager.h \
     ordermanager.h \
     customwidgets.h \
-    currentorderview.h
+    currentorderview.h \
+    sessionsmanager.h
 
 
 # Default rules for deployment.
