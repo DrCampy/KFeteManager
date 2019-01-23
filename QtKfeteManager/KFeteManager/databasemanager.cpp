@@ -212,6 +212,9 @@ bool        DatabaseManager::executeScript              (QString filename, QSqlQ
 
 void        DatabaseManager::closeDatabase              (){
     if(QSqlDatabase::contains()){
+        QSqlQuery query;
+        //Optimize database before closing it as recommanded in the sqlite doc.
+        query.exec("PRAGMA optimize;");
         QSqlDatabase::database().close();
     }
 }
