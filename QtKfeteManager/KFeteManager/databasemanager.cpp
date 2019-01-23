@@ -476,6 +476,9 @@ bool        DatabaseManager::hasClient                  (const Client &c){
 }
 
 bool        DatabaseManager::addClient                  (const Client &c, QString phone, QString address, QString email, qreal negLimit, bool isJobist, qreal balance){
+    if(c.exists() || c.isNull()){
+        return false;
+    }
     QSqlQuery query;
     query.prepare("INSERT OR UPDATE INTO Clients(Name, phone, address, email, negLimit, isJobist, balance) VALUES(?,?,?,?,?,?);");
     query.addBindValue(c.getName());

@@ -71,6 +71,9 @@ void Client::setLimit(qreal limit){
 }
 
 bool Client::exists() const{
+    if(isNull()){
+        return false;
+    }
     return DatabaseManager::hasClient(*this);
 }
 
