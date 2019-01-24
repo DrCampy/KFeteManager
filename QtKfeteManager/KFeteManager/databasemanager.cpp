@@ -23,7 +23,7 @@
 QStringList DatabaseManager::tables =
         QStringList() << "Articles" << "Functions" << "Clients" << "SaleSessions"
                       <<"HeldSession" << "Transactions" << "IsOrder" << "OrderContent"
-                      << "CashMoves" << "OrderClient" << "Config";
+                      << "OrderClient" << "CashMoves" << "Config";
 
 QStringList DatabaseManager::articlesFields =
         QStringList() << "Name" << "sellPrice" << "jShare"
@@ -57,7 +57,7 @@ QStringList DatabaseManager::OrderClientFields =
         QStringList() << "Id" << "client";
 
 QStringList DatabaseManager::CashMovesFields =
-        QStringList() << "Id" << "client";
+        QStringList() << "Id" << "client" << "note";
 
 QStringList DatabaseManager::configFields =
         QStringList() << "Field" << "value";
