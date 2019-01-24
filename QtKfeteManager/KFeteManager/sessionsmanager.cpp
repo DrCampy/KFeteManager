@@ -67,7 +67,7 @@ void SessionsManager::writeDetails(){
     qreal totalSales = 0, totJShare = 0;
     QVariant  countBefore, countAfter;
     //Loads session time
-    sessionID = this->sessionSelector->currentData().toLongLong();
+    sessionID = this->sessionSelector->currentData(Qt::EditRole).toLongLong();
     sessionTime.setSecsSinceEpoch(sessionID);
 
     //loads jobists
