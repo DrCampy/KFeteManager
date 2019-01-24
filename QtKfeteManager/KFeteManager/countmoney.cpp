@@ -91,7 +91,6 @@ CountMoneyBefore::CountMoneyBefore(QWidget *parent) : CountMoney(parent){
     comboLayout->addWidget(add);
 
     clientsModel  = new QSqlQueryModel(this);
-    clientsModel->setQuery("SELECT Name FROM Clients ORDER BY 'name' ASC;");
     selectionCombo->setModel(clientsModel);
 
     //validate/cancel buttons
@@ -117,6 +116,7 @@ CountMoneyBefore::CountMoneyBefore(QWidget *parent) : CountMoney(parent){
         addJobists(jobistsList);
     }
     jobistsList->setToolTip(tr("Cliquez sur un nom pour le retirer de la liste."));
+    refresh();
 }
 
 void CountMoneyBefore::addJobists(QStringList jobists){
@@ -156,7 +156,7 @@ QList<Client> CountMoneyBefore::getJobists(){
 }
 
 void CountMoneyBefore::refresh(){
-    clientsModel->setQuery("SELECT Name FROM Clients ORDER BY 'name' ASC;");
+    clientsModel->setQuery("SELECT Name FROM Clients WHERE isJobist = true ORDER BY 'name' ASC;");
 }
 
 CountMoneyAfter::CountMoneyAfter(QWidget *parent) : CountMoney(parent){
