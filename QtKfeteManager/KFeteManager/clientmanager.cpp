@@ -41,7 +41,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     QHBoxLayout *mainLayout     = new QHBoxLayout(this);
     QVBoxLayout *rightLayout    = new QVBoxLayout();
     QFormLayout *formLayout     = new QFormLayout();
-    QLabel *formTitle           = new QLabel(tr("Article sélectionné :"), this);
+    QLabel *formTitle           = new QLabel(tr("Client sélectionné :"), this);
     QPushButton *deleteButton   = new QPushButton(tr("Supprimer client"), this);
     QPushButton *createButton   = new QPushButton(tr("Nouveau client"), this);
     QPushButton *quitButton     = new QPushButton(tr("Quitter"), this);
