@@ -237,7 +237,7 @@ void SessionsManager::writeDetails(){
     text += "<p>" + tr("Total des recettes : ") + locale.toCurrencyString(totalSales) + "</p>";
     text += "<p>" + tr("À la fin : ") + (countAfter.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(countAfter.toDouble())) + "</p>";
     if(!countAfter.isNull()){
-        text += "<p>" + tr("Solde final théorique : ") + locale.toCurrencyString(countAfter.toDouble() + totalSales) + "</p>";
+        text += "<p>" + tr("Solde final théorique : ") + locale.toCurrencyString(countBefore.toDouble() + totalSales) + "</p>";
     }
 
     //Cash moves
