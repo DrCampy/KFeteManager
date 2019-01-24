@@ -35,7 +35,7 @@ Clients(
     email TEXT DEFAULT '',
     negLimit NUMERIC DEFAULT 0 CHECK(negLimit >= -10),
     isJobist INTEGER DEFAULT 0,
-    balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance > negLimit));
+    balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance >= negLimit));
 
 --Statement
 --5
