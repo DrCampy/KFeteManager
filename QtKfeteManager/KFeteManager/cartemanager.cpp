@@ -88,7 +88,7 @@ CarteManager::CarteManager(CarteModel *carteModel, QWidget *parent) : QWidget(pa
 
 void CarteManager::selectButton(int i){
     selectedIndex = i;
-    auto details = carteModel->getButton(static_cast<unsigned int>(selectedIndex));
+    auto *details = carteModel->getButton(static_cast<unsigned int>(selectedIndex));
     if(details){
         backgroundColor = details->getBackgroundColor();
         textColor = details->getTextColor();
@@ -100,6 +100,7 @@ void CarteManager::selectButton(int i){
     }
     articlesModel->select();
     loadPreview();
+    delete details;
 }
 
 void CarteManager::loadPreview(){

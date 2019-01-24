@@ -83,7 +83,7 @@ CarteView::CarteView(QWidget *parent, bool inUse) : QWidget(parent)
 }
 
 void CarteView::updateButton(unsigned int id){
-    auto details = model->getButton(id);
+    auto *details = model->getButton(id);
 
     if(details == nullptr){
         //disables button;
@@ -106,6 +106,7 @@ void CarteView::updateButton(unsigned int id){
         button->setStyleSheet(ss);
         button->setText(details->getName());
     }
+    delete details;
 }
 
 void CarteView::updateView(){

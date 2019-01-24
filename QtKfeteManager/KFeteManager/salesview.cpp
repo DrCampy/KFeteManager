@@ -211,6 +211,8 @@ void SalesView::cashDeposit(){
         else
             QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le dépôt."));
     }
+    delete amount;
+    delete note;
 }
 
 void SalesView::clientDeposit(){
@@ -231,6 +233,9 @@ void SalesView::clientDeposit(){
         else
             QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le dépôt."));
     }
+    delete amount;
+    delete client;
+    delete note;
 }
 
 void SalesView::cashWithdraw(){
@@ -249,6 +254,8 @@ void SalesView::cashWithdraw(){
         else
             QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le retrait."));
     }
+    delete amount;
+    delete note;
 }
 
 void SalesView::clientWithdraw(){
@@ -267,7 +274,11 @@ void SalesView::clientWithdraw(){
         if(amount->isValid() && (amount->toDouble() >= 0.01 || amount->toDouble() <= -0.01 ))
             DatabaseManager::addDeposit(*note, QVariant(-amount->toDouble()), *client);
         else
-            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le retrait."));    }
+            QMessageBox::warning(this, tr("Erreur"),  tr("Impossible d'effectuer le retrait."));
+    }
+    delete amount;
+    delete client;
+    delete note;
 }
 
 

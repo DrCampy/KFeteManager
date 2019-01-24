@@ -45,6 +45,10 @@ SessionsManager::SessionsManager(QWidget *parent) : QWidget(parent)
     refresh();
 }
 
+SessionsManager::~SessionsManager(){
+    delete sessionsModel;
+}
+
 void SessionsManager::refresh(){
     sessionsModel->setQuery("SELECT openingTime FROM saleSessions WHERE state='closed' ORDER BY openingTime ASC;");
 }

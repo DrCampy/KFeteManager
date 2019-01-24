@@ -13,6 +13,7 @@ class SessionsManager : public QWidget
     Q_OBJECT
 public:
     explicit SessionsManager(QWidget *parent = nullptr);
+    ~SessionsManager();
 
 private:
     QComboBox       *sessionSelector;
