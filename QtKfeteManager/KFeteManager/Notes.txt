@@ -21,19 +21,40 @@ TODO deal with already existing clients when adding new ones (if entered name al
 
 if possible, reduce the number of same models. I.E. If possible keep only one clientModel instead of 1 per interface.
 
-When counting cash before the session only display crosses next to names only if mouse hover over it
-
- Q_DECLARE_METATYPE() qRegisterMetaType<T>() to simplify connects between carte and orderModel
-
 !!no null name for anything + max name length.
 
 maybe throw custom QSqlException in case of error ?
 
 Balance of an account can be slightly ngative and appear as -0.00.
 
+Ask to confirm / count cash before auto closing session ?
+
+As many customizable parameters as possible like :
+lowest pay for a sale session
+negative limit for an account
+Could allow several profiles for client (like client, jobist, table,...)
+
+Save paid/validated sessions. 
+Have toe possibility to check past sessions and if neeed export them. CSV or TXT or... something else
+
+Store successive state of articles after modifications so that we keep an internal history of it accross time.
+Delete history entry when not useful anymore
+
+could have a trigger in the database.
+After writing to a field in config we execute many querries that cleanup database like deleting history entries ?
+
+Add a history of cash moves associated to each client account
+
+Intercept close event and ask if we really want to quit if the cash register not counted after.
+
+Could force free orders to select an account ?
 Currency    Notes                       Coins
 €(EUR)      500 200 100 50 20 10 5      2.0 1.0 0.50 0.20 0.10 0.05 0.02 0.01
 $(USD)      100 50  20  10 5  2  1      1.0 0.5 0.25 0.10 0.05 0.01
 £(GBP)      50  20  10  5               2.0 1.0 0.50 0.25 0.20 0.10 0.05 0.02 0.01
 
+Revérifier disposition boutons (valider à droite)
+
+//Note display jobist share (and functions benef ?) in order summary
+//update order summary when using keyboard arrows
 
