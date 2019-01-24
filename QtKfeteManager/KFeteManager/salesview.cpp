@@ -183,6 +183,7 @@ bool SalesView::processOrder(const Order &o, Client c){
             c.deposit(-o.getTotal());
         }
     }
+    selectClient();
     return DatabaseManager::addOrder(o, c);
 }
 
