@@ -321,8 +321,3 @@ void SessionsManager::writeDetails(){
     sessionDetails->clear();
     sessionDetails->appendHtml(text);
 }
-
-
-//NOTE TODO refresh account button once validate is pressed.
-//Note display jobist share (and functions benef ?) in order summary
-//Not update order summary when using keyboard arrows
