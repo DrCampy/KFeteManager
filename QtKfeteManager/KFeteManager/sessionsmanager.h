@@ -8,6 +8,32 @@
 #include <QPlainTextEdit>
 #include <QSqlQueryModel>
 #include <QDateTime>
+
+typedef QList<QPair<qreal, QString>> CashMoves;
+typedef QMultiMap<QString, QPair<qreal, QString>> AccountMoves;
+typedef QMap<QString, uint> SalesList;
+typedef QMap<QString, qreal> FunctionsBenefits;
+
+struct Session{
+    qlonglong           Id;
+    QDateTime           openTime;
+    QDateTime           closeTime;
+    QStringList         jobists;
+    QVariant            openAmount;
+    QVariant            closeAmount;
+    qreal               cashIncome;
+    CashMoves           cashMoves;
+    AccountMoves        accountMoves;
+    SalesList           normalSales;
+    SalesList           reducedSales;
+    SalesList           freeSales;
+    FunctionsBenefits   functionsBenefits;
+    qreal               jobistShare;
+    qreal               jobistWage;
+
+    void                clear();
+};
+
 class SessionsManager : public QWidget
 {
     Q_OBJECT
@@ -33,32 +59,20 @@ private:
     static void     deleteSession(qlonglong id);
     static void     payJobist(QString jobist, qreal wage);
 
+    Session session;
     //Datas
     QString text;
-    qlonglong sessionID;
-    QDateTime sessionTime, closingTime;
-    QStringList jobists;
-
-    //Name - Quantity
-    QMap<QString, uint> normalSales, reducedSales, freeSales;
-
-    //Name - amount (- note)
-    QMultiMap<QString, QPair<qreal, QString>> clientMoves;
-    QMap<QString, qreal> functionsBenefits;
-
-    QList<QPair<qreal, QString>> cashRegisterMoves;
-    qreal totalSales = 0, totJShare = 0, countLastSession = -1, minJShare = 0;
-    QVariant  countBefore, countAfter;
+    qreal countLastSession = -1, minJShare = 0;
 
 signals:
     void finished();
-
-public slots:
 
 private slots:
     void            writeDetails();
     void            loadDatas();
 
 };
+
+
 
 #endif // SESSIONSMANAGER_H

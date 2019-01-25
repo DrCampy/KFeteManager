@@ -55,51 +55,52 @@ void SessionsManager::refresh(){
     sessionsModel->setQuery("SELECT openingTime FROM saleSessions WHERE state='closed' ORDER BY openingTime ASC;");
 }
 
-void SessionsManager::clear(){
-    normalSales.clear();
-    totJShare = 0;
-    functionsBenefits.clear();
+void Session::clear(){
+    Id = 0;
+    openTime = QDateTime();
+    closeTime = QDateTime();
     jobists.clear();
+    openAmount = QVariant();
+    closeAmount = QVariant();
+    cashIncome = 0;
+    cashMoves.clear();
+    accountMoves.clear();
+    normalSales.clear();
     reducedSales.clear();
     freeSales.clear();
-    cashRegisterMoves.clear();
-    clientMoves.clear();
-    countBefore = QVariant();
-    countAfter = QVariant();
-    totalSales = 0;
-    totJShare = 0;
-    countLastSession = -1;
-    minJShare = 0;
+    functionsBenefits.clear();
+    jobistShare = 0;
+    jobistWage = 0;
 }
 
 void SessionsManager::loadDatas(){
     QSqlQuery query;
-    clear();
+    session.clear();
     //Loads session time
-    sessionID = this->sessionSelector->currentData(Qt::EditRole).toLongLong();
-    sessionTime.setSecsSinceEpoch(sessionID);
+    session.Id = this->sessionSelector->currentData(Qt::EditRole).toLongLong();
+    session.openTime.setSecsSinceEpoch(session.Id);
 
     //loads jobists
     query.prepare("SELECT name FROM heldSession WHERE sessionTime=:id ORDER BY name ASC;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     while(query.next()){
-        jobists << query.value(0).toString();
+        session.jobists << query.value(0).toString();
     }
 
     //Loads count before and after sales
     query.prepare("SELECT openAmount, closeAmount, closingTime FROM SaleSessions WHERE OpeningTime = :id;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     if(query.first()){
-        countBefore = query.value(0).toDouble();
-        countAfter = query.value(1).toDouble();
-        closingTime.setSecsSinceEpoch(query.value(2).toLongLong());
+        session.openAmount = query.value(0).toDouble();
+        session.closeAmount = query.value(1).toDouble();
+        session.closeTime.setSecsSinceEpoch(query.value(2).toLongLong());
     }
 
     //Tries to load the count at the end of the last session
     query.prepare("SELECT closeAmount FROM SaleSessions WHERE OpeningTime < :id ORDER BY OpeningTime DESC LIMIT 1;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     if(query.first() && !query.value(0).isNull()){
         countLastSession = query.value(0).toDouble();
@@ -120,7 +121,7 @@ void SessionsManager::loadDatas(){
                   "WHERE Transactions.sessionTime = :id AND OrderContent.Id IN (SELECT Id FROM IsOrder WHERE price = 'normal') "
                   "GROUP BY OrderContent.article "
                   "ORDER BY tot_qtt DESC;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     while(query.next()){
         const QString name = query.value(0).toString();
@@ -131,13 +132,13 @@ void SessionsManager::loadDatas(){
         const QString function = query.value(5).toString();
 
         //Register sale
-        normalSales.insert(name, nb);
+        session.normalSales.insert(name, nb);
 
         //Computes jobist share
-        totJShare += (artJShare * nb);
+        session.jobistShare += (artJShare * nb);
 
         //Computes function benefits
-        functionsBenefits[function] += nb*(soldPrice - boughtPrice - artJShare);
+        session.functionsBenefits[function] += nb*(soldPrice - boughtPrice - artJShare);
     }
 
     //Reduced price sales
@@ -151,7 +152,7 @@ void SessionsManager::loadDatas(){
                   "WHERE Transactions.sessionTime = :id AND OrderContent.Id IN (SELECT Id FROM IsOrder WHERE price = 'reduced') "
                   "GROUP BY OrderContent.article "
                   "ORDER BY tot_qtt DESC;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     while(query.next()){
         const QString name = query.value(0).toString();
@@ -162,13 +163,13 @@ void SessionsManager::loadDatas(){
         const QString function = query.value(5).toString();
 
         //Register sale
-        reducedSales.insert(name, nb);
+        session.reducedSales.insert(name, nb);
 
         //Computes jobist share
-        totJShare += (artJShare * nb);
+        session.jobistShare += (artJShare * nb);
 
         //Computes function benefits
-        functionsBenefits[function] += nb*(soldPrice - boughtPrice - artJShare);
+        session.functionsBenefits[function] += nb*(soldPrice - boughtPrice - artJShare);
     }
 
     //free sales
@@ -181,7 +182,7 @@ void SessionsManager::loadDatas(){
                   "WHERE Transactions.sessionTime = :id AND OrderContent.Id IN (SELECT Id FROM IsOrder WHERE price = 'free') "
                   "GROUP BY OrderContent.article "
                   "ORDER BY tot_qtt DESC;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     while(query.next()){
         const QString name = query.value(0).toString();
@@ -190,12 +191,12 @@ void SessionsManager::loadDatas(){
         const QString function = query.value(3).toString();
 
         //Register sale
-        freeSales.insert(name, nb);
+        session.freeSales.insert(name, nb);
 
         //No jobist share
 
         //Computes function benefits
-        functionsBenefits[function] -= nb*(boughtPrice);
+        session.functionsBenefits[function] -= nb*(boughtPrice);
     }
 
     //load cash moves
@@ -203,15 +204,15 @@ void SessionsManager::loadDatas(){
                   "FROM Transactions "
                   "INNER JOIN CashMoves ON Transactions.Id = CashMoves.Id "
                   "WHERE Transactions.sessionTime = :id;");
-    query.bindValue(":id", sessionID);
+    query.bindValue(":id", session.Id);
     query.exec();
     while(query.next()){
         if(query.value(0).isNull() || query.value(0).toString() == ""){
             //(cash register)
-            cashRegisterMoves.append(QPair<qreal, QString>(query.value(1).toDouble(), query.value(2).toString()));
+            session.cashMoves.append(QPair<qreal, QString>(query.value(1).toDouble(), query.value(2).toString()));
         }else{
             //(accounts)
-            clientMoves.insert(query.value(0).toString(), QPair<qreal, QString>(query.value(1).toDouble(), query.value(2).toString()));
+            session.accountMoves.insert(query.value(0).toString(), QPair<qreal, QString>(query.value(1).toDouble(), query.value(2).toString()));
         }
     }
 
@@ -228,10 +229,10 @@ void SessionsManager::loadDatas(){
                   " WHERE Id NOT IN (SELECT Id FROM OrderClient) "
                   " UNION "
                   " SELECT Id FROM CashMoves); ");
-    query.bindValue(":id",sessionID);
+    query.bindValue(":id",session.Id);
     query.exec();
     if(query.first()){
-        totalSales = query.value(0).toDouble();
+        session.cashIncome = query.value(0).toDouble();
     }
 
     query.exec("SELECT value FROM Config where field = 'MinJShare';");
@@ -248,15 +249,15 @@ void SessionsManager::writeDetails(){
 
     //Builds the text summary
     //Header
-    text += "<h1><p>" + tr("Session de vente du ") + locale.toString(sessionTime) + "</p></h1>";
-    if(!jobists.isEmpty()){
-        text += "<i><p>" + tr("Session fermée le ") + locale.toString(closingTime) + tr(" et tenue par :") + "<br>";
-        for(auto it : jobists){
+    text += "<h1><p>" + tr("Session de vente du ") + locale.toString(session.openTime) + "</p></h1>";
+    if(!session.jobists.isEmpty()){
+        text += "<i><p>" + tr("Session fermée le ") + locale.toString(session.closeTime) + tr(" et tenue par :") + "<br>";
+        for(auto it : session.jobists){
             text += it + "<br>"; //Adds jobists
         }
         text += "</p></i>";
     }else{
-        text += "<i><p>" + tr("Session fermée le ") + locale.toString(closingTime) + ".</i></p>";
+        text += "<i><p>" + tr("Session fermée le ") + locale.toString(session.closeTime) + ".</i></p>";
     }
 
 
@@ -265,21 +266,21 @@ void SessionsManager::writeDetails(){
     if(countLastSession > 0){
         text += "<p>" + tr("À la fin de l'éxercice précédent : ") + locale.toCurrencyString(countLastSession);
     }
-    text += "<p>" + tr("Au début : ") + (countBefore.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(countBefore.toDouble())) + "</p>";
-    text += "<p>" + tr("Total des recettes : ") + locale.toCurrencyString(totalSales) + "</p>";
-    text += "<p>" + tr("À la fin : ") + (countAfter.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(countAfter.toDouble())) + "</p>";
-    if(!countAfter.isNull()){
-        text += "<p>" + tr("Solde final théorique : ") + locale.toCurrencyString(countBefore.toDouble() + totalSales) + "</p>";
+    text += "<p>" + tr("Au début : ") + (session.openAmount.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(session.openAmount.toDouble())) + "</p>";
+    text += "<p>" + tr("Total des recettes : ") + locale.toCurrencyString(session.cashIncome) + "</p>";
+    text += "<p>" + tr("À la fin : ") + (session.closeAmount.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(session.closeAmount.toDouble())) + "</p>";
+    if(!session.closeAmount.isNull()){
+        text += "<p>" + tr("Solde final théorique : ") + locale.toCurrencyString(session.openAmount.toDouble() + session.cashIncome) + "</p>";
     }
 
     //Cash moves
 
     text += "<h2>" + tr("Mouvements en caisse :") + "</h2>";
-    if(cashRegisterMoves.isEmpty()){
+    if(session.cashMoves.isEmpty()){
         text += "<em>" + tr("Pas de mouvements.") + "</em>";
     }else{
         text += "<ul>";
-        for(auto it : cashRegisterMoves){
+        for(auto it : session.cashMoves){
             text += "<li>";
             if(it.first < 0){
                 text += tr("Retrait de ") + locale.toCurrencyString(-it.first) + " en caisse : " + it.second;
@@ -292,12 +293,12 @@ void SessionsManager::writeDetails(){
     }
 
     text += "<h2>" + tr("Mouvements sur les comptes :") + "</h2>";
-    if(clientMoves.isEmpty()){
+    if(session.accountMoves.isEmpty()){
         text += "<em>" + tr("Pas de mouvements.") + "</em>";
     }else{
-        for(auto client : clientMoves.uniqueKeys()){
+        for(auto client : session.accountMoves.uniqueKeys()){
             text += "<li>" + tr("Sur le compte de : ") + client + "<ul>";
-            for(auto moves : clientMoves.values(client)){
+            for(auto moves : session.accountMoves.values(client)){
                 text += "<li>";
                 if(moves.first < 0){
                     text += tr("Retrait de ") + locale.toCurrencyString(-moves.first) + " : " + moves.second;
@@ -313,27 +314,27 @@ void SessionsManager::writeDetails(){
     //Normal price sales
     text += "<h2>" + tr("Ventes au tarif normal :") + "</h2>";
     text += "<ul>";
-    for(auto item : normalSales.keys()){
-        text += "<li>" + item + " x " + QString::number(normalSales.value(item)) + "</li>";
+    for(auto item : session.normalSales.keys()){
+        text += "<li>" + item + " x " + QString::number(session.normalSales.value(item)) + "</li>";
     }
     text += "</ul>";
 
     //Reduced sales
-    if(!reducedSales.isEmpty()){
+    if(!session.reducedSales.isEmpty()){
         text += "<h2>" + tr("Ventes au tarif réduit :") + "</h2>";
         text += "<ul>";
-        for(auto item : reducedSales.keys()){
-            text += "<li>" + item + " x " + QString::number(reducedSales.value(item)) + "</li>";
+        for(auto item : session.reducedSales.keys()){
+            text += "<li>" + item + " x " + QString::number(session.reducedSales.value(item)) + "</li>";
         }
         text += "</ul>";
     }
 
     //Free sales
-    if(!freeSales.isEmpty()){
+    if(!session.freeSales.isEmpty()){
         text += "<h2>" + tr("Ventes offertes :") + "</h2>";
         text += "<ul>";
-        for(auto item : freeSales.keys()){
-            text += "<li>" + item + " x " + QString::number(freeSales.value(item)) + "</li>";
+        for(auto item : session.freeSales.keys()){
+            text += "<li>" + item + " x " + QString::number(session.freeSales.value(item)) + "</li>";
         }
         text += "</ul>";
     }
@@ -341,15 +342,15 @@ void SessionsManager::writeDetails(){
     //Functions
     text += "<h2>" + tr("Bénéfices des différentes fonctions :") + "</h2>";
     text += "<ul>";
-    for(auto function : functionsBenefits.keys()){
-        text += "<li>" + function + tr(" : ") + locale.toCurrencyString(functionsBenefits.value(function)) + "</li>";
+    for(auto function : session.functionsBenefits.keys()){
+        text += "<li>" + function + tr(" : ") + locale.toCurrencyString(session.functionsBenefits.value(function)) + "</li>";
     }
     text += "</ul>";
 
     //Jobists share
     text += "<h2>" + tr("Part des jobistes : ") + "</h2>";
-    text += "<p>" + locale.toCurrencyString(totJShare);
-    if(totJShare < minJShare){
+    text += "<p>" + locale.toCurrencyString(session.jobistShare);
+    if(session.jobistShare < minJShare){
         text += tr(" (part jobiste minimale : ") + locale.toCurrencyString(minJShare) + ")";
     }
     text += "</p>";
@@ -361,19 +362,21 @@ void SessionsManager::writeDetails(){
 
 void SessionsManager::validateAuto(){
     //Pay jobists
+
     //Wage in hundredth
-    uint share= static_cast<uint>(((totJShare > minJShare)?totJShare:minJShare)*100);
-    share /= static_cast<uint>(jobists.size());
+    uint share= static_cast<uint>(((session.jobistShare > minJShare)?session.jobistShare:minJShare)*100);
+    share /= static_cast<uint>(session.jobists.size());
     qreal wage = share/100;
-    for(auto jobist : jobists){
-        payJobist(jobist, wage/jobists.size());
+    session.jobistWage = wage*session.jobists.size();
+    for(auto jobist : session.jobists){
+        payJobist(jobist, wage/session.jobists.size());
     }
 
     //Save datas
     saveData();
 
     //Delete session
-    deleteSession(sessionID);
+    deleteSession(session.Id);
 }
 
 void SessionsManager::validateManually(){
@@ -395,4 +398,7 @@ void SessionsManager::deleteSession(qlonglong id){
     query.exec();
 }
 
+void SessionsManager::payJobist(QString jobist, qreal wage){
+
+}
 
