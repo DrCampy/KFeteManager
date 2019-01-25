@@ -877,7 +877,7 @@ bool        DatabaseManager::newSession                 (QVariant openAmount, QL
     return success;
 }
 
-bool        DatabaseManager::setCurrentSessionOpenAmount(qreal count){
+bool        DatabaseManager::setCurrentSessionOpenAmount(QVariant count){
     QSqlQuery query;
 
     //Fetch the session time.
@@ -928,7 +928,7 @@ bool        DatabaseManager::setCurrentSessionjobists   (QList<Client> jobists){
     return success;
 }
 
-bool        DatabaseManager::setCurrentSessionCloseAmount(qreal count){
+bool        DatabaseManager::setCurrentSessionCloseAmount(QVariant count){
     QSqlQuery query;
 
     //Fetch the session time.
@@ -939,12 +939,10 @@ bool        DatabaseManager::setCurrentSessionCloseAmount(qreal count){
     }
 
     //Sets closeAmount
-    query.prepare("UPDATE SaleSession SET closeAmount=:amount WHERE OpeningTime = :time;");
+    query.prepare("UPDATE SaleSessions SET closeAmount=:amount WHERE OpeningTime = :time;");
     query.bindValue(":amount", count);
     query.bindValue(":time", sessionTime);
-    bool success = query.exec();
-
-    return success;
+    return query.exec();
 }
 
 QStringList DatabaseManager::getNotes                   (){

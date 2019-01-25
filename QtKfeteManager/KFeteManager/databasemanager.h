@@ -77,9 +77,9 @@ public:
     static QVariant         getCurrentSession           ();
     static bool             closeSession                (QVariant closeAmount = QVariant());
     static bool             newSession                  (QVariant openAmount, QList<Client> holdingSession = QList<Client>());
-    static bool             setCurrentSessionOpenAmount (qreal count);
+    static bool             setCurrentSessionOpenAmount (QVariant count);
     static bool             setCurrentSessionjobists    (QList<Client> jobists);
-    static bool             setCurrentSessionCloseAmount (qreal count);
+    static bool             setCurrentSessionCloseAmount (QVariant count);
 
 
     static QStringList      getNotes                    ();
