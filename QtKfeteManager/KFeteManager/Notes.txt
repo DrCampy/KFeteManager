@@ -1,11 +1,11 @@
-1) Could we have several open sessions ?
 2) What happens if we delete a session from salesessions but it is still in config as current session ? -> Trigger "Cannot delete current session."
-
-3) Buffer some requests ?
 
 4) Have only some basic commands in Database and have all the specifications (client, articles, ...) in the corresponding classes.
    We could have (in database or so) an enum for the fields of such classes
+
 5) Date d'ouverture de la session dans la barre en bas.
+   Musique dans la barre en bas
+   Current jobist share dans la barre en bas ?
 
 Edit carte : disable "Validate" if no article selected
 
@@ -23,9 +23,7 @@ if possible, reduce the number of same models. I.E. If possible keep only one cl
 
 !!no null name for anything + max name length.
 
-maybe throw custom QSqlException in case of error ?
-
-Balance of an account can be slightly ngative and appear as -0.00.
+maybe throw custom Exception in case of error ?
 
 Ask to confirm / count cash before auto closing session ?
 
@@ -63,3 +61,10 @@ On windows : installer or sub program passwd.exe wich recquire admin rights (Ask
 On linux : write password hash in location where only sudo can write. Sub program will ask for sudo rights or refuse to execute if not sudo
 
 When clicking on menu to close session, first display closeAfter
+
+
+//Finish session manager
+manage passwords. All of them
+Login screen
+Statistics
+update databasemanager to use minJShare
