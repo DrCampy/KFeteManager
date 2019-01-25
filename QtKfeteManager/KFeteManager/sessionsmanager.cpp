@@ -7,9 +7,11 @@
 #include <QString>
 #include <QDateTime>
 #include <QLocale>
+#include <QLineEdit>
 
 #include "sessionsmanager.h"
 #include "customwidgets.h"
+#include "databasemanager.h"
 
 SessionsManager::SessionsManager(QWidget *parent) : QWidget(parent)
 {
@@ -53,23 +55,26 @@ void SessionsManager::refresh(){
     sessionsModel->setQuery("SELECT openingTime FROM saleSessions WHERE state='closed' ORDER BY openingTime ASC;");
 }
 
-void SessionsManager::writeDetails(){
-    QString text; text.reserve(1500);
-    qlonglong sessionID;
-    QDateTime sessionTime;
+void SessionsManager::clear(){
+    normalSales.clear();
+    totJShare = 0;
+    functionsBenefits.clear();
+    jobists.clear();
+    reducedSales.clear();
+    freeSales.clear();
+    cashRegisterMoves.clear();
+    clientMoves.clear();
+    countBefore = QVariant();
+    countAfter = QVariant();
+    totalSales = 0;
+    totJShare = 0;
+    countLastSession = -1;
+    minJShare = 0;
+}
+
+void SessionsManager::loadDatas(){
     QSqlQuery query;
-    QStringList jobists;
-    QLocale locale;
-    //Name - Quantity
-    QMap<QString, uint> normalSales, reducedSales, freeSales;
-
-    //Name - amount
-    QMultiMap<QString, QPair<qreal, QString>> clientMoves;
-    QMap<QString, qreal> functionsBenefits;
-
-    QList<QPair<qreal, QString>> cashRegisterMoves;
-    qreal totalSales = 0, totJShare = 0;
-    QVariant  countBefore, countAfter;
+    clear();
     //Loads session time
     sessionID = this->sessionSelector->currentData(Qt::EditRole).toLongLong();
     sessionTime.setSecsSinceEpoch(sessionID);
@@ -83,12 +88,21 @@ void SessionsManager::writeDetails(){
     }
 
     //Loads count before and after sales
-    query.prepare("SELECT openAmount, closeAmount FROM SaleSessions WHERE OpeningTime = :id;");
+    query.prepare("SELECT openAmount, closeAmount, closingTime FROM SaleSessions WHERE OpeningTime = :id;");
     query.bindValue(":id", sessionID);
     query.exec();
     if(query.first()){
         countBefore = query.value(0).toDouble();
         countAfter = query.value(1).toDouble();
+        closingTime.setSecsSinceEpoch(query.value(2).toLongLong());
+    }
+
+    //Tries to load the count at the end of the last session
+    query.prepare("SELECT closeAmount FROM SaleSessions WHERE OpeningTime < :id ORDER BY OpeningTime DESC LIMIT 1;");
+    query.bindValue(":id", sessionID);
+    query.exec();
+    if(query.first() && !query.value(0).isNull()){
+        countLastSession = query.value(0).toDouble();
     }
 
     //load sold items and jobistShare
@@ -192,7 +206,7 @@ void SessionsManager::writeDetails(){
     query.bindValue(":id", sessionID);
     query.exec();
     while(query.next()){
-        if(query.value(0).isNull()){
+        if(query.value(0).isNull() || query.value(0).toString() == ""){
             //(cash register)
             cashRegisterMoves.append(QPair<qreal, QString>(query.value(1).toDouble(), query.value(2).toString()));
         }else{
@@ -220,19 +234,37 @@ void SessionsManager::writeDetails(){
         totalSales = query.value(0).toDouble();
     }
 
+    query.exec("SELECT value FROM Config where field = 'MinJShare';");
+    if(query.first() && !query.value(0).isNull()){
+        minJShare = query.value(0).toDouble();
+    }
+}
+
+void SessionsManager::writeDetails(){
+    loadDatas();
+    text.clear();
+    text.reserve(1500);
+    QLocale locale;
+
     //Builds the text summary
     //Header
     text += "<h1><p>" + tr("Session de vente du ") + locale.toString(sessionTime) + "</p></h1>";
     if(!jobists.isEmpty()){
-        text += "<i><p>" + tr("Session tenue par :") + "</br>";
+        text += "<i><p>" + tr("Session fermée le ") + locale.toString(closingTime) + tr(" et tenue par :") + "<br>";
         for(auto it : jobists){
-            text += it + "<br/>"; //Adds jobists
+            text += it + "<br>"; //Adds jobists
         }
         text += "</p></i>";
+    }else{
+        text += "<i><p>" + tr("Session fermée le ") + locale.toString(closingTime) + ".</i></p>";
     }
+
 
     //Summary of the state of the cash register
     text += "<h2>" + tr("État de caisse :") + "</h2>";
+    if(countLastSession > 0){
+        text += "<p>" + tr("À la fin de l'éxercice précédent : ") + locale.toCurrencyString(countLastSession);
+    }
     text += "<p>" + tr("Au début : ") + (countBefore.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(countBefore.toDouble())) + "</p>";
     text += "<p>" + tr("Total des recettes : ") + locale.toCurrencyString(totalSales) + "</p>";
     text += "<p>" + tr("À la fin : ") + (countAfter.isNull()?"<em>"+tr("Non comptée")+"</em>":locale.toCurrencyString(countAfter.toDouble())) + "</p>";
@@ -316,8 +348,51 @@ void SessionsManager::writeDetails(){
 
     //Jobists share
     text += "<h2>" + tr("Part des jobistes : ") + "</h2>";
-    text += locale.toCurrencyString(totJShare);
+    text += "<p>" + locale.toCurrencyString(totJShare);
+    if(totJShare < minJShare){
+        text += tr(" (part jobiste minimale : ") + locale.toCurrencyString(minJShare) + ")";
+    }
+    text += "</p>";
+
 
     sessionDetails->clear();
     sessionDetails->appendHtml(text);
 }
+
+void SessionsManager::validateAuto(){
+    //Pay jobists
+    //Wage in hundredth
+    uint share= static_cast<uint>(((totJShare > minJShare)?totJShare:minJShare)*100);
+    share /= static_cast<uint>(jobists.size());
+    qreal wage = share/100;
+    for(auto jobist : jobists){
+        payJobist(jobist, wage/jobists.size());
+    }
+
+    //Save datas
+    saveData();
+
+    //Delete session
+    deleteSession(sessionID);
+}
+
+void SessionsManager::validateManually(){
+
+}
+
+void SessionsManager::validateNoPay(){
+
+}
+
+void SessionsManager::saveData(){
+
+}
+
+void SessionsManager::deleteSession(qlonglong id){
+    QSqlQuery query;
+    query.prepare("DELETE FROM SalesSessions WHERE OpeningTime = :id;");
+    query.bindValue(":id", id);
+    query.exec();
+}
+
+
