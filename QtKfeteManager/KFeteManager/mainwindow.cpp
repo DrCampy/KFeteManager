@@ -73,7 +73,20 @@ MainWindow::MainWindow(QWidget *parent) :
                                   tr("La session actuelle a été ouverte il y a plus de 12 heures, "
                                      "voulez-vous en ouvrir une nouvelle ?"));
             if(reply == QMessageBox::Yes){
-                DatabaseManager::closeSession();
+                QSqlQuery query(QString("SELECT closeAmount FROM SaleSessions WHERE openingTime = ") + QString::number(openSession.toLongLong()) + ";");
+                if(query.first()){
+                    if(query.value(0).isNull()){
+                        reply = QMessageBox::question(this, tr("Ouvrir une nouvelle session ?"),
+                                                      tr("La caisse n'a pas été comptée à la fin de l'exercice précédent. ") + tr("Fermer la session quand même ?"));
+                    }else{
+                        qreal closeAmount = query.value(0).toDouble();
+                        reply = QMessageBox::question(this, tr("Ouvrir une nouvelle session ?"),
+                                                      tr("Le total en caisse à la fin de l'xercice précédent était de : ") + locale().toCurrencyString(closeAmount) + ". "+tr("Valider ?"));
+                    }
+                   if(reply == QMessageBox::Yes){
+                       DatabaseManager::closeSession();
+                   }
+                }
             }
         }
     }
@@ -203,7 +216,8 @@ void MainWindow::countBeforeFinished(){
     auto cmb = dynamic_cast<CountMoneyBefore *>(center->widget(4));
     if(cmb){
         DatabaseManager::setCurrentSessionjobists(cmb->getJobists());
-        DatabaseManager::setCurrentSessionOpenAmount(cmb->getTotal());
+        QVariant total = (cmb->getTotal()>=0.01?cmb->getTotal():QVariant());
+        DatabaseManager::setCurrentSessionOpenAmount(total);
         cmb->save("count/before");
     }
 }
@@ -214,16 +228,15 @@ void MainWindow::countAfterFinished(){
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, tr("Voulez-vous quitter ?"),
                                   tr("Voulez-vous fermer la sessin de vente actuelle et fermer le programme ?"));
-    if(reply == QMessageBox::Yes){
-        DatabaseManager::closeSession(cma->getTotal());
+    if(cma && (reply == QMessageBox::Yes)){
+        QVariant total = (cma->getTotal()>=0.01?cma->getTotal():QVariant());
+        DatabaseManager::closeSession(total);
         this->close();
-    }else{
+    }else if(cma){
         //Saves the details of the count
-        if(cma){
-            cma->save("count/after");
-            DatabaseManager::setCurrentSessionCloseAmount(cma->getTotal());
-        }
-
+        cma->save("count/after");
+        QVariant total = (cma->getTotal()>=0.01?cma->getTotal():QVariant());
+        DatabaseManager::setCurrentSessionCloseAmount(total);
     }
 }
 
@@ -231,7 +244,8 @@ void MainWindow::newSessionCreated(){
     center->setCurrentIndex(0);
     auto cmb = dynamic_cast<CountMoneyBefore *>(center->widget(4));
     if(cmb){
-        DatabaseManager::newSession(cmb->getTotal(), cmb->getJobists());
+        QVariant total = (cmb->getTotal()>=0.01?cmb->getTotal():QVariant());
+        DatabaseManager::newSession(total, cmb->getJobists());
         cmb->save("count/before");
     }
     disconnect(center->widget(4), SIGNAL(validated()), this, SLOT(newSessionCreated()));
