@@ -58,3 +58,8 @@ Revérifier disposition boutons (valider à droite)
 //Note display jobist share (and functions benef ?) in order summary
 //update order summary when using keyboard arrows
 
+//Password storage :
+On windows : installer or sub program passwd.exe wich recquire admin rights (Ask for them in manifest).
+On linux : write password hash in location where only sudo can write. Sub program will ask for sudo rights or refuse to execute if not sudo
+
+When clicking on menu to close session, first display closeAfter
