@@ -62,6 +62,8 @@ public:
     static void             openDatabase            ();
     static void             closeDatabase           ();
     static void             createDatabase          ();
+    static bool             executeScript           (QString filename, QSqlDatabase db = QSqlDatabase::database());
+
 
     //TODO find where they should go. Class Function in catalog.h ?
     static uint             addFunction             (QString name);
@@ -138,8 +140,6 @@ public:
     static bool         addArticle                  (const Article &a, qreal price, qreal jShare, qreal bPrice, qreal redPrice, QString function);
 
 private:
-    static bool         executeScript               (QString filename, QSqlQuery &query);
-
     static bool         updateClientField           (const Client &c, QString field, QVariant value);
     static QVariant     getClientField              (const Client &c, QString field);
 };

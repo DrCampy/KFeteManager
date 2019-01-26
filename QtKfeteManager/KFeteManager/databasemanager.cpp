@@ -152,8 +152,7 @@ bool        DatabaseManager::checkDatabase              (){
 }
 
 void        DatabaseManager::createDatabase             (){
-    QSqlQuery querry;
-    executeScript(":/create-script.sql", querry);
+    executeScript(":/create-script.sql");
 
     //TODO remove
     //Insert notes and coins
@@ -162,13 +161,13 @@ void        DatabaseManager::createDatabase             (){
     query.exec("INSERT INTO Config(field, value) VALUES('coins', '2;1;0.5;0.2;0.1;0.05;0.02;0.01');");
 }
 
-bool        DatabaseManager::executeScript              (QString filename, QSqlQuery &query){
+bool        DatabaseManager::executeScript              (QString filename, QSqlDatabase db){
     //opens file
     QFile file(filename);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString script = file.readAll();
     file.close();
-
+    QSqlQuery query = QSqlQuery(db);
     //Each statement begins with '--Statement'
     QVector<QStringRef> statements = script.splitRef("--Statement", QString::SkipEmptyParts);
 
@@ -194,9 +193,6 @@ bool        DatabaseManager::executeScript              (QString filename, QSqlQ
         if(finalStatement.isEmpty() || finalStatement == ";"){
             continue;
         }
-
-        //Appends final ';'
-        //finalStatement.append(';');
 
         //Executes statement
         int ret = query.exec(finalStatement);
