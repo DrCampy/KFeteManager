@@ -46,7 +46,7 @@ SaleSessions(
     state TEXT NOT NULL DEFAULT 'opened' CHECK(state IN('opened', 'closed')),
     openAmount NUMERIC,
     closeAmount NUMERIC,
-    CHECK (((closingTime IS NULL) AND state = 'opened') OR ((closingTime > OpeningTime) AND state = 'closed')));
+    CHECK (((closingTime IS NULL) AND state = 'opened') OR (closingTime IS NOT NULL AND closingTime > OpeningTime AND state = 'closed')));
 
 --Statement
 --6
