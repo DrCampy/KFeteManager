@@ -33,7 +33,7 @@ Clients(
     phone TEXT DEFAULT '',
     address TEXT DEFAULT '',
     email TEXT DEFAULT '',
-    negLimit NUMERIC DEFAULT 0 CHECK(negLimit >= -10),
+    negLimit NUMERIC DEFAULT 0,
     isJobist INTEGER DEFAULT 0,
     balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance >= negLimit));
 
@@ -169,7 +169,18 @@ BEGIN
 SELECT Raise(Fail, 'Current Session Order Id must be a positive Integer.');
 END;
 
---20 to 26
+
+--Statement
+--20
+CREATE TRIGGER IF NOT EXISTS Client_has_valid_negLimit
+AFTER UPDATE OF negLimit ON Clients
+WHEN (NEW.NegLimit < (SELECT value FROM Config WHERE Field='MinNegLimit'))
+BEGIN
+UPDATE Clients SET NegLimit = (SELECT value FROM Config WHERE field='MinNegLimit')
+WHERE Name = NEW.Name;
+END;
+
+--21 to 29
 --Statement
 INSERT OR REPLACE INTO Functions VALUES('No Function', 0);
 
@@ -191,12 +202,9 @@ INSERT OR IGNORE INTO Config VALUES('ManagerHash', ''); --TODO Edit for real def
 --Statement
 INSERT OR IGNORE INTO Config VALUES('TreasurerHash', ''); --TODO Edit for real default hash
 
--- For the maybe to come history database
---CREATE TABLE IF NOT EXISTS
---SaleSessions(
---    OpeningTime DATE NOT NULL PRIMARY KEY,
---    closingTime DATE,
---    jShare NUMERIC NOT NULL, --not in day to day database
---    openAmount NUMERIC,
---    closeAmount NUMERIC,
---    soldAmount NUMERIC);
+--Statement
+INSERT OR IGNORE INTO Config VALUES('MinJShare', 10);
+
+--Statement
+INSERT OR IGNORE INTO Config VALUES('MinNegLimit', -10);
+
