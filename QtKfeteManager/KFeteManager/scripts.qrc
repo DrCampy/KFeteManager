@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file alias="create-script.sql">data/scripts/create.sql</file>
+        <file alias="create-history.sql">data/scripts/create-history.sql</file>
     </qresource>
 </RCC>
