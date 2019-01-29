@@ -12,10 +12,11 @@
 class HistoriesManager
 {
 public:
-    static bool openHistoryDb();
-    static void addSession(Session session);
-    static void closeHistoryDb();
-    static void createHistoryDb();
+    static bool         openHistoryDb();
+    static void         addSession(Session session);
+    static void         closeHistoryDb();
+    static void         createHistoryDb();
+    static QSqlDatabase getDatabase();
 };
 
 #endif // HISTORIESMANAGER_H

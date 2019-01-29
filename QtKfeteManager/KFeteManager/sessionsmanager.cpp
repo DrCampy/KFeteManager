@@ -12,6 +12,7 @@
 #include "sessionsmanager.h"
 #include "customwidgets.h"
 #include "databasemanager.h"
+#include "historiesmanager.h"
 
 SessionsManager::SessionsManager(QWidget *parent) : QWidget(parent)
 {
@@ -388,6 +389,33 @@ void SessionsManager::validateNoPay(){
 }
 
 void SessionsManager::saveData(){
+    //Save session
+    HistoriesManager::addSession(this->session);
+
+    QSqlDatabase historyDb = HistoriesManager::getDatabase();
+    //Save orders
+    //Get clients that ordered something
+    QSqlQuery mainClientQuery;
+    QSqlQuery mainItemsQuery;
+    QSqlQuery histClientQuery(historyDb);
+
+    mainClientQuery.prepare("SELECT DISTINCT client FROM OrderClient WHERE Id IN (SELECT Id FROM Transactions WHERE sessionTime = :id);");
+    mainClientQuery.bindValue(":id", session.Id);
+    mainClientQuery.exec();
+
+    //Starts a transaction with history db
+    historyDb.transaction();
+    bool success = true;
+
+    while(mainClientQuery.next()){
+        //ensure client is in db
+        histClientQuery.prepare("INSERT OR IGNORE INTO Clients VALUES(:client);");
+        histClientQuery.bindValue(":client", mainClientQuery.value(0).toString());
+        success &= histClientQuery.exec();
+
+        //get items ordered by that client of that client
+
+    }
 
 }
 

@@ -42,3 +42,7 @@ void HistoriesManager::createHistoryDb(){
         DatabaseManager::executeScript(":/create-history.sql", history);
     }
 }
+
+QSqlDatabase HistoriesManager::getDatabase(){
+    return QSqlDatabase::database("history");
+}

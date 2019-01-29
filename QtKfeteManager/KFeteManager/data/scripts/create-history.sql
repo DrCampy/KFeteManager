@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS
 FunctionsBenefits(
     Session INT NOT NULL REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
     Function TEXT NOT NULL,
-    Amoun NUMERIC NOT NULL,
+    Amount NUMERIC NOT NULL,
     PRIMARY KEY(Session, Function));
 
 --statement
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS
 AccountMoves(
     Session INT REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
     Client TEXT REFERENCES Clients(Name),
-    Amount NUMERIC NOT NULL,
+    amount NUMERIC NOT NULL,
     note TEXT);
 
 --statement
@@ -52,5 +52,4 @@ Sales(
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     price TEXT NOT NULL CHECK(price IN('normal', 'reduced', 'free')));
 
-
-
+--Collate article names

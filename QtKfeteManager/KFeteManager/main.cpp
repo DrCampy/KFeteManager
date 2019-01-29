@@ -5,6 +5,7 @@
 
 #include "mainwindow.h"
 #include "databasemanager.h"
+#include "historiesmanager.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,8 +14,9 @@ int main(int argc, char *argv[])
         QDir().mkdir("./data");
     }
 
-    //Opens database
+    //Opens databases
     DatabaseManager::openDatabase();
+    HistoriesManager::openHistoryDb();
 
     //Checks if database is OK
     if(!DatabaseManager::checkDatabase()){
@@ -47,6 +49,7 @@ int main(int argc, char *argv[])
 
     //Closes Database
     DatabaseManager::closeDatabase();
+    HistoriesManager::closeHistoryDb();
 
     return ret;
 }
