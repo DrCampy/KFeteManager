@@ -32,7 +32,7 @@ lowest pay for a sale session
 negative limit for an account
 Could allow several profiles for client (like client, jobist, table,...)
 
-Save paid/validated sessions. 
+Save paid/validated sessions.
 Have toe possibility to check past sessions and if neeed export them. CSV or TXT or... something else
 
 Store successive state of articles after modifications so that we keep an internal history of it accross time.
@@ -62,9 +62,11 @@ On linux : write password hash in location where only sudo can write. Sub progra
 
 When clicking on menu to close session, first display closeAfter
 
+Make sure all items with identical names except for CaSe are considered the same
 
 //Finish session manager
 manage passwords. All of them
 Login screen
 Statistics
 update databasemanager to use minJShare
+Use PRAGMA versions in db instead of "integrity check"
