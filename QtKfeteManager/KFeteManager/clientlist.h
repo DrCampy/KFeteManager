@@ -49,7 +49,6 @@ public:
 
 private:
     QString name;
-    static constexpr qreal LIMIT_MIN = -10;
 
 };
 

@@ -13,13 +13,6 @@ Client::Client(const Client &c){
 }
 
 void Client::create(QString phone, QString address, QString email, qreal limit, bool isJobist, qreal balance){
-
-    if(!isJobist && limit < 0){
-        limit = 0;
-    }else if(limit < LIMIT_MIN){
-        limit = LIMIT_MIN;
-    }
-
     DatabaseManager::addClient(*this, phone, address, email, limit, isJobist, balance);
 }
 
@@ -62,11 +55,6 @@ bool Client::isJobist() const{
 }
 
 void Client::setLimit(qreal limit){
-  if(!isJobist() || limit > 0){
-     limit = 0;
-  }else if(limit < LIMIT_MIN){
-     limit = LIMIT_MIN;
-  }
   DatabaseManager::updateClientLimit(*this, limit);
 }
 

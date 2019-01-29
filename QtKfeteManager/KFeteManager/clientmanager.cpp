@@ -54,6 +54,7 @@ ClientManager::ClientManager(QWidget *parent) : QWidget(parent)
     validateButton->setEnabled(false);
     clientModel->setTable("Clients");
     limit->setMinimum(-10);
+    limit->setMinimum(-qInf());
     limit->setMaximum(0);
     limit->setSuffix(" " + locale().currencySymbol());
 
