@@ -35,7 +35,8 @@ Clients(
     email TEXT DEFAULT '',
     negLimit NUMERIC DEFAULT 0,
     isJobist INTEGER DEFAULT 0,
-    balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance >= negLimit));
+    balance NUMERIC NOT NULL DEFAULT 0 CHECK(balance >= negLimit),
+    CHECK( (isJobist = 1) OR (isJobist = 0 AND negLimit = 0)));
 
 --Statement
 --5
@@ -174,7 +175,7 @@ END;
 --20
 CREATE TRIGGER IF NOT EXISTS Client_has_valid_negLimit
 AFTER UPDATE OF negLimit ON Clients
-WHEN (NEW.NegLimit < (SELECT value FROM Config WHERE Field='MinNegLimit'))
+WHEN (NEW.NegLimit > (SELECT value FROM Config WHERE Field='MinNegLimit'))
 BEGIN
 UPDATE Clients SET NegLimit = (SELECT value FROM Config WHERE field='MinNegLimit')
 WHERE Name = NEW.Name;
