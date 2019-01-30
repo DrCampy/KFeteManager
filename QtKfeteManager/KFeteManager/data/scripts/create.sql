@@ -170,17 +170,6 @@ BEGIN
 SELECT Raise(Fail, 'Current Session Order Id must be a positive Integer.');
 END;
 
-
---Statement
---20
-CREATE TRIGGER IF NOT EXISTS Client_has_valid_negLimit
-AFTER UPDATE OF negLimit ON Clients
-WHEN (NEW.NegLimit > (SELECT value FROM Config WHERE Field='MinNegLimit'))
-BEGIN
-UPDATE Clients SET NegLimit = (SELECT value FROM Config WHERE field='MinNegLimit')
-WHERE Name = NEW.Name;
-END;
-
 --21 to 29
 --Statement
 INSERT OR REPLACE INTO Functions VALUES('No Function', 0);
@@ -209,3 +198,12 @@ INSERT OR IGNORE INTO Config VALUES('MinJShare', 10);
 --Statement
 INSERT OR IGNORE INTO Config VALUES('MinNegLimit', -10);
 
+--Statement
+--20
+CREATE TRIGGER IF NOT EXISTS Client_has_valid_negLimit
+AFTER UPDATE OF negLimit ON Clients
+WHEN (NEW.negLimit < CAST( (SELECT value FROM Config WHERE Field='MinNegLimit') AS REAL))
+BEGIN
+UPDATE Clients SET NegLimit = (SELECT value FROM Config WHERE field='MinNegLimit')
+WHERE Name = NEW.Name;
+END;

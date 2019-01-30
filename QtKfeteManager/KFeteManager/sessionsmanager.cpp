@@ -399,6 +399,15 @@ void SessionsManager::saveData(){
     QSqlQuery mainItemsQuery;
     QSqlQuery histClientQuery(historyDb);
 
+    mainItemsQuery.prepare("SELECT OrderContent.article, SUM(OrderContent.quantity) AS tot_qtt "
+                           "FROM Transactions "
+                           "INNER JOIN OrderContent ON Transactions.Id = OrderContent.Id "
+                           "INNER JOIN Articles ON OrderContent.article = Articles.name "
+                           "INNER JOIN OrderClient ON Transactions.Id = OrderClient.Id "
+                           "WHERE Transactions.sessionTime = :id AND OrderClient.client = :client "
+                           "GROUP BY OrderContent.article "
+                           "ORDER BY tot_qtt DESC");
+    mainItemsQuery.bindValue(":id", session.Id);
     mainClientQuery.prepare("SELECT DISTINCT client FROM OrderClient WHERE Id IN (SELECT Id FROM Transactions WHERE sessionTime = :id);");
     mainClientQuery.bindValue(":id", session.Id);
     mainClientQuery.exec();
@@ -407,16 +416,44 @@ void SessionsManager::saveData(){
     historyDb.transaction();
     bool success = true;
 
+    //Adds/update history entries for each client
     while(mainClientQuery.next()){
         //ensure client is in db
+        QString client = mainClientQuery.value(0).toString();
         histClientQuery.prepare("INSERT OR IGNORE INTO Clients VALUES(:client);");
-        histClientQuery.bindValue(":client", mainClientQuery.value(0).toString());
+        histClientQuery.bindValue(":client", client);
         success &= histClientQuery.exec();
 
         //get items ordered by that client of that client
+        mainItemsQuery.bindValue(":client", client);
+        success &= mainItemsQuery.exec();
 
+        //Ensures item is in table
+        QSqlQuery itemInTable(historyDb);
+        itemInTable.prepare("INSERT OR IGNORE INTO ClientHistory(Client, Article) VALUES(:client, :article);");
+        itemInTable.bindValue(":client", client);
+        //Increment item
+        QSqlQuery incItemCount(historyDb);
+        incItemCount.prepare("UPDATE ClientHistory SET quantity = quantity + :quantity WHERE Article = :article AND Client = :client);");
+        incItemCount.bindValue(":client", client);
+
+        while(mainItemsQuery.next()){
+            QString article = mainItemsQuery.value(0).toString();
+            uint quantity = mainItemsQuery.value(1).toUInt();
+
+            itemInTable.bindValue(":article", article);
+            success &= itemInTable.exec();
+            incItemCount.bindValue(":article", article);
+            incItemCount.bindValue(":quantity", quantity);
+            success &= incItemCount.exec();
+        }
     }
 
+    if(success){
+        historyDb.commit();
+    }else{
+        historyDb.rollback();
+    }
 }
 
 void SessionsManager::deleteSession(qlonglong id){
