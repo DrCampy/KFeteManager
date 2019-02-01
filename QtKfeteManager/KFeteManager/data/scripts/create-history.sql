@@ -38,15 +38,15 @@ FunctionsBenefits(
 CREATE TABLE IF NOT EXISTS
 AccountMoves(
     Session INT REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
-    Client TEXT REFERENCES Clients(Name),
+    Client TEXT REFERENCES Clients(Name) ON DELETE IGNORE,
     amount NUMERIC NOT NULL,
     note TEXT);
 
 --statement
 CREATE TABLE IF NOT EXISTS
 CashMoves(
-    Session INT REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
-    Amount NUMERIC NOT NULL,
+    session INT REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
+    amount NUMERIC NOT NULL,
     note TEXT);
 
 --statement
@@ -55,13 +55,13 @@ Sales(
     Session INT REFERENCES Sessions(OpenTime) ON DELETE CASCADE,
     Article TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price TEXT NOT NULL CHECK(price IN('normal', 'reduced', 'free')),
+    price TEXT NOT NULL CHECK(price IN ('normal', 'reduced', 'free') ),
     PRIMARY KEY(Session, Article, price));
 
 --statement
 CREATE TABLE IF NOT EXISTS
 ClientHistory(
-    Client TEXT REFERENCES Clients(Name),
+    Client TEXT REFERENCES Clients(Name) ON DELETE CASCADE,
     Article TEXT REFERENCES Articles(Name),
     quantity INTEGER DEFAULT 0 CHECK(quantity > 0),
     PRIMARY KEY(Client, Article));

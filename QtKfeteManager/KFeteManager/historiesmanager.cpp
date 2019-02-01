@@ -13,8 +13,12 @@ void HistoriesManager::addSession(Session session){
     //TODO add clients if necessary ??????
     QSqlDatabase history = getDatabase();
     QSqlQuery query(history);
+    QSqlQuery insertClients(history);
+    QSqlQuery insertArticle(history);
     bool success = true;
     success &= history.transaction();
+
+    //Inserts all metadata of session
     query.prepare("INSERT INTO Sessions(OpenTime, closeTime, openAmount, closeAmount, incomes, jobistShare, jobistWage) "
                   "VALUES (:ot, :ct, :oa, :ca, :i, :js, :jw);");
     query.bindValue(":ot", session.openTime);
@@ -26,9 +30,9 @@ void HistoriesManager::addSession(Session session){
     query.bindValue(":jw", session.jobistWage);
     success &= query.exec();
 
+    //Inserts cash moves
     query.prepare("INSERT INTO CashMoves(Session, amount, note) VALUES(:sess, :amount, :note);");
     query.bindValue(":sess", session.Id);
-    //Inserts cash moves
     for(auto it : session.cashMoves){
         query.bindValue(":amount", it.first);
         query.bindValue(":note", it.second);
@@ -36,10 +40,13 @@ void HistoriesManager::addSession(Session session){
     }
 
     //Inserts account moves
+    insertClients.prepare("INSERT OR IGNORE INTO Clients(Name) VALUES(:client);");
     query.prepare("INSERT INTO AccountMoves(Session, Client, amount, note) "
                   "VALUES(:sess, :client, :amount, :note);");
     query.bindValue(":sess", session.Id);
-    for(auto it : session.accountMoves.keys()){
+    for(auto it : session.accountMoves.keys()){ //TODO Is a multimap. We have to correct that
+        insertClients.bindValue(":client", it); //ensures all clients are in db
+        success &= insertClients.exec();
         query.bindValue(":client", it);
         query.bindValue(":amount", session.accountMoves.value(it).first);
         query.bindValue(":note", session.accountMoves.value(it).second);
@@ -54,8 +61,53 @@ void HistoriesManager::addSession(Session session){
         query.bindValue(":amount", session.functionsBenefits.value(it));
         success &= query.exec();
     }
-     //Add all items to table items
 
+    //Add all items to table items
+    insertArticle.prepare("INSERT OR IGNORE INTO Articles(Name) VALUES(:art);");
+    query.prepare("INSERT INTO Sales(Session, Article, quantity, price) "
+                  "VALUES(:sess, :art, :qtt, :price);");
+    query.bindValue(":sess", session.Id);
+    query.bindValue(":price", "normal"); //Normal Sales
+    for(auto article : session.normalSales.keys()){
+        insertArticle.bindValue(":art", article);
+        success &= insertArticle.exec();
+        query.bindValue(":art", article);
+        query.bindValue(":qtt", session.normalSales.value(article));
+        success &= query.exec();
+    }
+
+    query.bindValue(":price", "reduced"); //reduced sales
+    for(auto article : session.reducedSales.keys()){
+        insertArticle.bindValue(":art", article);
+        success &= insertArticle.exec();
+        query.bindValue(":art", article);
+        query.bindValue(":qtt", session.reducedSales.value(article));
+        success &= query.exec();
+    }
+
+    query.bindValue(":price", "free"); //free sales
+    for(auto article : session.freeSales.keys()){
+        insertArticle.bindValue(":art", article);
+        success &= insertArticle.exec();
+        query.bindValue(":art", article);
+        query.bindValue(":qtt", session.freeSales.value(article));
+        success &= query.exec();
+    }
+
+    //Adds jobists
+    query.prepare("INSERT INTO Jobists(Session, Client) VALUES(:sess, :jobist);");
+    query.bindValue(":sess", session.Id);
+    for(auto jobist : session.jobists){
+        query.bindValue(":jobist", jobist);
+        success &= query.exec();
+    }
+
+    //Terminate transaction
+    if(success){
+        history.commit();
+    }else{
+        history.rollback();
+    }
 }
 
 bool HistoriesManager::openHistoryDb(){
