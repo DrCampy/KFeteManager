@@ -14,6 +14,11 @@
 #include "databasemanager.h"
 #include "historiesmanager.h"
 
+/**
+ * @brief SessionsManager::SessionsManager is the constructor for the SessionManager class.
+ *
+ * @param parent : parent QWidget.
+ */
 SessionsManager::SessionsManager(QWidget *parent) : QWidget(parent)
 {
     sessionSelector     = new QComboBox(this);
@@ -52,10 +57,18 @@ SessionsManager::~SessionsManager(){
     delete sessionsModel;
 }
 
+/**
+ * @brief SessionsManager::refresh refreshes the list of sessions.
+ */
 void SessionsManager::refresh(){
     sessionsModel->setQuery("SELECT openingTime FROM saleSessions WHERE state='closed' ORDER BY openingTime ASC;");
 }
 
+/**
+ * @brief Session::clear clears all the values of a session.
+ *
+ * Mainly used by SessionManager.
+ */
 void Session::clear(){
     Id = 0;
     openTime = QDateTime();
@@ -74,6 +87,11 @@ void Session::clear(){
     jobistWage = 0;
 }
 
+/**
+ * @brief SessionsManager::loadDatas loads the data of the selected %session into the variable session.
+ *
+ * The selected %session is the one selected by sessionSelector.
+ */
 void SessionsManager::loadDatas(){
     QSqlQuery query;
     session.clear();
@@ -242,6 +260,11 @@ void SessionsManager::loadDatas(){
     }
 }
 
+/**
+ * @brief SessionsManager::writeDetails formats the content of the loaded %session into text and display it.
+ *
+ * The content of the %session is in session and it is displayed into sessionDetails.
+ */
 void SessionsManager::writeDetails(){
     loadDatas();
     text.clear();
@@ -361,6 +384,11 @@ void SessionsManager::writeDetails(){
     sessionDetails->appendHtml(text);
 }
 
+/**
+ * @brief SessionsManager::validateAuto validates a %session and pays jobists with equals shares.
+ *
+ * The %session then goes into the history db and is deleted from the main db.
+ */
 void SessionsManager::validateAuto(){
     //Pay jobists
 
@@ -380,14 +408,29 @@ void SessionsManager::validateAuto(){
     deleteSession(session.Id);
 }
 
+/**
+ * @brief SessionsManager::validateManually validates a %session and asks to the user how the jobists should be paid.
+ *
+ * The %session then goes into the history db and is deleted from the main db.
+ */
 void SessionsManager::validateManually(){
 
 }
 
+/**
+ * @brief SessionsManager::validateNoPay validates a %session and do not pay jobists.
+ *
+ * The %session then goes into the history db and is deleted from the main db.
+ */
 void SessionsManager::validateNoPay(){
 
 }
 
+/**
+ * @brief SessionsManager::saveData saves the content of a session to the history DB.
+ *
+ * This action is irreversible as some metadata is lost (order time,...)
+ */
 void SessionsManager::saveData(){
     //Save session
     HistoriesManager::addSession(this->session);
@@ -456,6 +499,11 @@ void SessionsManager::saveData(){
     }
 }
 
+/**
+ * @brief SessionsManager::deleteSession deletes a session from the main database.
+ *
+ * @param id is the id of the session to delete.
+ */
 void SessionsManager::deleteSession(qlonglong id){
     QSqlQuery query;
     query.prepare("DELETE FROM SalesSessions WHERE OpeningTime = :id;");
@@ -463,6 +511,14 @@ void SessionsManager::deleteSession(qlonglong id){
     query.exec();
 }
 
+/**
+ * @brief SessionsManager::payJobist adds a certain amount to a jobist's account as wage.
+ *
+ * For now there is no trace of that wage paiment. It does not appear in any session. This might change in the future.
+ *
+ * @param jobist : name of the jobist to pay.
+ * @param wage : amount to pay to the jobist.
+ */
 void SessionsManager::payJobist(QString jobist, qreal wage){
 
 }

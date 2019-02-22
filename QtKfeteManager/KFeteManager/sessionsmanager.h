@@ -14,6 +14,9 @@ typedef QMultiMap<QString, QPair<qreal, QString>> AccountMoves;
 typedef QMap<QString, uint> SalesList;
 typedef QMap<QString, qreal> FunctionsBenefits;
 
+/**
+ * @brief The Session struct contains all the variables needed to represent a Session in the history.
+ */
 struct Session{
     qlonglong           Id;
     QDateTime           openTime;
@@ -34,6 +37,12 @@ struct Session{
     void                clear();
 };
 
+/**
+ * @brief The SessionsManager class contains the view to manage sessions.
+ *
+ * It allows user to display a session's content and validate it and pay (or not) the jobists.
+ * Inherits QWidget.
+ */
 class SessionsManager : public QWidget
 {
     Q_OBJECT
