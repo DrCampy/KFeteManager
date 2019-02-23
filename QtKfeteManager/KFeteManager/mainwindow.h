@@ -14,6 +14,12 @@ namespace Ui {
 class MainWindow;
 }
 
+/**
+ * @brief The MainWindow class contains and runs the window of the app. Everything happens inside except for a few dialog boxes.
+ *
+ * Manages the clock displayed and all the different view that can be used during operation.
+ * Inherits from QMainWindow.
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

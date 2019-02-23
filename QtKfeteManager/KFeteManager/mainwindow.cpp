@@ -22,6 +22,13 @@
 #include "ordermanager.h"
 #include "sessionsmanager.h"
 
+/**
+ * @brief MainWindow::MainWindow constructs the main window.
+ * Manages all the menus in the menu bar, the clock and it's timer and the switching between
+ * all the views used during operation of the program.
+ *
+ * @param parent is the parent widget.
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
@@ -135,11 +142,19 @@ MainWindow::~MainWindow()
 {
 }
 
+/**
+ * @brief MainWindow::updateClock updates the time displayed by the clock with the current date and time.
+ */
 void MainWindow::updateClock(){
     date = QDateTime(QDateTime::currentDateTime());
     clockLabel->setText(date.toString("ddd d/M/yyyy H:mm"));
 }
 
+/**
+ * @brief MainWindow::writeSettings saves the window settings inside QSettings.
+ *
+ * Parameters saved are : window position, window size and if the window is maximized.
+ */
 void MainWindow::writeSettings(){
     QSettings settings;
     settings.beginGroup("MainWindow");
@@ -149,6 +164,11 @@ void MainWindow::writeSettings(){
     settings.endGroup();
 }
 
+/**
+ * @brief MainWindow::readSettings reads the window settings from QSettings.
+ *
+ * Parameters loaded are : window size, window position and if the window is maximized.
+ */
 void MainWindow::readSettings(){
     QSettings settings;
     settings.beginGroup("MainWindow");
@@ -160,39 +180,70 @@ void MainWindow::readSettings(){
     settings.endGroup();
 }
 
+/**
+ * @brief MainWindow::closeEvent Intercepts any close event to allow us to save the window settings before leaving.
+ * @param event is the event catched.
+ */
 void MainWindow::closeEvent(QCloseEvent *event){
     writeSettings();
     event->accept();
 }
 
+/**
+ * @brief MainWindow::closeSession closes a salesession inside the main database.
+ */
 void MainWindow::closeSession(){
     DatabaseManager::closeSession();
     this->close();
 }
 
+/**
+ * @brief MainWindow::manageDB [WIP] will be used to perform some operations on the database.
+ */
 void MainWindow::manageDB(){
 }
 
+/**
+ * @brief MainWindow::payJobists displays the interface allowing user to pay the jobists.
+ */
 void MainWindow::payJobists(){
     center->setCurrentIndex(7);
 }
 
+/**
+ * @brief MainWindow::backToSales is called when user wants to go back to the main sales interface.
+ *
+ * This could change in the future for a stack-based interfaces history management.
+ */
 void MainWindow::backToSales(){
     center->setCurrentIndex(0);
 }
 
+/**
+ * @brief MainWindow::editCatalog displays the interface allowing the user to edit the catalog.
+ */
 void MainWindow::editCatalog(){
     center->setCurrentIndex(1);
 }
 
+/**
+ * @brief MainWindow::editCarte displays the interface allowing the user to edit the carte.
+ */
 void MainWindow::editCarte(){
     center->setCurrentIndex(2);
 }
 
+/**
+ * @brief MainWindow::editClient displays the interface allowing the user to edit the clients data.
+ */
 void MainWindow::editClient(){
     center->setCurrentIndex(3);
 }
 
+/**
+ * @brief MainWindow::countBefore displays the interface allowing the user to register the amount of cash available before begining the sales.
+ * Also refreshes the list of jobists shown in the dropdown list of the interface.
+ */
 void MainWindow::countBefore(){
     center->setCurrentIndex(4);
     auto cmb = dynamic_cast<CountMoneyBefore *>(center->widget(4));
@@ -201,16 +252,27 @@ void MainWindow::countBefore(){
     }
 }
 
+/**
+ * @brief MainWindow::countAfter displays the interface allowing the user to register the amount of cash in the cash register after the sales.
+ */
 void MainWindow::countAfter(){
     center->setCurrentIndex(5);    
 }
 
+/**
+ * @brief MainWindow::createNewSession display the interface allowing the user to register the amount of cash before the sales.
+ * After the call to this function, the interface will trigger newSessionCreated() when user presses OK button.
+ */
 void MainWindow::createNewSession(){
     disconnect(center->widget(4), SIGNAL(validated()), this, SLOT(countBeforeFinished()));
     center->setCurrentIndex(4);
     connect(center->widget(4), SIGNAL(validated()), this, SLOT(newSessionCreated()));
 }
 
+/**
+ * @brief MainWindow::countBeforeFinished is called when the user presses OK on the interface to register the cash before the sales.
+ * Saves the jobists for the current session and the cash total in the main database.
+ */
 void MainWindow::countBeforeFinished(){
     center->setCurrentIndex(0);
     auto cmb = dynamic_cast<CountMoneyBefore *>(center->widget(4));
@@ -222,6 +284,9 @@ void MainWindow::countBeforeFinished(){
     }
 }
 
+/**
+ * @brief MainWindow::countAfterFinished
+ */
 void MainWindow::countAfterFinished(){
     center->setCurrentIndex(0);
     auto cma = dynamic_cast<CountMoneyAfter *>(center->widget(5));
