@@ -7,6 +7,15 @@
 #include "databasemanager.h"
 #include "historiesmanager.h"
 
+/**
+ * @brief qMain starts the program.
+ * Opens the different databases, performs checks (procedure will change).
+ * Loads the QSettings for the application, runs the application then close databases.
+ *
+ * @param argc Number of arguments
+ * @param argv Arguments
+ * @return 0 in case of success. != 0 otherwise.
+ */
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
