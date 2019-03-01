@@ -18,21 +18,21 @@ typedef QMap<QString, qreal> FunctionsBenefits;
  * @brief The Session struct contains all the variables needed to represent a Session in the history.
  */
 struct Session{
-    qlonglong           Id;
-    QDateTime           openTime;
-    QDateTime           closeTime;
-    QStringList         jobists;
-    QVariant            openAmount;
-    QVariant            closeAmount;
-    qreal               cashIncome;
-    CashMoves           cashMoves;
-    AccountMoves        accountMoves;
-    SalesList           normalSales;
-    SalesList           reducedSales;
-    SalesList           freeSales;
+    qlonglong           Id; /**< ID of the represented session.*/
+    QDateTime           openTime; /**< Date and time the session was opened.*/
+    QDateTime           closeTime; /**< Date and time the session was closed.*/
+    QStringList         jobists; /**< List of the jobists holding the session.*/
+    QVariant            openAmount; /**< Money in the cash register at the time of opening.*/
+    QVariant            closeAmount; /**< Money in the cash register at the time of closing.*/
+    qreal               cashIncome; /**< Theoretical cash incomes due to sales.*/
+    CashMoves           cashMoves; /**< List of cash moves in the cash register that are not linked to any account. */
+    AccountMoves        accountMoves; /**< List of cash moves in the cash register linked to accounts.*/
+    SalesList           normalSales; /**< List of articles sold at normal price.*/
+    SalesList           reducedSales; /**< List of articles sold at reduced price.*/
+    SalesList           freeSales; /**< List of articles sold for free.*/
     FunctionsBenefits   functionsBenefits;
-    qreal               jobistShare;
-    qreal               jobistWage;
+    qreal               jobistShare; /**< Actual earnings of the jobists for the session.*/
+    qreal               jobistWage; /**< Actual amount paid to the jobists (in total).*/
 
     void                clear();
 };
