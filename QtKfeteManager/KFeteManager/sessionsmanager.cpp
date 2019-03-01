@@ -364,7 +364,7 @@ void SessionsManager::writeDetails(){
 void SessionsManager::validateAuto(){
     //Pay jobists
 
-    //Wage in hundredth
+    //Wage in hundredth of currency unit
     uint share= static_cast<uint>(((session.jobistShare > minJShare)?session.jobistShare:minJShare)*100);
     share /= static_cast<uint>(session.jobists.size());
     qreal wage = share/100;
@@ -457,7 +457,7 @@ void SessionsManager::saveData(){
 }
 
 void SessionsManager::deleteSession(qlonglong id){
-    QSqlQuery query;
+    QSqlQuery query; //Query from main db
     query.prepare("DELETE FROM SalesSessions WHERE OpeningTime = :id;");
     query.bindValue(":id", id);
     query.exec();
