@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QLocale>
 #include <QLineEdit>
+#include <QFormLayout>
 
 #include "sessionsmanager.h"
 #include "customwidgets.h"
@@ -369,9 +370,13 @@ void SessionsManager::validateAuto(){
     share /= static_cast<uint>(session.jobists.size());
     qreal wage = share/100;
     session.jobistWage = wage*session.jobists.size();
+
+    //Create a map for the wages to be paid. Here all jobists receive equal part.
+    QMap<QString, qreal> wages;
     for(auto jobist : session.jobists){
-        payJobist(jobist, wage/session.jobists.size());
+        wages.insert(jobist, wage/session.jobists.size());
     }
+    payJobist(wages);
 
     //Save datas
     saveData();
@@ -381,6 +386,7 @@ void SessionsManager::validateAuto(){
 }
 
 void SessionsManager::validateManually(){
+
 
 }
 
@@ -463,7 +469,72 @@ void SessionsManager::deleteSession(qlonglong id){
     query.exec();
 }
 
-void SessionsManager::payJobist(QString jobist, qreal wage){
+/**
+ * @brief SessionsManager::payJobist adds a certain amount to a jobist's account as wage.
+ *
+ * For now there is no trace of that wage paiment. It does not appear in any session. This might change in the future.
+ *
+ * @param jobist : name of the jobist to pay.
+ * @param wage : amount to pay to the jobist.
+ */
+void SessionsManager::payJobist(QMap<QString, qreal> wages){
+    for (int i = 0; i < wages.size();i++) {
+        QString jobist = wages.keys().at(i);
+        qreal wage = wages.values().at(i);
 
+        DatabaseManager::clientDeposit(wage, Client(jobist));
+    }
 }
 
+
+/**
+ * @brief WageSelector::WageSelector Constructor for the WageSelector class
+ * @param session the session from which the dialog box will fetch the data needed.
+ * @param parent Qt Widget parent.
+ */
+WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
+    if(session == nullptr){
+        return;
+    }
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    QFormLayout *formLayout = new QFormLayout();
+    QHBoxLayout *buttonsLayout = new QHBoxLayout();
+    okButton = new QPushButton(tr("Payer"), this);
+    cancelButton = new QPushButton(tr("Annuler"), this);
+    total = new QLabel(locale().toCurrencyString(0.0), this);
+    qreal share = session->jobistShare/session->jobists.size();
+
+    for(auto jobist : session->jobists){
+        QDoubleSpinBox *newSpinBox = new QDoubleSpinBox(this);
+        connect(newSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateTotal()));
+        newSpinBox->setValue(share);
+        formLayout->addRow(jobist, newSpinBox);
+    }
+
+    //TODO connect buttons to corresponding qdialog's functions.
+    buttonsLayout->addWidget(okButton);
+    buttonsLayout->addWidget(cancelButton);
+
+    mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(total);
+    mainLayout->addLayout(buttonsLayout);
+}
+
+void WageSelector::updateTotal(){
+    qreal numericalTotal = 0.0;
+    for(auto spinBox : spinBoxesList){
+        numericalTotal += spinBox->value();
+    }
+    this->total->setText(locale().toCurrencyString(numericalTotal));
+}
+
+bool WageSelector::ask(QMap<QString, qreal> *wages){
+    if(wages == nullptr){
+        return false;
+    }
+    this->exec();
+    if(this->result() == QDialog::Accepted){
+        //TODO GET JOBIST'S NAME from either formlayout or private list variable.
+        //wages->insert()
+    }
+}
