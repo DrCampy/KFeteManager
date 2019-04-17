@@ -30,7 +30,7 @@ struct Session{
     SalesList           normalSales; /**< List of articles sold at normal price.*/
     SalesList           reducedSales; /**< List of articles sold at reduced price.*/
     SalesList           freeSales; /**< List of articles sold for free.*/
-    FunctionsBenefits   functionsBenefits;
+    FunctionsBenefits   functionsBenefits; /**< List of benefits for each function, per function.*/
     qreal               jobistShare; /**< Actual earnings of the jobists for the session.*/
     qreal               jobistWage; /**< Actual amount paid to the jobists (in total).*/
 
