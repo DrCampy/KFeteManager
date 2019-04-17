@@ -12,6 +12,7 @@
 #include <QDoubleSpinBox>
 #include <QLabel>
 #include <QVariant>
+#include <QFormLayout>
 
 typedef QList<QPair<qreal, QString>> CashMoves;
 typedef QMultiMap<QString, QPair<qreal, QString>> AccountMoves;
@@ -101,6 +102,7 @@ private :
     QLabel *total;
     QPushButton *okButton;
     QPushButton *cancelButton;
+    QFormLayout *formLayout;
 
 private slots:
     void updateTotal();

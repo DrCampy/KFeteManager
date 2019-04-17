@@ -9,6 +9,7 @@
 #include <QLocale>
 #include <QLineEdit>
 #include <QFormLayout>
+#include <QDebug>
 
 #include "sessionsmanager.h"
 #include "customwidgets.h"
@@ -544,14 +545,19 @@ WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
     if(session == nullptr){
         return;
     }
+    //Layouts
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    QFormLayout *formLayout = new QFormLayout();
     QHBoxLayout *buttonsLayout = new QHBoxLayout();
+    formLayout = new QFormLayout();
+
+    //buttons and labels
     okButton = new QPushButton(tr("Payer"), this);
     cancelButton = new QPushButton(tr("Annuler"), this);
     total = new QLabel(locale().toCurrencyString(0.0), this);
+
     qreal share = session->jobistShare/session->jobists.size();
 
+    //create the spinboxes, connects them and add them to the form with the associated jobist name
     for(auto jobist : session->jobists){
         QDoubleSpinBox *newSpinBox = new QDoubleSpinBox(this);
         connect(newSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateTotal()));
@@ -560,9 +566,12 @@ WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
     }
 
     //TODO connect buttons to corresponding qdialog's functions.
+
+    //Adds buttons to their layout
     buttonsLayout->addWidget(okButton);
     buttonsLayout->addWidget(cancelButton);
 
+    //Construct window from layouts
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(total);
     mainLayout->addLayout(buttonsLayout);
@@ -570,19 +579,46 @@ WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
 
 void WageSelector::updateTotal(){
     qreal numericalTotal = 0.0;
+    //Computes total
     for(auto spinBox : spinBoxesList){
         numericalTotal += spinBox->value();
     }
+    //Sets total to the total's label
     this->total->setText(locale().toCurrencyString(numericalTotal));
 }
 
 bool WageSelector::ask(QMap<QString, qreal> *wages){
+    //Checks that we are given a valid data pointer
     if(wages == nullptr){
         return false;
     }
+
+    //executes the dialog box
     this->exec();
+
+    //If user clicked on 'validate', else we do nothing
     if(this->result() == QDialog::Accepted){
-        //TODO GET JOBIST'S NAME from either formlayout or private list variable.
-        //wages->insert()
+        //Iterate over every field aka jobist
+        for (int i = 0; i < formLayout->rowCount(); i++){
+            //Get field from form then cast it
+            QWidget *field = formLayout->itemAt(i, QFormLayout::FieldRole)->widget();
+            QDoubleSpinBox *spinBox = qobject_cast<QDoubleSpinBox *>(field);
+            //Check if cast was successful. If not, exit
+            if(spinBox == nullptr){
+                qDebug() << "WageSelector : unable to cast to QDoubleSpinBox.";
+                return false;
+            }
+            //Gets the label then casts it.
+            QLabel *label = qobject_cast<QLabel *>(formLayout->labelForField(field));
+            if(label == nullptr){
+                qDebug() << "WageSelector : unable to cast to Label.";
+            }
+
+            //Adds the result found to the wages structure
+            wages->insert(label->text(), spinBox->value());
+        }
     }
+    return true;
 }
+
+//TODO might check for some constraints ? Like a sum of wages above the actual benefits or so ?
