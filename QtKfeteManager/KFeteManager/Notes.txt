@@ -70,3 +70,4 @@ Login screen
 Statistics
 update databasemanager to use minJShare
 Use PRAGMA versions in db instead of "integrity check"
+afficher un résumé de la session de vente avant de fermer le programme
