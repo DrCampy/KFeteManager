@@ -66,9 +66,6 @@ private:
     void            refresh();
     void            clear();
 
-    void            validateAuto();
-    void            validateManually();
-    void            validateNoPay();
     void            saveData();
     static void     deleteSession(qlonglong id);
     static void     payJobist(QMap<QString, qreal> wages);
@@ -84,6 +81,9 @@ signals:
 private slots:
     void            writeDetails();
     void            loadDatas();
+    void            validateAuto();
+    void            validateManually();
+    void            validateNoPay();
 
 };
 
@@ -95,7 +95,7 @@ class WageSelector : protected QDialog
 {
     Q_OBJECT
 public :
-    explicit WageSelector(Session *session, QWidget *parent = nullptr);
+    explicit WageSelector(const Session *session, QWidget *parent = nullptr);
     bool ask(QMap<QString, qreal> *wages);
 private :
     QList<QDoubleSpinBox*> spinBoxesList;

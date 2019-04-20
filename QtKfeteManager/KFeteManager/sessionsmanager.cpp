@@ -9,7 +9,9 @@
 #include <QLocale>
 #include <QLineEdit>
 #include <QFormLayout>
+#include <QMessageBox>
 #include <QDebug>
+#include <QSqlError>
 
 #include "sessionsmanager.h"
 #include "customwidgets.h"
@@ -52,6 +54,11 @@ SessionsManager::SessionsManager(QWidget *parent) : QWidget(parent)
     //Connects
     connect(backButton, SIGNAL(clicked()), this, SIGNAL(finished()));
     connect(sessionSelector, SIGNAL(currentIndexChanged(int)), this, SLOT(writeDetails()));
+
+    connect(validate1Button, SIGNAL(clicked()), this, SLOT(validateAuto()));
+    connect(validate2Button, SIGNAL(clicked()), this, SLOT(validateManually()));
+    connect(validate3Button, SIGNAL(clicked()), this, SLOT(validateNoPay()));
+
     refresh();
 }
 
@@ -381,9 +388,18 @@ void SessionsManager::writeDetails(){
     }
     text += "</p>";
 
-
+    //Updates the displayed text
     sessionDetails->clear();
     sessionDetails->appendHtml(text);
+
+    //Updates the statuses of the validation buttons
+    if(session.jobists.length() == 0){
+        validate1Button->setEnabled(false);
+        validate2Button->setEnabled(false);
+    }else{
+        validate1Button->setEnabled(true);
+        validate2Button->setEnabled(true);
+    }
 }
 
 /**
@@ -412,7 +428,12 @@ void SessionsManager::validateAuto(){
 
     //Delete session
     deleteSession(session.Id);
+
+    //Refresh list of sessions
+    refresh();
 }
+
+//TODO check if the jobists paiment is saved properly with saveData (paid or not and how much ?)
 
 /**
  * @brief SessionsManager::validateManually validates a %session and asks to the user how the jobists should be paid.
@@ -420,8 +441,21 @@ void SessionsManager::validateAuto(){
  * The %session then goes into the history db and is deleted from the main db.
  */
 void SessionsManager::validateManually(){
+    WageSelector *wageDialog = new WageSelector(&session, this);
 
+    QMap<QString, qreal> *wages = new QMap<QString, qreal>();
 
+    bool result = wageDialog->ask(wages);
+
+    //If user pressed OK we receive true and do the paiment
+    if(result){
+        payJobist(*wages);
+        saveData();
+        deleteSession(session.Id);
+        refresh();
+    }
+
+    delete wages;
 }
 
 /**
@@ -430,7 +464,16 @@ void SessionsManager::validateManually(){
  * The %session then goes into the history db and is deleted from the main db.
  */
 void SessionsManager::validateNoPay(){
-
+    QMessageBox msgBox;
+    msgBox.setText(tr("Voulez-vous réellement ne pas payer les jobistes ?"));
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    int ret = msgBox.exec();
+    if(ret == QMessageBox::Yes){
+        saveData();
+        deleteSession(session.Id);
+        refresh();
+    }
 }
 
 /**
@@ -513,7 +556,7 @@ void SessionsManager::saveData(){
  */
 void SessionsManager::deleteSession(qlonglong id){
     QSqlQuery query; //Query from main db
-    query.prepare("DELETE FROM SalesSessions WHERE OpeningTime = :id;");
+    query.prepare("DELETE FROM SaleSessions WHERE OpeningTime = :id;");
     query.bindValue(":id", id);
     query.exec();
 }
@@ -541,7 +584,7 @@ void SessionsManager::payJobist(QMap<QString, qreal> wages){
  * @param session the session from which the dialog box will fetch the data needed.
  * @param parent Qt Widget parent.
  */
-WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
+WageSelector::WageSelector(const Session *session, QWidget *parent) : QDialog(parent){
     if(session == nullptr){
         return;
     }
@@ -563,9 +606,12 @@ WageSelector::WageSelector(Session *session, QWidget *parent) : QDialog(parent){
         connect(newSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateTotal()));
         newSpinBox->setValue(share);
         formLayout->addRow(jobist, newSpinBox);
+        spinBoxesList.append(newSpinBox);
     }
 
-    //TODO connect buttons to corresponding qdialog's functions.
+    //connect buttons to corresponding qdialog's functions (accept/reject).
+    connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(cancelButton, SIGNAL(clicked()), this, SLOT(accept()));
 
     //Adds buttons to their layout
     buttonsLayout->addWidget(okButton);
@@ -586,6 +632,8 @@ void WageSelector::updateTotal(){
     //Sets total to the total's label
     this->total->setText(locale().toCurrencyString(numericalTotal));
 }
+
+//TODO manage case where there is no jobist
 
 bool WageSelector::ask(QMap<QString, qreal> *wages){
     //Checks that we are given a valid data pointer
