@@ -1,8 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <vector>
 
 using namespace std;
+
+struct Line;
 
 /**
  * @brief main: main function of the program.
@@ -28,6 +31,16 @@ int main(int argc, char *argv[])
     string user = string(argv[3]);
     string hash = string(argv[4]);
 
+    ifstream fileStream;
+    fileStream.open(file, ios_base::in);
+
+    char line[512];
+    vector<Line> v;
+    while(fileStream.getline(line, 512)){
+        //v.push_back
+    }
+
+
     if(operation.compare("ADD")){
 
     }else if(operation.compare("UPDATE")){
@@ -43,21 +56,31 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-struct line{
+struct Line{
     enum Type {COMMENT, VALID, INVALID};
     Type type = COMMENT;
-    string *content = nullptr;
-    string *user = nullptr;
-    string *hash = nullptr;
+    string content;
+    string user;
+    string hash;
 
-    void parse(string *input);
+    void parse(string line);
 };
 
-void line::parse(string *str){
-    if(str->at(0) == '#'){
+void Line::parse(string line){
+    if(line.at(0) == '#'){
         this->type = COMMENT;
-        this->content = new string(*str);
+        this->content = line;
     }else{
-        //split string at /t
+        string delimiter = "\t";
+        unsigned long int pos = line.find(delimiter);
+        if(pos == string::npos){
+            this->type = INVALID;
+            this->content = line;
+        }else{
+            string user = line.substr(0, pos);
+            line.erase(0, pos + delimiter.length());
+            this->user = user;
+            this->hash = line;
+        }
     }
 }
