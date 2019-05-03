@@ -43,3 +43,21 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+struct line{
+    enum Type {COMMENT, VALID, INVALID};
+    Type type = COMMENT;
+    string *content = nullptr;
+    string *user = nullptr;
+    string *hash = nullptr;
+
+    void parse(string *input);
+};
+
+void line::parse(string *str){
+    if(str->at(0) == '#'){
+        this->type = COMMENT;
+        this->content = new string(*str);
+    }else{
+        //split string at /t
+    }
+}
