@@ -8,6 +8,11 @@
 #include <QPlainTextEdit>
 #include <QSqlQueryModel>
 #include <QDateTime>
+#include <QDialog>
+#include <QDoubleSpinBox>
+#include <QLabel>
+#include <QVariant>
+#include <QFormLayout>
 
 typedef QList<QPair<qreal, QString>> CashMoves;
 typedef QMultiMap<QString, QPair<qreal, QString>> AccountMoves;
@@ -61,12 +66,9 @@ private:
     void            refresh();
     void            clear();
 
-    void            validateAuto();
-    void            validateManually();
-    void            validateNoPay();
     void            saveData();
     static void     deleteSession(qlonglong id);
-    static void     payJobist(QString jobist, qreal wage);
+    static void     payJobist(QMap<QString, qreal> wages);
 
     Session session;
     //Datas
@@ -79,9 +81,33 @@ signals:
 private slots:
     void            writeDetails();
     void            loadDatas();
+    void            validateAuto();
+    void            validateManually();
+    void            validateNoPay();
 
 };
 
 
+/**
+ * @brief The WageSelector class implements a dialog box allowing the user to choose freely the wage for each jobist of a session.
+ */
+class WageSelector : protected QDialog
+{
+    Q_OBJECT
+public :
+    explicit WageSelector(const Session *session, QWidget *parent = nullptr);
+    bool ask(QMap<QString, qreal> *wages);
+private :
+    QList<QDoubleSpinBox*> spinBoxesList;
+    QLabel *total;
+    QPushButton *okButton;
+    QPushButton *cancelButton;
+    QFormLayout *formLayout;
+
+private slots:
+    void updateTotal();
+
+
+};
 
 #endif // SESSIONSMANAGER_H
