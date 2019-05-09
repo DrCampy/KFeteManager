@@ -188,7 +188,9 @@ Line::Line(const string &line){
  * @param line : a string containing the line of text.
  */
 void Line::parse(const string &line){
-    if(line.at(0) == '#'){
+    if(line.length() < 1){
+            this->type = INVALID;
+    }else if(line.at(0) == '#'){
         this->type = COMMENT;
         this->content = line;
     }else{
@@ -199,7 +201,8 @@ void Line::parse(const string &line){
             this->content = line;
         }else{
             this->user = line.substr(0, pos);
-            this->hash = line.substr(pos);
+            this->hash = line.substr(pos+delimiter.length());
+            this->type = VALID;
         }
     }
 }
