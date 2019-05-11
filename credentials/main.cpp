@@ -3,8 +3,6 @@
 #include <map>
 #include <vector>
 #include <cmath>
-#include <list>
-#include <algorithm>
 
 #include "sha256.h"
 using namespace std;
@@ -31,6 +29,7 @@ public:
     string getUser();
     string getHash();
     void update(string line);
+    //Line& operator=(const Line& other);
 
 private:
     void parse(const string &line);
@@ -49,47 +48,22 @@ private:
  *Input parameters :
  * 1. File where the credentials are stored
  * 2. The operation to perform
- *    (ADD: Add a user-hash pair, UPDATE: update a hash, DELETE: delete a pair, CHECK: check a pair, EXISTS: checks if an entry exists for that user)
+ *    (ADD: Add a user-hash pair, UPDATE: update a hash, DELETE: delete a pair, CHECK: check a pair)
  * 3. User
  * 4. Password
  */
 int main(int argc, char *argv[])
 {
-
-    std::list<string> supportedOperations = {"ADD", "UPDATE", "DELETE", "CHECK", "EXISTS"};
-    std::vector<string> test;
-    if(argc < 2){
-        cerr << "Error: must provide at least 1 argument. Type \"credentials HELP\" for help." << endl;
-    }
-    string operation = argv[1];
-
-    if(find(supportedOperations.cbegin(), supportedOperations.cend(), operation) == supportedOperations.cend()){
-        cerr << "Error: Unknwon operation: \"" << operation << "\"" << endl;
-    }
-
-    if(operation.compare("EXISTS") == 0){
-        if(argc != 4){
-            cerr << "Error: Operation EXISTS requires 3 arguments but " << argc-1 << " were received." << endl;
-        }
-    }else{
-        if(argc != 5 ){
-            cerr << "Error: Operation " << operation << " requires 4 arguments but " << argc-1 << " were received." << endl;
-        }
-    }
-    if(argc < 4 || argc > 5){
-        fprintf(stderr, "Expecting 3 or 4 arguments but %d were received.", argc-1);
+    if(argc != 5){
+        fprintf(stdout, "Expecting 4 arguments but %d were received.", argc-1);
         return 1;
     }
 
     unsigned int workFactor = 10;
 
-
-    string file = string(argv[2]);
-    string operation = string(argv[1]);
+    string file = string(argv[1]);
+    string operation = string(argv[2]);
     string user = string(argv[3]);
-    if(operation.compare("EXISTS") != 0 && argc != 5){
-
-    }
     string password = string(argv[4]);
 
     //Computes the hash of the password.
@@ -175,14 +149,6 @@ int main(int argc, char *argv[])
                 return 1;
             }
         }
-    }else if(operation.compare("EXISTS") == 0){
-        //Looks for the user we are looking for.
-        for(auto it = v.begin(); it < v.end(); it++){
-            if(it->getUser() == user)
-            return 0;
-        }
-    }else{
-        fprintf(stderr, "Unknown operation : %s.\n", operation.c_str());
     }
     return 1;
 }
@@ -289,3 +255,13 @@ void Line::update(string line){
     content = hash = user = string();
     parse(line);
 }
+
+/*
+Line& Line::operator=(const Line &other){
+    this->type = other.type;
+    this->content = other.content;
+    this->user = other.user;
+    this->hash = other.hash;
+    return *this;
+}
+*/
