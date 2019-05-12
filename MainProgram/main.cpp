@@ -14,7 +14,7 @@
  *
  * @param argc Number of arguments
  * @param argv Arguments
- * @return 0 in case of success. != 0 otherwise.
+ * @return EXIT_SUCCESS in case of success. EXIT_FAILURE otherwise.
  */
 int main(int argc, char *argv[])
 {
