@@ -2,11 +2,14 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QDebug>
+#include <QProcess>
+#include <QStringList>
+#include <QDebug>
 
 #include "mainwindow.h"
 #include "databasemanager.h"
 #include "historiesmanager.h"
-
+#include "credentialsmanager.h"
 /**
  * @brief qMain starts the program.
  * Opens the different databases, performs checks (procedure will change).
@@ -45,6 +48,9 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
+
+    //Checks if the needed users exists in the "credentials" program
+    CredentialsManager::exists("Tresorier");
 
     app.setOrganizationName("Morgan Diepart");
     app.setApplicationName("KFeteManager");

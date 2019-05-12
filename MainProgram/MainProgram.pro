@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    credentialsmanager.cpp \
         main.cpp \
         mainwindow.cpp \
     loginview.cpp \
@@ -47,6 +48,7 @@ SOURCES += \
     historiesmanager.cpp
 
 HEADERS += \
+    credentialsmanager.h \
         mainwindow.h \
     loginview.h \
     salesview.h \
